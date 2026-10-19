@@ -174,4 +174,5 @@ Denne applikation er udgivet under **GNU General Public License version 2 (GPL-2
 
 ## Kontakt
 
-For spørgsmål eller feedback, åbn venligst GitHub Issues:
+For spørgsmål eller feedback, åbn venligst:
+- [GitHub Issues](https://github.com/storefyr/Skrynja/issues)

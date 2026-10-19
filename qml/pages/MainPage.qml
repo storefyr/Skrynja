@@ -28,7 +28,6 @@ Page {
                 font.pixelSize: Theme.fontSizeLarge
                 color: Theme.highlightColor
                 anchors.horizontalCenter: parent.horizontalCenter
-                anchors.margins: Theme.paddingMedium
             }
             
             // Settings button
@@ -47,11 +46,6 @@ Page {
                 delegate: chatDelegate
                 spacing: Theme.paddingSmall
                 clip: true
-                
-                // Mørkt tema baggrund
-                background: Rectangle {
-                    color: isDarkTheme ? Theme.secondaryBackgroundColor : Theme.backgroundColor
-                }
             }
             
             // Input area
@@ -66,7 +60,6 @@ Page {
                     width: parent.width * 0.8
                     placeholderText: "Skriv dit spørgsmål..."
                     text: currentInput
-                    onTextChanged: currentInput = text
                     onAccepted: sendMessage()
                 }
                 
@@ -104,14 +97,12 @@ Page {
         title: "Indstillinger"
         anchors.fill: parent
         visible: showSettings
-        standardButtons: Dialog.Ok | Dialog.Cancel
-        
-        // Mørkt tema for dialog
-        background: Rectangle {
-            color: isDarkTheme ? Theme.secondaryBackgroundColor : Theme.backgroundColor
-        }
+        acceptText: "OK"
+        rejectText: "Annuller"
         
         onAccepted: {
+            // Save API key when dialog is accepted
+            mistralClient.apiKey = apiKeyField.text
             showSettings = false
         }
         onRejected: showSettings = false
