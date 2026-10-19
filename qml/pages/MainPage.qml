@@ -1,223 +1,126 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
-import QtQuick.Controls 1.0
-import QtQuick.Layouts 1.1
 
 Page {
     id: mainPage
-    
-    property string currentInput: ""
-    property string currentResponse: ""
-    property bool showSettings: false
-    
-    // Mørkt tema understøttelse for Sailfish OS 5
-    property bool isDarkTheme: Theme.colorScheme === Theme.Dark
-    
+
+    ListModel {
+        id: chatModel
+    }
+
+    function scrollToBottom() {
+        flickable.contentY = Math.max(0, flickable.contentHeight - flickable.height)
+    }
+
+    function trimHistory() {
+        while (chatModel.count > 50) {
+            chatModel.remove(0)
+        }
+    }
+
+    function sendMessage() {
+        var text = inputField.text.trim()
+        if (text.length === 0 || mistralClient.isLoading) {
+            return
+        }
+        chatModel.append({ "role": "user", "content": text })
+        inputField.text = ""
+        trimHistory()
+        scrollToBottom()
+        mistralClient.sendMessage(text)
+    }
+
     SilicaFlickable {
+        id: flickable
         anchors.fill: parent
         contentHeight: column.height + Theme.paddingLarge
-        
+
+        PullDownMenu {
+            MenuItem {
+                text: "Indstillinger"
+                onClicked: pageStack.push(Qt.resolvedUrl("SettingsDialog.qml"))
+            }
+        }
+
         Column {
             id: column
             width: parent.width
             spacing: Theme.paddingMedium
-            
-            // Header
+
+            PageHeader {
+                title: "Skrynja"
+            }
+
             Label {
-                text: "Skrynja"
-                font.pixelSize: Theme.fontSizeLarge
-                color: Theme.highlightColor
                 anchors.horizontalCenter: parent.horizontalCenter
+                visible: chatModel.count === 0
+                text: "Skriv en besked til Skrynja"
+                color: Theme.secondaryColor
             }
-            
-            // Settings button
-            Button {
-                text: "Indstillinger"
-                anchors.horizontalCenter: parent.horizontalCenter
-                onClicked: showSettings = true
+
+            Repeater {
+                model: chatModel
+
+                Column {
+                    width: column.width - Theme.paddingLarge * 2
+                    x: Theme.paddingLarge
+                    spacing: Theme.paddingSmall
+
+                    Label {
+                        width: parent.width
+                        horizontalAlignment: role === "user" ? Text.AlignRight : Text.AlignLeft
+                        text: role === "user" ? "Dig" : "Skrynja"
+                        font.pixelSize: Theme.fontSizeSmall
+                        color: Theme.secondaryHighlightColor
+                    }
+                    Label {
+                        width: parent.width
+                        wrapMode: Text.Wrap
+                        horizontalAlignment: role === "user" ? Text.AlignRight : Text.AlignLeft
+                        text: content
+                    }
+                }
             }
-            
-            // Chat history
-            ListView {
-                id: chatList
-                width: parent.width
-                height: childrenRect.height
-                model: chatHistoryModel
-                delegate: chatDelegate
-                spacing: Theme.paddingSmall
-                clip: true
+
+            Label {
+                width: parent.width - Theme.paddingLarge * 2
+                x: Theme.paddingLarge
+                visible: mistralClient.isLoading || mistralClient.lastError.length > 0
+                text: mistralClient.lastError.length > 0 ? mistralClient.lastError : "Skrynja skriver…"
+                color: mistralClient.lastError.length > 0 ? Theme.errorColor : Theme.secondaryColor
+                wrapMode: Text.Wrap
+                font.pixelSize: Theme.fontSizeSmall
+                horizontalAlignment: Text.AlignHCenter
             }
-            
-            // Input area
+
             Row {
-                width: parent.width
-                spacing: Theme.paddingSmall
-                leftPadding: Theme.paddingSmall
-                rightPadding: Theme.paddingSmall
-                
+                width: parent.width - Theme.paddingLarge * 2
+                x: Theme.paddingLarge
+                spacing: Theme.paddingMedium
+
                 TextField {
                     id: inputField
-                    width: parent.width * 0.8
-                    placeholderText: "Skriv dit spørgsmål..."
-                    text: currentInput
-                    onTextChanged: currentInput = text
-                    onAccepted: sendMessage()
+                    width: parent.width - sendButton.width - parent.spacing
+                    placeholderText: "Skriv dit spørgsmål…"
                 }
-                
-                Button {
+                TextButton {
+                    id: sendButton
                     text: "Send"
-                    width: parent.width * 0.2
-                    enabled: currentInput.length > 0 && !mistralClient.isLoading
-                    onClicked: sendMessage()
-                }
-            }
-            
-            // Loading indicator
-            BusyIndicator {
-                id: loadingIndicator
-                anchors.horizontalCenter: parent.horizontalCenter
-                visible: mistralClient.isLoading
-                running: mistralClient.isLoading
-            }
-            
-            // Error message
-            Label {
-                id: errorLabel
-                text: mistralClient.lastError
-                color: Theme.errorColor
-                visible: mistralClient.lastError.length > 0
-                anchors.horizontalCenter: parent.horizontalCenter
-                font.pixelSize: Theme.fontSizeSmall
-            }
-        }
-    }
-    
-    // Settings dialog med mørkt tema understøttelse
-    Dialog {
-        id: settingsDialog
-        title: "Indstillinger"
-        anchors.fill: parent
-        visible: showSettings
-        acceptText: "OK"
-        rejectText: "Annuller"
-        
-        onAccepted: {
-            // Save API key when dialog is accepted
-            mistralClient.apiKey = apiKeyField.text
-            showSettings = false
-        }
-        onRejected: showSettings = false
-        
-        Column {
-            width: parent.width
-            spacing: Theme.paddingMedium
-            
-            Label {
-                text: "API Nøgle (skal starte med 'mistral-')"
-                font.pixelSize: Theme.fontSizeSmall
-            }
-            
-            TextField {
-                id: apiKeyField
-                width: parent.width
-                placeholderText: "Indtast din Mistral AI API nøgle"
-                text: mistralClient.apiKey
-                echoMode: TextInput.Password
-                onAccepted: mistralClient.apiKey = text
-            }
-            
-            Label {
-                text: "Model"
-                font.pixelSize: Theme.fontSizeSmall
-            }
-            
-            ComboBox {
-                id: modelCombo
-                width: parent.width
-                model: mistralClient.availableModels
-                currentIndex: {
-                    var idx = modelCombo.find(mistralClient.model);
-                    return idx >= 0 ? idx : 0;
-                }
-                onCurrentIndexChanged: mistralClient.model = modelCombo.currentText
-            }
-        }
-    }
-    
-    ListModel {
-        id: chatHistoryModel
-    }
-    
-    Component {
-        id: chatDelegate
-        Row {
-            width: parent.width
-            spacing: Theme.paddingSmall
-            leftPadding: Theme.paddingSmall
-            rightPadding: Theme.paddingSmall
-            
-            Rectangle {
-                width: childrenRect.width + Theme.paddingMedium * 2
-                height: childrenRect.height + Theme.paddingMedium * 2
-                color: role === "user" ? 
-                       (isDarkTheme ? "#3a7bc8" : Theme.highlightColor) :
-                       (isDarkTheme ? "#2a5a98" : Theme.secondaryHighlightColor)
-                radius: Theme.radiusSmall
-                opacity: isDarkTheme ? 0.9 : 1.0
-                
-                Column {
-                    spacing: Theme.paddingSmall
-                    
-                    Label {
-                        text: role === "user" ? "Dig:" : "Skrynja:"
-                        font.pixelSize: Theme.fontSizeSmall
-                        color: Theme.primaryColor
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-                    
-                    Label {
-                        text: content
-                        font.pixelSize: Theme.fontSizeMedium
-                        color: isDarkTheme ? Qt.lighter(Theme.primaryColor, 1.5) : Theme.primaryColor
-                        width: parent.width * 0.9
-                        wrapMode: Text.WordWrap
-                    }
+                    enabled: inputField.text.trim().length > 0 && !mistralClient.isLoading
+                    onClicked: mainPage.sendMessage()
                 }
             }
         }
+
+        VerticalScrollDecorator {}
     }
-    
-    function sendMessage() {
-        if (currentInput.length === 0 || mistralClient.isLoading) {
-            return
-        }
-        
-        var messageText = currentInput
-        currentInput = ""
-        inputField.text = ""
-        
-        // Add user message to history
-        chatHistoryModel.append({"role": "user", "content": messageText})
-        
-        // Build complete history with both user and assistant messages
-        var history = []
-        for (var i = 0; i < chatHistoryModel.count; i++) {
-            var item = chatHistoryModel.get(i)
-            history.push({"role": item.role, "content": item.content})
-        }
-        
-        mistralClient.sendMessage(history)
-    }
-    
+
     Connections {
         target: mistralClient
-        function onMessageReceived(response) {
-            chatHistoryModel.append({"role": "assistant", "content": response})
-            chatList.positionViewAtEnd()
+        onMessageReceived: {
+            chatModel.append({ "role": "assistant", "content": response })
+            trimHistory()
+            scrollToBottom()
         }
-        
-
     }
-    
-
 }
