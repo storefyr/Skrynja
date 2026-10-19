@@ -27,7 +27,7 @@ Page {
                 font.pixelSize: Theme.fontSizeLarge
                 color: Theme.highlightColor
                 anchors.horizontalCenter: parent.horizontalCenter
-                padding: Theme.paddingMedium
+                anchors.margins: Theme.paddingMedium
             }
             
             // Settings button
@@ -41,7 +41,7 @@ Page {
             ListView {
                 id: chatList
                 width: parent.width
-                height: implicitHeight
+                height: childrenRect.height
                 model: chatHistoryModel
                 delegate: chatDelegate
                 spacing: Theme.paddingSmall
@@ -57,7 +57,7 @@ Page {
             Row {
                 width: parent.width
                 spacing: Theme.paddingSmall
-                padding: Theme.paddingSmall
+                anchors.margins: Theme.paddingSmall
                 
                 TextField {
                     id: inputField
@@ -159,7 +159,7 @@ Page {
         Row {
             width: parent.width
             spacing: Theme.paddingSmall
-            padding: Theme.paddingSmall
+            anchors.margins: Theme.paddingSmall
             
             Rectangle {
                 width: childrenRect.width + Theme.paddingMedium * 2

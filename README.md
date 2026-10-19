@@ -122,24 +122,34 @@ Du kan få en API nøgle ved at:
 ## Projektstruktur
 
 ```
-skrynja/
-├── skrynja.pro              # Qt projektfil
-├── skrynja.desktop          # Desktop entry
-├── skrynja.yaml             # RPM spec fil
-├── LICENSE                  # GPL-2.0 licens
-├── README.md                # Dokumentation
-├── qml.qrc                 # Resource fil
+harbour-skrynja/
+├── harbour-skrynja.pro        # Qt projektfil
+├── harbour-skrynja.desktop    # Desktop entry
+├── harbour-skrynja.yaml       # RPM spec fil
+├── LICENSE                    # GPL-2.0 licens
+├── README.md                  # Dokumentation
+├── qml.qrc                   # Resource fil
 ├── qml/
-│   ├── main.qml             # Hoved QML fil
-│   ├── CoverPage.qml        # Cover side
+│   ├── main.qml               # Hoved QML fil
+│   ├── CoverPage.qml          # Cover side
 │   └── pages/
-│       └── MainPage.qml     # Hovedside med UI
+│       └── MainPage.qml       # Hovedside med UI
 ├── src/
-│   ├── main.cpp             # Hoved C++ fil
-│   ├── mistralclient.h      # Header for Mistral client
-│   └── mistralclient.cpp    # Implementation af Mistral client
-└── icon/
-    └── skrynja.svg          # App ikon
+│   ├── main.cpp               # Hoved C++ fil
+│   ├── mistralclient.h        # Header for Mistral client
+│   └── mistralclient.cpp      # Implementation af Mistral client
+├── icon/
+│   ├── skrynja.svg            # App ikon (SVG)
+│   ├── 86x86/
+│   ├── 108x108/
+│   │   ├── harbour-skrynja.png
+│   │   └── harbour-skrynja.png
+│   ├── 128x128/
+│   │   └── harbour-skrynja.png
+│   ├── 172x172/
+│   │   └── harbour-skrynja.png
+│   └── 256x256/
+│       └── harbour-skrynja.png
 ```
 
 ## Qt Kompatibilitet
@@ -164,4 +174,4 @@ Denne applikation er udgivet under **GNU General Public License version 2 (GPL-2
 
 ## Kontakt
 
-For spørgsmål eller feedback, kontakt venligst:
+For spørgsmål eller feedback, åbn venligst GitHub Issues:

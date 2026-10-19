@@ -266,7 +266,19 @@ void MistralClient::onReplyFinished()
                 if (message.contains("content") && message["content"].isString()) {
                     QString content = message["content"].toString();
                     emit messageReceived(content);
+                } else {
+                    // Missing content in message
+                    m_lastError = "Ugyldigt svar format: manglende content i message";
+                    emit lastErrorChanged();
+                    cleanupRequest();
+                    return;
                 }
+            } else {
+                // Missing message in choice
+                m_lastError = "Ugyldigt svar format: manglende message i choice";
+                emit lastErrorChanged();
+                cleanupRequest();
+                return;
             }
         } else {
             // Empty choices list - error condition
