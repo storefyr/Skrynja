@@ -28,5 +28,4 @@ DISTFILES += \
 
 # Icon files - just size directories, sailfishapp.prf will handle the rest
 SAILFISHAPP_ICONS = 86x86 108x108 128x128 172x172 256x256
-
-# Destination directory for target
+SAILFISHAPP_ICONS_PATH = icon
