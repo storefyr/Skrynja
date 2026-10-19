@@ -6,6 +6,8 @@
 #include <QNetworkReply>
 #include <QSettings>
 #include <QJsonArray>
+#include <QVariant>
+#include <QTimer>
 
 class MistralClient : public QObject
 {
@@ -28,7 +30,7 @@ public:
 
     bool isLoading() const;
     QString lastError() const;
-    QStringList availableModels() const;
+    const QStringList &availableModels() const;
 
     Q_INVOKABLE void sendMessage(const QString &message, const QVariantList &history);
     Q_INVOKABLE void cancelRequest();
@@ -44,12 +46,14 @@ signals:
 private slots:
     void onReplyFinished();
     void onReplyError(QNetworkReply::NetworkError error);
+    void onTimeout();
     void loadSettings();
     void saveSettings();
 
 private:
     QNetworkAccessManager *m_networkManager;
     QNetworkReply *m_currentReply;
+    QTimer *m_timeoutTimer;
     QString m_apiKey;
     QString m_model;
     bool m_isLoading;

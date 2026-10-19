@@ -8,9 +8,10 @@ int main(int argc, char *argv[])
 {
     QGuiApplication app(argc, argv);
     
-    // Sæt applikationsnavn for korrekt QSettings gemning
+    // Set application info for consistent QSettings storage
     QCoreApplication::setApplicationName("skrynja");
     QCoreApplication::setOrganizationName("Harbour");
+    QCoreApplication::setApplicationVersion("1.0");
 
     QQmlApplicationEngine engine;
     
