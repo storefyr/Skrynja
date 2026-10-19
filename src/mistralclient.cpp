@@ -31,15 +31,8 @@ MistralClient::MistralClient(QObject *parent) : QObject(parent)
 
 MistralClient::~MistralClient()
 {
-    // Clean up current reply
-    if (m_currentReply) {
-        m_currentReply->deleteLater();
-    }
-    
-    // Clean up timeout timer
-    if (m_timeoutTimer) {
-        m_timeoutTimer->deleteLater();
-    }
+    // Ensure all requests and timers are cleaned up properly
+    cancelRequest();
     
     // QObject children will be cleaned up automatically by Qt's parent-child system
 }
@@ -225,14 +218,14 @@ void MistralClient::onReplyFinished()
     disconnect(m_currentReply, &QNetworkReply::finished, this, &MistralClient::onReplyFinished);
     disconnect(m_currentReply, &QNetworkReply::errorOccurred, this, &MistralClient::onReplyError);
 
+    // Read response ONCE and store it
+    QByteArray response = m_currentReply->readAll();
+    
     // Check HTTP status code for non-2xx responses
     int httpStatus = m_currentReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     if (httpStatus != 200 && httpStatus != 0) {
-        qDebug() << "HTTP" << httpStatus << "response:" << m_currentReply->readAll();
+        qDebug() << "HTTP" << httpStatus << "response:" << QString(response).left(200);
     }
-    
-    // Reset read position
-    m_currentReply->reset();
 
     if (m_currentReply->error() != QNetworkReply::NoError) {
         m_lastError = m_currentReply->errorString();
@@ -241,8 +234,6 @@ void MistralClient::onReplyFinished()
         return;
     }
 
-    QByteArray response = m_currentReply->readAll();
-    
     // Debug log response (truncated)
     qDebug() << "API response received:" << QString(response).left(200) << "...";
     
