@@ -165,6 +165,3 @@ Denne applikation er udgivet under **GNU General Public License version 2 (GPL-2
 ## Kontakt
 
 For spørgsmål eller feedback, kontakt venligst:
-- Email: support@mistral.ai
-- Web: https://mistral.ai
-- GitHub Issues: [storefyr/Skrynja/issues](https://github.com/storefyr/Skrynja/issues)

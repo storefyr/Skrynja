@@ -1,6 +1,5 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
-import QtQuick.Controls 1.0
 import QtQuick.Layouts 1.1
 
 Page {
@@ -42,7 +41,7 @@ Page {
             ListView {
                 id: chatList
                 width: parent.width
-                height: parent.height * 0.6
+                height: implicitHeight
                 model: chatHistoryModel
                 delegate: chatDelegate
                 spacing: Theme.paddingSmall
@@ -225,8 +224,5 @@ Page {
 
     }
     
-    Component.onCompleted: {
-        // Load saved API key if available
-        // This would be implemented with settings storage in a real app
-    }
+
 }

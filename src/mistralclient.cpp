@@ -146,7 +146,7 @@ void MistralClient::sendMessage(const QVariantList &history)
     
     // Add history - both user and assistant messages with type safety
     for (int i = 0; i < history.size(); i++) {
-        if (history[i].type() == QVariant::Map) {
+        if (history[i].canConvert(QMetaType::QVariantMap)) {
             QVariantMap histItem = history[i].toMap();
             
             if (histItem.contains("role") && 

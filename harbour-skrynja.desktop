@@ -7,8 +7,6 @@ Exec=harbour-skrynja
 Icon=icon/86x86/harbour-skrynja.png
 Terminal=false
 Categories=Utility;Network;
-
-[Desktop Entry]
 X-Sailfish-App-Id=harbour.skrynja
 X-Sailfish-App-Version=1.0
 X-Sailfish-App-Name=Skrynja
