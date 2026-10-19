@@ -25,6 +25,7 @@ Dialog {
             id: modelCombo
             width: parent.width
             label: "Model"
+            property string selectedModel: mistralClient.model
             menu: ContextMenu {
                 Repeater {
                     model: mistralClient.availableModels
@@ -33,20 +34,18 @@ Dialog {
                     }
                 }
             }
-            property bool _ready: false
             Component.onCompleted: {
                 var models = mistralClient.availableModels
                 for (var i = 0; i < models.length; i++) {
-                    if (models[i] === mistralClient.model) {
+                    if (models[i] === selectedModel) {
                         currentIndex = i
                         break
                     }
                 }
-                _ready = true
             }
             onCurrentIndexChanged: {
-                if (_ready && currentIndex >= 0) {
-                    mistralClient.model = mistralClient.availableModels[currentIndex]
+                if (currentIndex >= 0) {
+                    selectedModel = mistralClient.availableModels[currentIndex]
                 }
             }
         }
@@ -54,5 +53,6 @@ Dialog {
 
     onAccepted: {
         mistralClient.apiKey = apiKeyField.text
+        mistralClient.model = modelCombo.selectedModel
     }
 }

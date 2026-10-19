@@ -33,7 +33,7 @@ make install  # eller deploy via SDK/Qt Creator
 ## Brug
 
 1. Åbn appen
-2. Træk ned og vælg «Indstillinger», eller åbn indstillinger fra app-menuen
+2. Træk ned fra toppen og vælg «Indstillinger»
 3. Indsæt din Mistral API-nøgle (starter med `mistral-`) og vælg en model
 4. Skriv dit spørgsmål og tryk «Send»
 
