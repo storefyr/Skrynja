@@ -1,21 +1,14 @@
 Name: harbour-skrynja
-Summary: Skrynja - Mistral AI Chat for Sailfish OS
+Summary: Skrynja — Mistral AI chat
 Description: |
-  En Sailfish OS applikation der gør det muligt at stille spørgsmål til Mistral AI
-  og modtage svar direkte på din enhed.
+  Stil spørgsmål til Mistral AI og få svar direkte på din Sailfish OS-enhed.
 Version: 1.0
 Release: 1
-URL: https://mistral.ai
+URL: https://github.com/storefyr/Skrynja
 License: GPL-2.0
 
-Requires: sailfishsilica-qt5 >= 1.0
-
-Sources:
-  - harbour-skrynja.pro
-  - qml/*
-  - qml/pages/*.qml
-  - src/*
-  - harbour-skrynja.desktop
+Requires:
+  - sailfishsilica-qt5 >= 1.0
 
 PkgConfigBR:
   - Qt5Core
@@ -29,5 +22,3 @@ Files:
   - '%{_datadir}/applications/%{name}.desktop'
   - '%{_datadir}/%{name}/qml/*'
   - '%{_datadir}/icons/hicolor/*x*/apps/%{name}.png'
-
-Install: app

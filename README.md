@@ -1,178 +1,74 @@
-# Skrynja - Mistral AI Chat for Sailfish OS
+# Skrynja — Mistral AI chat for Sailfish OS
 
-En Sailfish OS applikation der gør det muligt at stille spørgsmål til Mistral AI og modtage svar direkte på din enhed.
+En simpel chat-klient til Mistral AI for Sailfish OS. Skriv et spørgsmål, få et svar.
 
 ## Funktioner
 
-- Send spørgsmål til Mistral AI
-- Modtag svar i realtid
-- Chat historik
-- Indstillinger for API nøgle og model
-- Understøttelse af flere Mistral modeller
-- **Mørkt tema (Dark Mode)** - Automatisk tilpasning til Sailfish OS 5's tema-indstillinger
-- Optimeret til Jollaphone 2026's skærmstørrelse
+- Chat med Mistral AI (`api.mistral.ai`)
+- Vælg mellem Mistrals chat-modeller
+- API-nøgle gemmes lokalt på enheden (QSettings, organization `Harbour`, application `skrynja`)
+- Følger systemets lyst/mørke tema automatisk via Sailfish Silica
 
 ## Forudsætninger
 
-- Sailfish OS 5.x (testet på Jollaphone 2026)
-- Qt 5.12+
-- Qt Network modul
-- Internetforbindelse
+- Sailfish OS (Qt 5.6, Sailfish Silica)
+- Mistral AI API-nøgle fra [console.mistral.ai](https://console.mistral.ai)
 
-## Installation
+## Bygning
 
-### 1. Klon dette repository
+Byg med Sailfish OS SDK:
 
 ```bash
-git clone https://github.com/storefyr/Skrynja.git
-cd Skrynja
-```
-
-### 2. Opret bygningsmiljø
-
-```bash
-mkdir build
-cd build
+mkdir build && cd build
 qmake ..
 make
 ```
 
-### 3. Installer applikationen
+Installér på enhed eller emulator:
 
 ```bash
-sudo make install
+make install  # eller deploy via SDK/Qt Creator
 ```
-
-### 4. Kør applikationen
-
-Applikationen vil være tilgængelig i din app menu som "Skrynja".
-
-## Konfiguration
-
-1. Åbn applikationen
-2. Tryk på "Indstillinger"
-3. Indtast din Mistral AI API nøgle (kan fås fra https://mistral.ai)
-4. Vælg ønsket model (mistral-tiny-2407, mistral-small-2407, mistral-medium-2407)
-5. Gem indstillingerne
 
 ## Brug
 
-1. Skriv dit spørgsmål i inputfeltet
-2. Tryk på "Send" eller tryk Enter
-3. Vent på svar fra Mistral AI
-4. Chat historikken vises automatisk
-
-## API Nøgle
-
-Du kan få en API nøgle ved at:
-1. Gå til https://mistral.ai
-2. Opret en konto (hvis du ikke allerede har en)
-3. Gå til API sektion
-4. Opret en ny API nøgle
-5. Kopier nøglen og indsæt den i applikationens indstillinger
-
-## Understøttede Modeller
-
-- `mistral-tiny-2407` - Hurtig og effektiv (standard)
-- `mistral-small-2407` - God balance mellem hastighed og kvalitet
-- `mistral-medium-2407` - Højeste kvalitet
-
-## Sailfish OS 5 Funktioner
-
-- **Automatisk tema-detektion**: Applikationen tilpasser sig automatisk til systemets tema (lys/mørk)
-- **Forbedret visuel design**: Optimeret farveskema for bedst mulig læsbarhed
-- **Cover Action**: Hurtig adgang via Jollaphone 2026's cover flow
-- **Responsive layout**: Tilpasser sig til Jollaphone 2026's skærmstørrelse (6,5")
-
-## Fejlfinding
-
-### "API nøgle er påkrævet"
-- Sørg for at du har indtastet din API nøgle i indstillingerne
-- Nøglen skal starte med "mistral-"
-
-### "Ugyldigt svar fra server"
-- Tjek din internetforbindelse
-- Sørg for at din API nøgle er korrekt
-- Prøv igen senere
-
-### "Network error"
-- Tjek din internetforbindelse
-- Sørg for at din enhed har adgang til internettet
-
-## Sikkerhed
-
-### API Nøgle
-⚠️ **VIGTIGT:** API nøglen gemmes i **QSettings** på din enhed.
-
-- **Lagring:** QSettings lagrer data i **plaintext** på Sailfish OS
-- **Sted:** Nøglen gemmes under `~/.config/Harbour/skrynja` (via QSettings med organization="Harbour", application="skrynja")
-- **Anbefalinger:**
-  - Brug en **dedikeret API nøgle** til denne applikation
-  - **Slet** nøglen ved at fjerne filen `~/.config/Harbour/skrynja` eller nulstille indstillingerne i applikationen
-  - Overvej at **rotere** din API nøgle regelmæssigt
-- **Sikkerhedsniveau:** Passende for personlig brug på en sikret enhed
-
-### Sikkerhedsforanstaltninger
-- ✅ Applikationen sender **kun** data til `api.mistral.ai`
-- ✅ Ingen data logges til eksterne tjenester
-- ✅ Al kommunikation sker via **HTTPS** med SSL
-- ✅ Ingen API nøgle sendes i logs (maskeret i debug output)
-- ⚠️ **Note:** QSettings lagring er **plaintext** - dette er standard for Sailfish OS applikationer
+1. Åbn appen
+2. Træk ned og vælg «Indstillinger», eller åbn indstillinger fra app-menuen
+3. Indsæt din Mistral API-nøgle (starter med `mistral-`) og vælg en model
+4. Skriv dit spørgsmål og tryk «Send»
 
 ## Projektstruktur
 
 ```
 harbour-skrynja/
-├── harbour-skrynja.pro        # Qt projektfil
+├── harbour-skrynja.pro        # qmake projektfil (sailfishapp)
 ├── harbour-skrynja.desktop    # Desktop entry
-├── harbour-skrynja.yaml       # RPM spec fil
-├── LICENSE                    # GPL-2.0 licens
-├── README.md                  # Dokumentation
-├── qml.qrc                   # Resource fil
+├── harbour-skrynja.yaml       # RPM spec (yaml)
+├── LICENSE                    # GPL-2.0
+├── README.md
+├── icon/                      # App-ikoner (86–256 px + SVG)
 ├── qml/
-│   ├── main.qml               # Hoved QML fil
-│   ├── CoverPage.qml          # Cover side
+│   ├── main.qml               # ApplicationWindow
+│   ├── CoverPage.qml          # Cover
 │   └── pages/
-│       └── MainPage.qml       # Hovedside med UI
-├── src/
-│   ├── main.cpp               # Hoved C++ fil
-│   ├── mistralclient.h        # Header for Mistral client
-│   └── mistralclient.cpp      # Implementation af Mistral client
-├── icon/
-│   ├── skrynja.svg            # App ikon (SVG)
-│   ├── 86x86/
-│   │   └── harbour-skrynja.png
-│   ├── 108x108/
-│   │   └── harbour-skrynja.png
-│   ├── 128x128/
-│   │   └── harbour-skrynja.png
-│   ├── 172x172/
-│   │   └── harbour-skrynja.png
-│   └── 256x256/
-│       └── harbour-skrynja.png
+│       ├── MainPage.qml       # Chat
+│       └── SettingsDialog.qml # API-nøgle og model
+└── src/
+    ├── main.cpp               # Entry point (libsailfishapp)
+    ├── mistralclient.h
+    └── mistralclient.cpp      # Mistral API-klient (QtNetwork)
 ```
 
-## Qt Kompatibilitet
+## Sikkerhed
 
-Applikationen er testet med:
-- ✅ **Qt 5.12+** (Sailfish OS 5 standard)
-- ✅ **Qt 5.15** (anbefalet)
-- ✅ **Qt 6.x** (fremtidssikret)
+API-nøglen gemmes i **klartekst** i QSettings (`~/.config/Harbour/skrynja`). Det er standardpraksis for Sailfish OS-apps, men nøglen ligger lokalt på din enhed. Brug en dedikeret nøgle, og slet den ved at fjerne filen eller nulstille indstillingerne i appen.
 
-### Qt Version Specifikke Notes
-- **QTimer-based timeout:** Brugt i stedet for `setTransferTimeout` for bedst kompatibilitet
-- **New-style signal-slot syntax:** Kompatibel med Qt 5.12+
-- **QNetworkReply::errorOccurred:** Tilgængelig i Qt 5.12+
-
-## Bidrag
-
-Bidrag er velkomne! Åbn venligst en issue eller pull request for eventuelle ændringer.
+Al trafik går direkte til `https://api.mistral.ai` over HTTPS. Appen logger eller sender ikke data til andre.
 
 ## Licens
 
-Denne applikation er udgivet under **GNU General Public License version 2 (GPL-2.0)**. Se LICENSE filen for detaljer.
+GPL-2.0 — se LICENSE.
 
 ## Kontakt
 
-For spørgsmål eller feedback, åbn venligst:
 - [GitHub Issues](https://github.com/storefyr/Skrynja/issues)

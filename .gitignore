@@ -1,0 +1,9 @@
+build/
+*.o
+*.moc
+moc_*.cpp
+qrc_*.cpp
+Makefile*
+.release/
+.debug/
+*.zip
