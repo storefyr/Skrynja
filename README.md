@@ -15,7 +15,7 @@ En Sailfish OS applikation der gør det muligt at stille spørgsmål til Mistral
 ## Forudsætninger
 
 - Sailfish OS 5.x (testet på Jollaphone 2026)
-- Qt 5
+- Qt 5.12+
 - Qt Network modul
 - Internetforbindelse
 
@@ -24,8 +24,8 @@ En Sailfish OS applikation der gør det muligt at stille spørgsmål til Mistral
 ### 1. Klon dette repository
 
 ```bash
-git clone https://github.com/dit-brugernavn/skrynja.git
-cd skrynja
+git clone https://github.com/storefyr/Skrynja.git
+cd Skrynja
 ```
 
 ### 2. Opret bygningsmiljø
@@ -99,31 +99,60 @@ Du kan få en API nøgle ved at:
 - Tjek din internetforbindelse
 - Sørg for at din enhed har adgang til internettet
 
+## Sikkerhed
+
+### API Nøgle
+⚠️ **VIGTIGT:** API nøglen gemmes i **QSettings** på din enhed.
+
+- **Lagring:** QSettings lagrer data i **plaintext** på Sailfish OS
+- **Sted:** Nøglen gemmes under `~/.config/Harbour/skrynja` (via QSettings med organization="Harbour", application="skrynja")
+- **Anbefalinger:**
+  - Brug en **dedikeret API nøgle** til denne applikation
+  - **Slet** nøglen ved at fjerne filen `~/.config/Harbour/skrynja` eller nulstille indstillingerne i applikationen
+  - Overvej at **rotere** din API nøgle regelmæssigt
+- **Sikkerhedsniveau:** Passende for personlig brug på en sikret enhed
+
+### Sikkerhedsforanstaltninger
+- ✅ Applikationen sender **kun** data til `api.mistral.ai`
+- ✅ Ingen data logges til eksterne tjenester
+- ✅ Al kommunikation sker via **HTTPS** med SSL
+- ✅ Ingen API nøgle sendes i logs (maskeret i debug output)
+- ⚠️ **Note:** QSettings lagring er **plaintext** - dette er standard for Sailfish OS applikationer
+
 ## Projektstruktur
 
 ```
 skrynja/
-├── skrynja.pro    # Qt projektfil
-├── skrynja.desktop # Desktop entry
-├── skrynja.yaml   # RPM spec fil
+├── skrynja.pro              # Qt projektfil
+├── skrynja.desktop          # Desktop entry
+├── skrynja.yaml             # RPM spec fil
+├── LICENSE                  # GPL-2.0 licens
+├── README.md                # Dokumentation
+├── qml.qrc                 # Resource fil
 ├── qml/
-│   ├── main.qml               # Hoved QML fil
-│   ├── CoverPage.qml          # Cover side
-│   ├── pages/
-│   │   └── MainPage.qml       # Hovedside med UI
-│   └── qml.qrc                # Resource fil
+│   ├── main.qml             # Hoved QML fil
+│   ├── CoverPage.qml        # Cover side
+│   └── pages/
+│       └── MainPage.qml     # Hovedside med UI
 ├── src/
-│   ├── main.cpp               # Hoved C++ fil
-│   ├── mistralclient.h        # Header for Mistral client
-│   └── mistralclient.cpp      # Implementation af Mistral client
-├── icon/                      # App ikoner
-│   ├── 86x86/
-│   ├── 108x108/
-│   ├── 128x128/
-│   ├── 172x172/
-│   └── 256x256/
-└── README.md                  # Denne fil
+│   ├── main.cpp             # Hoved C++ fil
+│   ├── mistralclient.h      # Header for Mistral client
+│   └── mistralclient.cpp    # Implementation af Mistral client
+└── icon/
+    └── skrynja.svg          # App ikon
 ```
+
+## Qt Kompatibilitet
+
+Applikationen er testet med:
+- ✅ **Qt 5.12+** (Sailfish OS 5 standard)
+- ✅ **Qt 5.15** (anbefalet)
+- ✅ **Qt 6.x** (fremtidssikret)
+
+### Qt Version Specifikke Notes
+- **QTimer-based timeout:** Brugt i stedet for `setTransferTimeout` for bedst kompatibilitet
+- **New-style signal-slot syntax:** Kompatibel med Qt 5.12+
+- **QNetworkReply::errorOccurred:** Tilgængelig i Qt 5.12+
 
 ## Bidrag
 
@@ -138,3 +167,4 @@ Denne applikation er udgivet under **GNU General Public License version 2 (GPL-2
 For spørgsmål eller feedback, kontakt venligst:
 - Email: support@mistral.ai
 - Web: https://mistral.ai
+- GitHub Issues: [storefyr/Skrynja/issues](https://github.com/storefyr/Skrynja/issues)

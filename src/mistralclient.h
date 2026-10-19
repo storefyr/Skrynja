@@ -30,7 +30,7 @@ public:
 
     bool isLoading() const;
     QString lastError() const;
-    const QStringList &availableModels() const;
+    QStringList availableModels() const;
 
     Q_INVOKABLE void sendMessage(const QString &message, const QVariantList &history);
     Q_INVOKABLE void cancelRequest();

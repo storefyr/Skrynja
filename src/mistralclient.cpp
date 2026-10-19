@@ -21,9 +21,12 @@ MistralClient::MistralClient(QObject *parent) : QObject(parent)
         "mistral-large"
     };
     
-    // Load settings - use application organization for consistency
+    // Load settings - use parent for consistent QSettings storage
     m_settings = new QSettings(this);
     loadSettings();
+    
+    // Emit availableModelsChanged after initialization
+    emit availableModelsChanged();
 }
 
 MistralClient::~MistralClient()
@@ -39,7 +42,6 @@ MistralClient::~MistralClient()
     }
     
     // QObject children will be cleaned up automatically by Qt's parent-child system
-    // No need for explicit delete on m_networkManager and m_settings
 }
 
 QString MistralClient::apiKey() const
@@ -80,7 +82,7 @@ QString MistralClient::lastError() const
     return m_lastError;
 }
 
-const QStringList &MistralClient::availableModels() const
+QStringList MistralClient::availableModels() const
 {
     return m_availableModels;
 }
@@ -143,6 +145,7 @@ void MistralClient::sendMessage(const QString &message, const QVariantList &hist
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     request.setRawHeader("Authorization", ("Bearer " + m_apiKey).toUtf8());
+    request.setRawHeader("User-Agent", "Skrynja/1.0 (Sailfish OS)");
 
     QJsonObject json;
     json["model"] = m_model;
@@ -174,12 +177,16 @@ void MistralClient::sendMessage(const QString &message, const QVariantList &hist
     messagesArray.append(userMessage);
     
     json["messages"] = messagesArray;
-    json["temperature"] = 0.7;  // Constant value, no need for qBound
-    json["max_tokens"] = 2000;  // Constant value, no need for qBound
+    json["temperature"] = 0.7;
+    json["max_tokens"] = 2000;
     json["stream"] = false;
 
     QJsonDocument doc(json);
     QByteArray data = doc.toJson(QJsonDocument::Compact);
+
+    // Debug log request (without API key)
+    qDebug() << "Sending request to:" << url.toString();
+    qDebug() << "Request data:" << QString(data).left(200) << "...";
 
     m_currentReply = m_networkManager->post(request, data);
     
@@ -197,7 +204,7 @@ void MistralClient::sendMessage(const QString &message, const QVariantList &hist
 void MistralClient::onTimeout()
 {
     if (m_currentReply) {
-        m_lastError = "Forespørgsel timeout - tjek din internetforbindelse";
+        m_lastError = "Forespørgsel timeout (60s) - tjek din internetforbindelse";
         emit lastErrorChanged();
         cleanupRequest();
     }
@@ -218,6 +225,15 @@ void MistralClient::onReplyFinished()
     disconnect(m_currentReply, &QNetworkReply::finished, this, &MistralClient::onReplyFinished);
     disconnect(m_currentReply, &QNetworkReply::errorOccurred, this, &MistralClient::onReplyError);
 
+    // Check HTTP status code for non-2xx responses
+    int httpStatus = m_currentReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    if (httpStatus != 200 && httpStatus != 0) {
+        qDebug() << "HTTP" << httpStatus << "response:" << m_currentReply->readAll();
+    }
+    
+    // Reset read position
+    m_currentReply->reset();
+
     if (m_currentReply->error() != QNetworkReply::NoError) {
         m_lastError = m_currentReply->errorString();
         emit lastErrorChanged();
@@ -226,6 +242,9 @@ void MistralClient::onReplyFinished()
     }
 
     QByteArray response = m_currentReply->readAll();
+    
+    // Debug log response (truncated)
+    qDebug() << "API response received:" << QString(response).left(200) << "...";
     
     QJsonDocument doc = QJsonDocument::fromJson(response);
     
@@ -296,6 +315,9 @@ void MistralClient::onReplyError(QNetworkReply::NetworkError error)
     disconnect(m_currentReply, &QNetworkReply::finished, this, &MistralClient::onReplyFinished);
     disconnect(m_currentReply, &QNetworkReply::errorOccurred, this, &MistralClient::onReplyError);
     
+    // Check HTTP status code for more detailed errors
+    int httpStatus = m_currentReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    
     // Add more detailed error information
     if (error == QNetworkReply::TimeoutError) {
         m_lastError = "Forespørgsel timeout - tjek din internetforbindelse";
@@ -303,8 +325,12 @@ void MistralClient::onReplyError(QNetworkReply::NetworkError error)
         m_lastError = "Kunne ikke forbinde til server - tjek din internetforbindelse";
     } else if (error == QNetworkReply::SslHandshakeFailedError) {
         m_lastError = "SSL fejl - tjek din internetforbindelse eller servercertifikat";
+    } else if (error == QNetworkReply::RemoteHostClosedError) {
+        m_lastError = "Forbindelsen blev lukket af serveren";
+    } else if (httpStatus >= 400) {
+        m_lastError = QString("Server fejl %1: %2").arg(httpStatus).arg(m_currentReply->errorString());
     } else {
-        m_lastError = m_currentReply->errorString();
+        m_lastError = QString("Netværksfejl (%1): %2").arg(error).arg(m_currentReply->errorString());
     }
     
     emit lastErrorChanged();
