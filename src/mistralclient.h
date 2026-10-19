@@ -18,6 +18,7 @@ class MistralClient : public QObject
     Q_PROPERTY(bool isLoading READ isLoading NOTIFY isLoadingChanged)
     Q_PROPERTY(QString lastError READ lastError NOTIFY lastErrorChanged)
     Q_PROPERTY(QStringList availableModels READ availableModels NOTIFY availableModelsChanged)
+    Q_PROPERTY(bool webSearchEnabled READ webSearchEnabled WRITE setWebSearchEnabled NOTIFY webSearchEnabledChanged)
 
 public:
     explicit MistralClient(QObject *parent = 0);
@@ -32,6 +33,8 @@ public:
     bool isLoading() const;
     QString lastError() const;
     QStringList availableModels() const;
+    bool webSearchEnabled() const;
+    void setWebSearchEnabled(bool enabled);
 
     Q_INVOKABLE void sendMessage(const QString &message);
 
@@ -44,7 +47,9 @@ signals:
     void isLoadingChanged();
     void lastErrorChanged();
     void messageReceived(const QString &response);
+    void sourcesReceived(const QStringList &sources);
     void availableModelsChanged();
+    void webSearchEnabledChanged();
 
 private slots:
     void onReplyFinished();
@@ -64,6 +69,8 @@ private:
     bool m_isLoading;
     QString m_lastError;
     QStringList m_availableModels;
+    bool m_webSearchEnabled;
+    QString m_conversationId;
 };
 
 #endif // MISTRALCLIENT_H

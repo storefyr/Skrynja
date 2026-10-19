@@ -49,10 +49,19 @@ Dialog {
                 }
             }
         }
+
+        TextSwitch {
+            id: webSearchSwitch
+            width: parent.width
+            text: "Websøgning"
+            description: "Lad modellen søge på nettet for aktuel information (Mistral Conversations API, beta)"
+            checked: mistralClient.webSearchEnabled
+        }
     }
 
     onAccepted: {
         mistralClient.apiKey = apiKeyField.text
         mistralClient.model = modelCombo.selectedModel
+        mistralClient.webSearchEnabled = webSearchSwitch.checked
     }
 }

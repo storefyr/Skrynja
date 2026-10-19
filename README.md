@@ -5,6 +5,7 @@ En simpel chat-klient til Mistral AI for Sailfish OS. Skriv et spørgsmål, få 
 ## Funktioner
 
 - Chat med Mistral AI (`api.mistral.ai`)
+- Valgfri websøgning: modellen kan søge på nettet og viser kilder (via Mistrals Conversations API, som er i beta)
 - Vælg mellem Mistrals chat-modeller
 - API-nøgle gemmes lokalt på enheden (QSettings, organization `Harbour`, application `skrynja`)
 - Følger systemets lyst/mørke tema automatisk via Sailfish Silica
@@ -35,7 +36,8 @@ make install  # eller deploy via SDK/Qt Creator
 1. Åbn appen
 2. Træk ned fra toppen og vælg «Indstillinger»
 3. Indsæt din Mistral API-nøgle (starter med `mistral-`) og vælg en model
-4. Skriv dit spørgsmål og tryk «Send»
+4. Slå «Websøgning» til, hvis du vil have svar med aktuelle kilder
+5. Skriv dit spørgsmål og tryk «Send»
 
 ## Projektstruktur
 
@@ -63,7 +65,7 @@ harbour-skrynja/
 
 API-nøglen gemmes i **klartekst** i QSettings (`~/.config/Harbour/skrynja`). Det er standardpraksis for Sailfish OS-apps, men nøglen ligger lokalt på din enhed. Brug en dedikeret nøgle, og slet den ved at fjerne filen eller nulstille indstillingerne i appen.
 
-Al trafik går direkte til `https://api.mistral.ai` over HTTPS. Appen logger eller sender ikke data til andre.
+Al trafik går direkte til `https://api.mistral.ai` over HTTPS. Appen logger eller sender ikke data til andre. Når websøgning er slået til, sendes samtalen til Mistrals Conversations API med `store=false`, så Mistral ikke gemmer den server-side; samtale-id holdes kun i hukommelsen og forsvinder, når appen lukkes. Bemærk at Conversations API stadig er i beta hos Mistral.
 
 ## Licens
 

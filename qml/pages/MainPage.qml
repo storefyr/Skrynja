@@ -4,6 +4,8 @@ import Sailfish.Silica 1.0
 Page {
     id: mainPage
 
+    property string pendingSources: ""
+
     ListModel {
         id: chatModel
     }
@@ -23,7 +25,7 @@ Page {
         if (text.length === 0 || mistralClient.isLoading) {
             return
         }
-        chatModel.append({ "role": "user", "content": text })
+        chatModel.append({ "role": "user", "content": text, "sources": "" })
         inputField.text = ""
         trimHistory()
         scrollToBottom()
@@ -79,6 +81,14 @@ Page {
                         horizontalAlignment: role === "user" ? Text.AlignRight : Text.AlignLeft
                         text: content
                     }
+                    Label {
+                        width: parent.width
+                        visible: sources.length > 0
+                        wrapMode: Text.Wrap
+                        font.pixelSize: Theme.fontSizeSmall
+                        color: Theme.secondaryHighlightColor
+                        text: "Kilder: " + sources
+                    }
                 }
             }
 
@@ -117,8 +127,12 @@ Page {
 
     Connections {
         target: mistralClient
+        onSourcesReceived: {
+            pendingSources = sources.join(", ")
+        }
         onMessageReceived: {
-            chatModel.append({ "role": "assistant", "content": response })
+            chatModel.append({ "role": "assistant", "content": response, "sources": pendingSources })
+            pendingSources = ""
             trimHistory()
             scrollToBottom()
         }
