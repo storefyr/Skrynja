@@ -11,10 +11,11 @@ License: GPL-2.0
 Requires: sailfishsilica-qt5 >= 1.0
 
 Sources:
-  - skrynja.pro
+  - harbour-skrynja.pro
   - qml/*
+  - qml/pages/*.qml
   - src/*
-  - skrynja.desktop
+  - harbour-skrynja.desktop
 
 PkgConfigBR:
   - Qt5Core

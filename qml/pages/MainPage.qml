@@ -130,7 +130,7 @@ Page {
                 placeholderText: "Indtast din Mistral AI API nøgle"
                 text: mistralClient.apiKey
                 echoMode: TextInput.Password
-                onTextChanged: mistralClient.apiKey = text
+                onAccepted: mistralClient.apiKey = text
             }
             
             Label {

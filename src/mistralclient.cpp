@@ -13,12 +13,11 @@ MistralClient::MistralClient(QObject *parent) : QObject(parent)
     m_isLoading = false;
     m_model = "mistral-tiny";
     
-    // Available models
+    // Available models - updated to current Mistral model names
     m_availableModels = {
-        "mistral-tiny",
-        "mistral-small", 
-        "mistral-medium",
-        "mistral-large"
+        "mistral-tiny-2407",
+        "mistral-small-2407", 
+        "mistral-medium-2407"
     };
     
     // Load settings - use parent for consistent QSettings storage
@@ -163,12 +162,6 @@ void MistralClient::sendMessage(const QString &message, const QVariantList &hist
         }
     }
     
-    // Add current user message
-    QJsonObject userMessage;
-    userMessage["role"] = "user";
-    userMessage["content"] = message;
-    messagesArray.append(userMessage);
-    
     json["messages"] = messagesArray;
     json["temperature"] = 0.7;
     json["max_tokens"] = 2000;
@@ -275,6 +268,12 @@ void MistralClient::onReplyFinished()
                     emit messageReceived(content);
                 }
             }
+        } else {
+            // Empty choices list - error condition
+            m_lastError = "Ingen svar modtaget fra API - pr\u00f8v igen";
+            emit lastErrorChanged();
+            cleanupRequest();
+            return;
         }
     } else if (root.contains("message") && root["message"].isObject()) {
         // Handle alternative response format
@@ -302,12 +301,26 @@ void MistralClient::onReplyError(QNetworkReply::NetworkError error)
     
     if (!m_currentReply) return;
     
-    // Disconnect signals to prevent double handling
-    disconnect(m_currentReply, &QNetworkReply::finished, this, &MistralClient::onReplyFinished);
-    disconnect(m_currentReply, &QNetworkReply::errorOccurred, this, &MistralClient::onReplyError);
-    
     // Check HTTP status code for more detailed errors
     int httpStatus = m_currentReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    
+    // Try to read error response from API
+    QByteArray response = m_currentReply->readAll();
+    
+    // Parse JSON error if available
+    QJsonDocument doc = QJsonDocument::fromJson(response);
+    if (doc.isObject()) {
+        QJsonObject root = doc.object();
+        if (root.contains("error") && root["error"].isObject()) {
+            QJsonObject errorObj = root["error"].toObject();
+            if (errorObj.contains("message")) {
+                m_lastError = errorObj["message"].toString();
+                emit lastErrorChanged();
+                cleanupRequest();
+                return;
+            }
+        }
+    }
     
     // Add more detailed error information
     if (error == QNetworkReply::TimeoutError) {
