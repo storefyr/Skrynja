@@ -1,5 +1,6 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
+import QtQuick.Controls 1.0
 import QtQuick.Layouts 1.1
 
 Page {
@@ -57,7 +58,8 @@ Page {
             Row {
                 width: parent.width
                 spacing: Theme.paddingSmall
-                anchors.margins: Theme.paddingSmall
+                leftPadding: Theme.paddingSmall
+                rightPadding: Theme.paddingSmall
                 
                 TextField {
                     id: inputField
@@ -159,7 +161,8 @@ Page {
         Row {
             width: parent.width
             spacing: Theme.paddingSmall
-            anchors.margins: Theme.paddingSmall
+            leftPadding: Theme.paddingSmall
+            rightPadding: Theme.paddingSmall
             
             Rectangle {
                 width: childrenRect.width + Theme.paddingMedium * 2

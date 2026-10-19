@@ -26,15 +26,7 @@ DISTFILES += \
     harbour-skrynja.desktop \
     harbour-skrynja.yaml
 
-# Icon files
-SAILFISHAPP_ICONS = \
-    icon/86x86/harbour-skrynja.png \
-    icon/108x108/harbour-skrynja.png \
-    icon/128x128/harbour-skrynja.png \
-    icon/172x172/harbour-skrynja.png \
-    icon/256x256/harbour-skrynja.png
+# Icon files - just size directories, sailfishapp.prf will handle the rest
+SAILFISHAPP_ICONS = 86x86 108x108 128x128 172x172 256x256
 
-SAILFISHAPP_ICONS_PATH = icon
-
-# Application name for QSettings
-QMAKE_TARGET.DESTDIR = harbour-skrynja
+# Destination directory for target
