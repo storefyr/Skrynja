@@ -1,9 +1,0 @@
-RCC:
-{
-    "qml", ""
-    {
-        "main.qml", ""
-        "CoverPage.qml", ""
-        "pages/MainPage.qml", ""
-    }
-}

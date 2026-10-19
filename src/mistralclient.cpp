@@ -1,39 +1,34 @@
 #include "mistralclient.h"
+
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QJsonArray>
-#include <QDebug>
-#include <QCoreApplication>
+#include <QNetworkAccessManager>
+#include <QNetworkRequest>
+#include <QSettings>
+#include <QTimer>
 
-MistralClient::MistralClient(QObject *parent) : QObject(parent)
+MistralClient::MistralClient(QObject *parent)
+    : QObject(parent)
+    , m_networkManager(new QNetworkAccessManager(this))
+    , m_currentReply(0)
+    , m_timeoutTimer(0)
+    , m_isLoading(false)
+    , m_model("mistral-small-latest")
 {
-    m_networkManager = new QNetworkAccessManager(this);
-    m_currentReply = nullptr;
-    m_timeoutTimer = nullptr;
-    m_isLoading = false;
-    m_model = "mistral-tiny-2407";
-    
-    // Available models - updated to current Mistral model names
-    m_availableModels = {
-        "mistral-tiny-2407",
-        "mistral-small-2407", 
-        "mistral-medium-2407"
-    };
-    
-    // Load settings - use parent for consistent QSettings storage
-    m_settings = new QSettings(this);
+    m_availableModels << "mistral-small-latest"
+                      << "mistral-medium-latest"
+                      << "mistral-large-latest"
+                      << "ministral-8b-latest"
+                      << "ministral-3b-latest";
+
+    m_settings = new QSettings("Harbour", "skrynja", this);
     loadSettings();
-    
-    // Emit availableModelsChanged after initialization
-    emit availableModelsChanged();
 }
 
 MistralClient::~MistralClient()
 {
-    // Ensure all requests and timers are cleaned up properly
     cancelRequest();
-    
-    // QObject children will be cleaned up automatically by Qt's parent-child system
 }
 
 QString MistralClient::apiKey() const
@@ -82,7 +77,10 @@ QStringList MistralClient::availableModels() const
 void MistralClient::loadSettings()
 {
     m_apiKey = m_settings->value("apiKey", "").toString();
-    m_model = m_settings->value("model", "mistral-tiny-2407").toString();
+    m_model = m_settings->value("model", "mistral-small-latest").toString();
+    if (!m_availableModels.contains(m_model)) {
+        m_model = "mistral-small-latest";
+    }
 }
 
 void MistralClient::saveSettings()
@@ -92,38 +90,16 @@ void MistralClient::saveSettings()
     m_settings->sync();
 }
 
-void MistralClient::cancelRequest()
+void MistralClient::sendMessage(const QString &message)
 {
-    // Clean up timeout timer first
-    if (m_timeoutTimer) {
-        m_timeoutTimer->stop();
-        m_timeoutTimer->deleteLater();
-        m_timeoutTimer = nullptr;
-    }
-    
-    if (m_currentReply) {
-        // Disconnect signals before aborting
-        disconnect(m_currentReply, &QNetworkReply::finished, this, &MistralClient::onReplyFinished);
-        disconnect(m_currentReply, &QNetworkReply::errorOccurred, this, &MistralClient::onReplyError);
-        
-        m_currentReply->abort();
-        m_currentReply->deleteLater();
-        m_currentReply = nullptr;
-    }
-    
-    if (m_isLoading) {
-        m_isLoading = false;
-        emit isLoadingChanged();
-    }
-}
-
-void MistralClient::sendMessage(const QVariantList &history)
-{
-    // Cancel any existing request
     cancelRequest();
-    
+
+    if (message.trimmed().isEmpty()) {
+        return;
+    }
+
     if (m_apiKey.isEmpty()) {
-        m_lastError = "API nøgle er påkrævet";
+        m_lastError = tr("API-nøgle er påkrævet");
         emit lastErrorChanged();
         return;
     }
@@ -133,247 +109,170 @@ void MistralClient::sendMessage(const QVariantList &history)
     m_lastError.clear();
     emit lastErrorChanged();
 
-    QUrl url("https://api.mistral.ai/v1/chat/completions");
-    QNetworkRequest request(url);
+    QNetworkRequest request(QUrl("https://api.mistral.ai/v1/chat/completions"));
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
-    request.setRawHeader("Authorization", ("Bearer " + m_apiKey).toUtf8());
-    request.setRawHeader("User-Agent", "Skrynja/1.0 (Sailfish OS)");
+    request.setRawHeader("Authorization", QByteArray("Bearer ") + m_apiKey.toUtf8());
+
+    QJsonObject userMessage;
+    userMessage["role"] = "user";
+    userMessage["content"] = message;
 
     QJsonObject json;
     json["model"] = m_model;
-    
-    QJsonArray messagesArray;
-    
-    // Add history - both user and assistant messages with type safety
-    for (int i = 0; i < history.size(); i++) {
-        if (history[i].canConvert(QMetaType::QVariantMap)) {
-            QVariantMap histItem = history[i].toMap();
-            
-            if (histItem.contains("role") && 
-                histItem["role"].type() == QVariant::String &&
-                histItem.contains("content") && 
-                histItem["content"].type() == QVariant::String) {
-                
-                QJsonObject histObj;
-                histObj["role"] = histItem["role"].toString();
-                histObj["content"] = histItem["content"].toString();
-                messagesArray.append(histObj);
-            }
-        }
-    }
-    
-    json["messages"] = messagesArray;
+    json["messages"] = QJsonArray() << userMessage;
     json["temperature"] = 0.7;
     json["max_tokens"] = 2000;
-    json["stream"] = false;
 
-    QJsonDocument doc(json);
-    QByteArray data = doc.toJson(QJsonDocument::Compact);
-
-    // Debug log request (without API key)
-    qDebug() << "Sending request to:" << url.toString();
-    qDebug() << "Request data:" << QString(data).left(200) << "...";
-
-    m_currentReply = m_networkManager->post(request, data);
-    
-    // Use new-style signal-slot connections
+    m_currentReply = m_networkManager->post(request, QJsonDocument(json).toJson(QJsonDocument::Compact));
     connect(m_currentReply, &QNetworkReply::finished, this, &MistralClient::onReplyFinished);
-    connect(m_currentReply, &QNetworkReply::errorOccurred, this, &MistralClient::onReplyError);
-    
-    // Set up timeout timer (60 seconds)
+    connect(m_currentReply, SIGNAL(error(QNetworkReply::NetworkError)),
+            this, SLOT(onReplyError(QNetworkReply::NetworkError)));
+
     m_timeoutTimer = new QTimer(this);
     m_timeoutTimer->setSingleShot(true);
     connect(m_timeoutTimer, &QTimer::timeout, this, &MistralClient::onTimeout);
     m_timeoutTimer->start(60000);
 }
 
-void MistralClient::onTimeout()
+void MistralClient::cancelRequest()
 {
+    if (m_timeoutTimer) {
+        m_timeoutTimer->stop();
+        m_timeoutTimer->deleteLater();
+        m_timeoutTimer = 0;
+    }
+
     if (m_currentReply) {
-        m_lastError = "Forespørgsel timeout (60s) - tjek din internetforbindelse";
-        emit lastErrorChanged();
-        cleanupRequest();
-    }
-}
-
-void MistralClient::onReplyFinished()
-{
-    // Clean up timeout timer
-    if (m_timeoutTimer) {
-        m_timeoutTimer->stop();
-        m_timeoutTimer->deleteLater();
-        m_timeoutTimer = nullptr;
-    }
-    
-    if (!m_currentReply) return;
-
-    // Disconnect signals to prevent double handling
-    disconnect(m_currentReply, &QNetworkReply::finished, this, &MistralClient::onReplyFinished);
-    disconnect(m_currentReply, &QNetworkReply::errorOccurred, this, &MistralClient::onReplyError);
-
-    // Read response ONCE and store it
-    QByteArray response = m_currentReply->readAll();
-    
-    // Check HTTP status code for non-2xx responses
-    int httpStatus = m_currentReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-    if (httpStatus != 200 && httpStatus != 0) {
-        qDebug() << "HTTP" << httpStatus << "response:" << QString(response).left(200);
-    }
-
-    if (m_currentReply->error() != QNetworkReply::NoError) {
-        m_lastError = m_currentReply->errorString();
-        emit lastErrorChanged();
-        cleanupRequest();
-        return;
-    }
-
-    // Debug log response (truncated)
-    qDebug() << "API response received:" << QString(response).left(200) << "...";
-    
-    QJsonDocument doc = QJsonDocument::fromJson(response);
-    
-    if (!doc.isObject()) {
-        m_lastError = QString("Ugyldigt JSON svar: %1").arg(QString(response).left(200));
-        emit lastErrorChanged();
-        cleanupRequest();
-        return;
-    }
-
-    QJsonObject root = doc.object();
-    
-    // Check for API errors
-    if (root.contains("error") && root["error"].isObject()) {
-        QJsonObject error = root["error"].toObject();
-        if (error.contains("message")) {
-            m_lastError = error["message"].toString();
-        } else if (error.contains("type")) {
-            m_lastError = QString("API fejl: %1").arg(error["type"].toString());
-        } else {
-            m_lastError = "Ukendt API fejl";
-        }
-        emit lastErrorChanged();
-        cleanupRequest();
-        return;
-    }
-    
-    // Check for choices (standard response)
-    if (root.contains("choices") && root["choices"].isArray()) {
-        QJsonArray choices = root["choices"].toArray();
-        if (!choices.isEmpty()) {
-            QJsonObject firstChoice = choices.first().toObject();
-            if (firstChoice.contains("message") && firstChoice["message"].isObject()) {
-                QJsonObject message = firstChoice["message"].toObject();
-                if (message.contains("content") && message["content"].isString()) {
-                    QString content = message["content"].toString();
-                    emit messageReceived(content);
-                } else {
-                    // Missing content in message
-                    m_lastError = "Ugyldigt svar format: manglende content i message";
-                    emit lastErrorChanged();
-                    cleanupRequest();
-                    return;
-                }
-            } else {
-                // Missing message in choice
-                m_lastError = "Ugyldigt svar format: manglende message i choice";
-                emit lastErrorChanged();
-                cleanupRequest();
-                return;
-            }
-        } else {
-            // Empty choices list - error condition
-            m_lastError = "Ingen svar modtaget fra API - pr\u00f8v igen";
-            emit lastErrorChanged();
-            cleanupRequest();
-            return;
-        }
-    } else if (root.contains("message") && root["message"].isObject()) {
-        // Handle alternative response format
-        QJsonObject message = root["message"].toObject();
-        if (message.contains("content") && message["content"].isString()) {
-            QString content = message["content"].toString();
-            emit messageReceived(content);
-        }
-    } else {
-        m_lastError = QString("Ukendt svar format: %1").arg(QString(response).left(200));
-        emit lastErrorChanged();
-    }
-
-    cleanupRequest();
-}
-
-void MistralClient::onReplyError(QNetworkReply::NetworkError error)
-{
-    // Clean up timeout timer
-    if (m_timeoutTimer) {
-        m_timeoutTimer->stop();
-        m_timeoutTimer->deleteLater();
-        m_timeoutTimer = nullptr;
-    }
-    
-    if (!m_currentReply) return;
-    
-    // Check HTTP status code for more detailed errors
-    int httpStatus = m_currentReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-    
-    // Try to read error response from API
-    QByteArray response = m_currentReply->readAll();
-    
-    // Parse JSON error if available
-    QJsonDocument doc = QJsonDocument::fromJson(response);
-    if (doc.isObject()) {
-        QJsonObject root = doc.object();
-        if (root.contains("error") && root["error"].isObject()) {
-            QJsonObject errorObj = root["error"].toObject();
-            if (errorObj.contains("message")) {
-                m_lastError = errorObj["message"].toString();
-                emit lastErrorChanged();
-                cleanupRequest();
-                return;
-            }
-        }
-    }
-    
-    // Add more detailed error information
-    if (error == QNetworkReply::TimeoutError) {
-        m_lastError = "Forespørgsel timeout - tjek din internetforbindelse";
-    } else if (error == QNetworkReply::ConnectionRefusedError) {
-        m_lastError = "Kunne ikke forbinde til server - tjek din internetforbindelse";
-    } else if (error == QNetworkReply::SslHandshakeFailedError) {
-        m_lastError = "SSL fejl - tjek din internetforbindelse eller servercertifikat";
-    } else if (error == QNetworkReply::RemoteHostClosedError) {
-        m_lastError = "Forbindelsen blev lukket af serveren";
-    } else if (httpStatus >= 400) {
-        m_lastError = QString("Server fejl %1: %2").arg(httpStatus).arg(m_currentReply->errorString());
-    } else {
-        m_lastError = QString("Netværksfejl (%1): %2").arg(error).arg(m_currentReply->errorString());
-    }
-    
-    emit lastErrorChanged();
-    cleanupRequest();
-}
-
-void MistralClient::cleanupRequest()
-{
-    // Clean up timeout timer
-    if (m_timeoutTimer) {
-        m_timeoutTimer->stop();
-        m_timeoutTimer->deleteLater();
-        m_timeoutTimer = nullptr;
-    }
-    
-    if (m_currentReply) {
-        // Disconnect signals before aborting
-        disconnect(m_currentReply, &QNetworkReply::finished, this, &MistralClient::onReplyFinished);
-        disconnect(m_currentReply, &QNetworkReply::errorOccurred, this, &MistralClient::onReplyError);
-        
+        m_currentReply->disconnect(this);
         m_currentReply->abort();
         m_currentReply->deleteLater();
-        m_currentReply = nullptr;
+        m_currentReply = 0;
     }
-    
+
     if (m_isLoading) {
         m_isLoading = false;
         emit isLoadingChanged();
     }
+}
+
+void MistralClient::onTimeout()
+{
+    m_lastError = tr("Forespørgsel timeout (60s) — tjek din internetforbindelse");
+    emit lastErrorChanged();
+    cancelRequest();
+}
+
+void MistralClient::onReplyFinished()
+{
+    if (!m_currentReply) {
+        return;
+    }
+
+    if (m_timeoutTimer) {
+        m_timeoutTimer->stop();
+        m_timeoutTimer->deleteLater();
+        m_timeoutTimer = 0;
+    }
+
+    QNetworkReply *reply = m_currentReply;
+    m_currentReply = 0;
+    reply->disconnect(this);
+
+    const QByteArray response = reply->readAll();
+    const int httpStatus = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+
+    if (reply->error() != QNetworkReply::NoError || (httpStatus != 0 && httpStatus != 200)) {
+        QJsonDocument doc = QJsonDocument::fromJson(response);
+        if (doc.isObject()) {
+            QJsonObject errorObj = doc.object().value("error").toObject();
+            if (errorObj.contains("message")) {
+                m_lastError = errorObj.value("message").toString();
+                emit lastErrorChanged();
+                reply->deleteLater();
+                m_isLoading = false;
+                emit isLoadingChanged();
+                return;
+            }
+        }
+        m_lastError = reply->errorString();
+        emit lastErrorChanged();
+        reply->deleteLater();
+        m_isLoading = false;
+        emit isLoadingChanged();
+        return;
+    }
+
+    reply->deleteLater();
+
+    QJsonDocument doc = QJsonDocument::fromJson(response);
+    if (!doc.isObject()) {
+        m_lastError = tr("Ugyldigt svar fra server");
+        emit lastErrorChanged();
+        m_isLoading = false;
+        emit isLoadingChanged();
+        return;
+    }
+
+    QJsonObject root = doc.object();
+    QJsonArray choices = root.value("choices").toArray();
+    if (choices.isEmpty()) {
+        m_lastError = tr("Intet svar modtaget fra API");
+        emit lastErrorChanged();
+        m_isLoading = false;
+        emit isLoadingChanged();
+        return;
+    }
+
+    QString content = choices.first().toObject()
+            .value("message").toObject()
+            .value("content").toString();
+
+    m_isLoading = false;
+    emit isLoadingChanged();
+
+    if (content.isEmpty()) {
+        m_lastError = tr("Tomt svar fra API");
+        emit lastErrorChanged();
+    } else {
+        emit messageReceived(content);
+    }
+}
+
+void MistralClient::onReplyError(QNetworkReply::NetworkError error)
+{
+    Q_UNUSED(error)
+    if (!m_currentReply) {
+        return;
+    }
+
+    if (m_timeoutTimer) {
+        m_timeoutTimer->stop();
+        m_timeoutTimer->deleteLater();
+        m_timeoutTimer = 0;
+    }
+
+    QNetworkReply *reply = m_currentReply;
+    m_currentReply = 0;
+    reply->disconnect(this);
+
+    const QByteArray response = reply->readAll();
+    reply->deleteLater();
+
+    QJsonDocument doc = QJsonDocument::fromJson(response);
+    if (doc.isObject()) {
+        QJsonObject errorObj = doc.object().value("error").toObject();
+        if (errorObj.contains("message")) {
+            m_lastError = errorObj.value("message").toString();
+            emit lastErrorChanged();
+            m_isLoading = false;
+            emit isLoadingChanged();
+            return;
+        }
+    }
+
+    m_lastError = tr("Netværksfejl: %1").arg(error == QNetworkReply::TimeoutError
+                                           ? tr("timeout") : QStringLiteral("forbindelse fejlede"));
+    emit lastErrorChanged();
+    m_isLoading = false;
+    emit isLoadingChanged();
 }

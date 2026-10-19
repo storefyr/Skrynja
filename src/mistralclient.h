@@ -2,12 +2,13 @@
 #define MISTRALCLIENT_H
 
 #include <QObject>
-#include <QNetworkAccessManager>
 #include <QNetworkReply>
-#include <QSettings>
-#include <QJsonArray>
-#include <QVariant>
-#include <QTimer>
+#include <QString>
+#include <QStringList>
+
+class QNetworkAccessManager;
+class QTimer;
+class QSettings;
 
 class MistralClient : public QObject
 {
@@ -19,7 +20,7 @@ class MistralClient : public QObject
     Q_PROPERTY(QStringList availableModels READ availableModels NOTIFY availableModelsChanged)
 
 public:
-    explicit MistralClient(QObject *parent = nullptr);
+    explicit MistralClient(QObject *parent = 0);
     ~MistralClient();
 
     QString apiKey() const;
@@ -32,8 +33,10 @@ public:
     QString lastError() const;
     QStringList availableModels() const;
 
-    Q_INVOKABLE void sendMessage(const QVariantList &history);
-    Q_INVOKABLE void cancelRequest();
+    Q_INVOKABLE void sendMessage(const QString &message);
+
+public slots:
+    void cancelRequest();
 
 signals:
     void apiKeyChanged();
@@ -47,19 +50,20 @@ private slots:
     void onReplyFinished();
     void onReplyError(QNetworkReply::NetworkError error);
     void onTimeout();
+
+private:
     void loadSettings();
     void saveSettings();
 
-private:
     QNetworkAccessManager *m_networkManager;
     QNetworkReply *m_currentReply;
     QTimer *m_timeoutTimer;
+    QSettings *m_settings;
     QString m_apiKey;
     QString m_model;
     bool m_isLoading;
     QString m_lastError;
     QStringList m_availableModels;
-    QSettings *m_settings;
 };
 
 #endif // MISTRALCLIENT_H
