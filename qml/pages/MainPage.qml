@@ -60,6 +60,7 @@ Page {
                     width: parent.width * 0.8
                     placeholderText: "Skriv dit spørgsmål..."
                     text: currentInput
+                    onTextChanged: currentInput = text
                     onAccepted: sendMessage()
                 }
                 

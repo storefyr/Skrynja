@@ -141,8 +141,8 @@ harbour-skrynja/
 ├── icon/
 │   ├── skrynja.svg            # App ikon (SVG)
 │   ├── 86x86/
+│   │   └── harbour-skrynja.png
 │   ├── 108x108/
-│   │   ├── harbour-skrynja.png
 │   │   └── harbour-skrynja.png
 │   ├── 128x128/
 │   │   └── harbour-skrynja.png
