@@ -32,7 +32,7 @@ public:
     QString lastError() const;
     QStringList availableModels() const;
 
-    Q_INVOKABLE void sendMessage(const QString &message, const QVariantList &history);
+    Q_INVOKABLE void sendMessage(const QVariantList &history);
     Q_INVOKABLE void cancelRequest();
 
 signals:

@@ -212,7 +212,7 @@ Page {
             history.push({"role": item.role, "content": item.content})
         }
         
-        mistralClient.sendMessage(messageText, history)
+        mistralClient.sendMessage(history)
     }
     
     Connections {

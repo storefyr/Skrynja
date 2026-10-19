@@ -52,7 +52,7 @@ Applikationen vil være tilgængelig i din app menu som "Skrynja".
 1. Åbn applikationen
 2. Tryk på "Indstillinger"
 3. Indtast din Mistral AI API nøgle (kan fås fra https://mistral.ai)
-4. Vælg ønsket model (mistral-tiny, mistral-small, mistral-medium)
+4. Vælg ønsket model (mistral-tiny-2407, mistral-small-2407, mistral-medium-2407)
 5. Gem indstillingerne
 
 ## Brug
@@ -73,9 +73,9 @@ Du kan få en API nøgle ved at:
 
 ## Understøttede Modeller
 
-- `mistral-tiny` - Hurtig og effektiv (standard)
-- `mistral-small` - God balance mellem hastighed og kvalitet
-- `mistral-medium` - Højeste kvalitet
+- `mistral-tiny-2407` - Hurtig og effektiv (standard)
+- `mistral-small-2407` - God balance mellem hastighed og kvalitet
+- `mistral-medium-2407` - Højeste kvalitet
 
 ## Sailfish OS 5 Funktioner
 

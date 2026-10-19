@@ -11,7 +11,7 @@ MistralClient::MistralClient(QObject *parent) : QObject(parent)
     m_currentReply = nullptr;
     m_timeoutTimer = nullptr;
     m_isLoading = false;
-    m_model = "mistral-tiny";
+    m_model = "mistral-tiny-2407";
     
     // Available models - updated to current Mistral model names
     m_availableModels = {
@@ -82,7 +82,7 @@ QStringList MistralClient::availableModels() const
 void MistralClient::loadSettings()
 {
     m_apiKey = m_settings->value("apiKey", "").toString();
-    m_model = m_settings->value("model", "mistral-tiny").toString();
+    m_model = m_settings->value("model", "mistral-tiny-2407").toString();
 }
 
 void MistralClient::saveSettings()
@@ -117,7 +117,7 @@ void MistralClient::cancelRequest()
     }
 }
 
-void MistralClient::sendMessage(const QString &message, const QVariantList &history)
+void MistralClient::sendMessage(const QVariantList &history)
 {
     // Cancel any existing request
     cancelRequest();
