@@ -6,7 +6,7 @@ Merci de votre intérêt pour contribuer à Skrynja ! 🎉
 
 ### Signaler des bugs
 
-Si vous trouvez un bug, ouvrez une [issue](https://github.com/nicosouv/harbour-skrynja/issues) en incluant :
+Si vous trouvez un bug, ouvrez une [issue](https://github.com/storefyr/Skrynja/issues) en incluant :
 
 - Une description claire du problème
 - Les étapes pour reproduire le bug
@@ -189,7 +189,7 @@ En contribuant, vous acceptez que vos contributions soient sous licence MIT, com
 
 ## Questions ?
 
-N'hésitez pas à ouvrir une issue ou à contacter [@nicosouv](https://github.com/nicosouv).
+N'hésitez pas à ouvrir une issue ou à contacter [@storefyr](https://github.com/storefyr).
 
 ---
 

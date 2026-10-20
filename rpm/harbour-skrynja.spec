@@ -4,7 +4,7 @@ Version:    0.1.0
 Release:    1
 Group:      Applications/Internet
 License:    MIT
-URL:        https://github.com/nicosouv/harbour-skrynja
+URL:        https://github.com/storefyr/Skrynja
 Source0:    %{name}-%{version}.tar.bz2
 Requires:   sailfishsilica-qt5 >= 0.10.9
 BuildRequires:  pkgconfig(sailfishapp) >= 1.0.2

@@ -626,7 +626,7 @@ Dialog {
             Button {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: qsTr("Source code on GitHub")
-                onClicked: Qt.openUrlExternally("https://github.com/nicosouv/harbour-skrynja")
+                onClicked: Qt.openUrlExternally("https://github.com/storefyr/Skrynja")
             }
 
             Label {

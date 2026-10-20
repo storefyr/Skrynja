@@ -34,7 +34,7 @@ Poussez sur GitHub et laissez les Actions builder pour vous !
 ### 1. Cloner le repo
 
 ```bash
-git clone https://github.com/nicosouv/harbour-skrynja.git
+git clone https://github.com/storefyr/Skrynja.git
 cd harbour-skrynja
 ```
 
@@ -141,7 +141,7 @@ git push origin v1.0.0
 # 4. Publier automatiquement
 ```
 
-Les RPM seront disponibles dans [Releases](https://github.com/nicosouv/harbour-skrynja/releases) quelques minutes après.
+Les RPM seront disponibles dans [Releases](https://github.com/storefyr/Skrynja/releases) quelques minutes après.
 
 **Note:** Le tag DOIT être au format `vX.Y.Z` (avec `v` en préfixe) pour déclencher le build.
 

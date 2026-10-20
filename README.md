@@ -40,7 +40,7 @@ Skrynja is a fork of [SailCat](https://github.com/nicosouv/harbour-sailcat), rew
 
 ```bash
 # Clone the repo
-git clone https://github.com/nicosouv/harbour-skrynja.git
+git clone https://github.com/storefyr/Skrynja.git
 cd harbour-skrynja
 
 # Build with Sailfish SDK
@@ -52,7 +52,7 @@ sfdk deploy --manual
 
 ### RPM Installation
 
-Download the `.rpm` file from [releases](https://github.com/nicosouv/harbour-skrynja/releases) and install it on your Sailfish device.
+Download the `.rpm` file from [releases](https://github.com/storefyr/Skrynja/releases) and install it on your Sailfish device.
 
 ## 🔧 Configuration
 
@@ -177,7 +177,7 @@ The **build-docker.yml** workflow:
 - ✅ Creates GitHub release with RPMs
 - ✅ Publishes automatically
 
-Compiled RPMs are available in [Releases](https://github.com/nicosouv/harbour-skrynja/releases).
+Compiled RPMs are available in [Releases](https://github.com/storefyr/Skrynja/releases).
 
 ### PR Validation
 
@@ -240,9 +240,9 @@ MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 📧 Contact
 
-Nicolas Souv - [@nicosouv](https://github.com/nicosouv)
+[@storefyr](https://github.com/storefyr)
 
-Project link: [https://github.com/nicosouv/harbour-skrynja](https://github.com/nicosouv/harbour-skrynja)
+Project link: [https://github.com/storefyr/Skrynja](https://github.com/storefyr/Skrynja)
 
 ---
 

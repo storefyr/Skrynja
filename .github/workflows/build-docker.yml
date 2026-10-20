@@ -173,7 +173,7 @@ jobs:
           - Conversation history
           - Secure local API key storage
 
-          For more info, see the [README](https://github.com/nicosouv/harbour-skrynja/blob/main/README.md).
+          For more info, see the [README](https://github.com/storefyr/Skrynja/blob/main/README.md).
           EOF
           cat release_notes.md
 

@@ -3,7 +3,7 @@ Summary: Le Chat de Mistral AI pour Sailfish OS, avec recherche web
 Version: 0.1.0
 Release: 1
 Group: Applications/Internet
-URL: https://github.com/nicosouv/harbour-skrynja
+URL: https://github.com/storefyr/Skrynja
 License: MIT
 Sources:
   - '%{name}-%{version}.tar.bz2'

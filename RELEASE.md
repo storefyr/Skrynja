@@ -92,7 +92,7 @@ Une fois le tag poussé, le workflow **build-docker.yml** se déclenche automati
 
 ### 6. Vérifier la Release
 
-1. Aller sur [GitHub Releases](https://github.com/nicosouv/harbour-skrynja/releases)
+1. Aller sur [GitHub Releases](https://github.com/storefyr/Skrynja/releases)
 2. Vérifier que la release apparaît avec `vX.Y.Z`
 3. Vérifier que les 3 RPM sont attachés
 4. Tester le téléchargement d'un RPM
@@ -115,7 +115,7 @@ Template d'annonce :
 ✨ Nouveautés :
 - [Liste des features]
 
-📥 Télécharger : https://github.com/nicosouv/harbour-skrynja/releases/tag/vX.Y.Z
+📥 Télécharger : https://github.com/storefyr/Skrynja/releases/tag/vX.Y.Z
 
 #SailfishOS #MistralAI #OpenSource
 ```
@@ -250,8 +250,8 @@ Idées pour améliorer le process :
 
 ## Resources
 
-- [GitHub Releases](https://github.com/nicosouv/harbour-skrynja/releases)
-- [GitHub Actions Workflows](https://github.com/nicosouv/harbour-skrynja/actions)
+- [GitHub Releases](https://github.com/storefyr/Skrynja/releases)
+- [GitHub Actions Workflows](https://github.com/storefyr/Skrynja/actions)
 - [Semantic Versioning](https://semver.org/)
 - [Keep a Changelog](https://keepachangelog.com/)
 
