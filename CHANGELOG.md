@@ -5,7 +5,18 @@ All notable changes to Skrynja will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [Unreleased]### Changed- **Settings: "Web search" toggle replaces "Limit conversation context".** The  context limit is gone (server-side history); web search is a create-time  option, so the description says so.
+- **System prompt description** now says "when a conversation is created" instead  of "before every conversation".
+
+### Removed- `SettingsManager::contextMessageLimit` and its Settings UI. The Conversations  API keeps the history server-side; there is nothing to trim locally.
+
+### Fixed- `ChatPage.qml`: repaired brace balance broken during the Conversations API  rewrite (extra `}` after the attached-image preview closed the input Column  early, leaving the rest of the page outside the root item).
+
+### Tests- Unit tests rewritten for the Conversations API: typed SSE events  (`message.output.delta`, `conversation.response.done`, `conversation.created`,  `tool.execution.started`, `error`), create-vs-append request bodies, image chunk  encoding, reconcile check (`remoteHasUserMessage`), title output parsing, and  `%23stream` URL encoding.
+- `remoteConversationId` round-trip test: the id reported by  `conversation.created` is persisted on the conversation and survives a reload.
+- `pendingUserContent` / `pendingUserImagePath` accessor tests.
+- `buildTurnBodyWithImage` skips gracefully on hosts without a JPEG image plugin.
+
 
 ## [0.1.0] - 2026-10-20
 

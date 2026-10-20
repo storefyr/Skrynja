@@ -29,7 +29,8 @@ class SettingsManager : public QObject
     Q_PROPERTY(double temperature READ temperature WRITE setTemperature NOTIFY temperatureChanged)
     Q_PROPERTY(int maxTokens READ maxTokens WRITE setMaxTokens NOTIFY maxTokensChanged)
     Q_PROPERTY(QString systemPrompt READ systemPrompt WRITE setSystemPrompt NOTIFY systemPromptChanged)
-    Q_PROPERTY(int contextMessageLimit READ contextMessageLimit WRITE setContextMessageLimit NOTIFY contextMessageLimitChanged)
+    // Enables the web_search tool on new remote conversations (create-time).
+    Q_PROPERTY(bool webSearch READ webSearch WRITE setWebSearch NOTIFY webSearchChanged)
     Q_PROPERTY(QString chatStyle READ chatStyle WRITE setChatStyle NOTIFY chatStyleChanged)
     Q_PROPERTY(QString autoTitleMode READ autoTitleMode WRITE setAutoTitleMode NOTIFY autoTitleModeChanged)
     Q_PROPERTY(bool showTimestamps READ showTimestamps WRITE setShowTimestamps NOTIFY showTimestampsChanged)
@@ -73,9 +74,9 @@ public:
 
     QString systemPrompt() const;
     void setSystemPrompt(const QString &prompt);
+    bool webSearch() const;
+    void setWebSearch(bool enabled);
 
-    int contextMessageLimit() const;
-    void setContextMessageLimit(int limit);
 
     QString chatStyle() const;
     void setChatStyle(const QString &style);
@@ -158,8 +159,8 @@ signals:
     void temperatureChanged();
     void maxTokensChanged();
     void systemPromptChanged();
+    void webSearchChanged();
     void availableModelsChanged();
-    void contextMessageLimitChanged();
     void chatStyleChanged();
     void autoTitleModeChanged();
     void showTimestampsChanged();
@@ -177,7 +178,7 @@ private:
     double m_temperature;
     int m_maxTokens;
     QString m_systemPrompt;
-    int m_contextMessageLimit;
+    bool m_webSearch;
     QString m_chatStyle;
     QString m_autoTitleMode;
     bool m_showTimestamps;

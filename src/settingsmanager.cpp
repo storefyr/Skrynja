@@ -57,11 +57,11 @@ SettingsManager::SettingsManager(QObject *parent)
     , m_providerId(Providers::defaultId())
     , m_temperature(-1.0)
     , m_maxTokens(0)
-    , m_contextMessageLimit(0)
     , m_chatStyle("flat")
     , m_autoTitleMode("local")
     , m_showTimestamps(true)
     , m_enterKeySends(false)
+    , m_webSearch(false)
     , m_modelSwitches(0)
 {
     loadSettings();
@@ -372,23 +372,17 @@ void SettingsManager::setSystemPrompt(const QString &prompt)
     }
 }
 
-int SettingsManager::contextMessageLimit() const
+bool SettingsManager::webSearch() const
 {
-    return m_contextMessageLimit;
+    return m_webSearch;
 }
 
-void SettingsManager::setContextMessageLimit(int limit)
+void SettingsManager::setWebSearch(bool enabled)
 {
-    // Always an even number: a trimmed history should start on a user turn.
-    int normalized = limit < 0 ? 0 : limit;
-    if (normalized > 0 && normalized % 2 != 0) {
-        normalized += 1;
-    }
-
-    if (m_contextMessageLimit != normalized) {
-        m_contextMessageLimit = normalized;
+    if (m_webSearch != enabled) {
+        m_webSearch = enabled;
         saveSettings();
-        emit contextMessageLimitChanged();
+        emit webSearchChanged();
     }
 }
 
@@ -721,7 +715,7 @@ void SettingsManager::loadSettings()
     m_temperature = m_settings.value("generation/temperature", -1.0).toDouble();
     m_maxTokens = m_settings.value("generation/maxTokens", 0).toInt();
     m_systemPrompt = m_settings.value("generation/systemPrompt", "").toString();
-    m_contextMessageLimit = m_settings.value("generation/contextMessageLimit", 0).toInt();
+    m_webSearch = m_settings.value("generation/webSearch", false).toBool();
     m_chatStyle = m_settings.value("ui/chatStyle", "flat").toString();
     if (!availableChatStyles().contains(m_chatStyle)) {
         m_chatStyle = "flat";
@@ -883,7 +877,6 @@ void SettingsManager::saveSettings()
     m_settings.setValue("generation/temperature", m_temperature);
     m_settings.setValue("generation/maxTokens", m_maxTokens);
     m_settings.setValue("generation/systemPrompt", m_systemPrompt);
-    m_settings.setValue("generation/contextMessageLimit", m_contextMessageLimit);
     m_settings.setValue("generation/autoTitleMode", m_autoTitleMode);
     m_settings.setValue("ui/chatStyle", m_chatStyle);
     m_settings.setValue("ui/showTimestamps", m_showTimestamps);

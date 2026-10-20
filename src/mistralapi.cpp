@@ -1,5 +1,8 @@
 #include "mistralapi.h"
 #include "categories.h"
+#include <QBuffer>
+#include <QFile>
+#include <QImage>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QNetworkRequest>
@@ -21,6 +24,13 @@ static const int MAX_RATE_LIMIT_RETRIES = 3;
 static const int RATE_LIMIT_BACKOFF_MS = 2000;
 static const int RATE_LIMIT_MAX_WAIT_MS = 30000;
 
+// Keep an inlined image bounded: the request body would otherwise carry the
+// gallery original, base64-inflated by a third.
+static const int MAX_IMAGE_DIMENSION = 1024;
+static const int JPEG_QUALITY = 85;
+
+static const char * const MISTRAL_BASE_URL = "https://api.mistral.ai/v1";
+
 // Statuses that mean "not now" rather than "no": the same request sent again
 // a moment later usually goes through.
 static bool isTransientStatus(int status)
@@ -28,7 +38,7 @@ static bool isTransientStatus(int status)
     return status == 429      // rate limited
             || status == 502  // bad gateway, seen when a provider recycles a node
             || status == 503  // capacity exhausted
-            || status == 529; // overloaded, used by some OpenAI-compatible hosts
+            || status == 529; // overloaded
 }
 
 // How long the provider wants us to wait. Retry-After is either a number of
@@ -47,8 +57,7 @@ static int retryDelayMs(QNetworkReply *reply, int attempt)
 }
 
 // Require a verified peer and refuse the legacy TLS versions rather than
-// inheriting the platform default. A custom endpoint may well be plain HTTP on
-// the local network, in which case none of this applies and Qt ignores it.
+// inheriting the platform default.
 static void applyTransportSecurity(QNetworkRequest &request)
 {
     QSslConfiguration ssl = QSslConfiguration::defaultConfiguration();
@@ -60,6 +69,33 @@ static void applyTransportSecurity(QNetworkRequest &request)
     request.setAttribute(QNetworkRequest::FollowRedirectsAttribute, false);
 }
 
+// Downscale and encode an attached image as a data URL, or an empty string.
+static QString imageToDataUrl(const QString &filePath)
+{
+    QString localPath = filePath;
+    if (localPath.startsWith("file:")) {
+        localPath = QUrl(localPath).toLocalFile();
+    }
+    QImage img(localPath);
+    if (img.isNull()) {
+        qWarning() << "Cannot load image:" << localPath;
+        return QString();
+    }
+    if (img.width() > MAX_IMAGE_DIMENSION || img.height() > MAX_IMAGE_DIMENSION) {
+        img = img.scaled(MAX_IMAGE_DIMENSION, MAX_IMAGE_DIMENSION,
+                         Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    }
+    QByteArray bytes;
+    QBuffer buffer(&bytes);
+    buffer.open(QIODevice::WriteOnly);
+    img.save(&buffer, "JPEG", JPEG_QUALITY);
+    buffer.close();
+    if (bytes.isEmpty()) {
+        return QString();
+    }
+    return QString("data:image/jpeg;base64,") + QString::fromLatin1(bytes.toBase64());
+}
+
 MistralAPI::MistralAPI(QObject *parent)
     : QObject(parent)
     , m_networkManager(new QNetworkAccessManager(this))
@@ -68,12 +104,13 @@ MistralAPI::MistralAPI(QObject *parent)
     , m_requestTimer(new QTimer(this))
     , m_isBusy(false)
     , m_timedOut(false)
-    , m_modelSource(Providers::MistralCatalogue)
-    , m_streamUsageOption(false)
     , m_keyRequired(true)
     , m_minRequestIntervalMs(MIN_REQUEST_INTERVAL_MS)
     , m_retryCount(0)
     , m_streamStarted(false)
+    , m_streamDone(false)
+    , m_reconciling(false)
+    , m_reconcileReply(nullptr)
 {
     m_timeoutTimer->setSingleShot(true);
     m_timeoutTimer->setInterval(REQUEST_TIMEOUT_MS);
@@ -83,27 +120,9 @@ MistralAPI::MistralAPI(QObject *parent)
     connect(m_requestTimer, &QTimer::timeout,
             this, &MistralAPI::sendPendingChatRequest);
 
-    // Sensible until the settings have been read.
-    const Providers::Provider fallback = Providers::byId(Providers::defaultId());
-    setEndpoint(fallback.id, fallback.baseUrl, fallback.modelSource,
-                fallback.streamUsageOption, fallback.keyRequired);
-}
-
-void MistralAPI::setEndpoint(const QString &providerId,
-                             const QString &baseUrl,
-                             Providers::ModelSource modelSource,
-                             bool streamUsageOption,
-                             bool keyRequired)
-{
-    m_providerId = providerId;
-    m_baseUrl = baseUrl;
-    m_modelSource = modelSource;
-    m_streamUsageOption = streamUsageOption;
-    m_keyRequired = keyRequired;
-    // A custom endpoint is the user's own machine as often as not; nobody
-    // rate-limits their own llama.cpp.
-    m_minRequestIntervalMs = (providerId == QLatin1String("custom"))
-            ? 0 : MIN_REQUEST_INTERVAL_MS;
+    // The only provider: Mistral AI. The base URL is fixed; a custom endpoint
+    // speaks the OpenAI dialect and cannot serve /v1/conversations.
+    m_baseUrl = QString::fromLatin1(MISTRAL_BASE_URL);
 }
 
 int MistralAPI::throttleDelayMs() const
@@ -128,7 +147,9 @@ QUrl MistralAPI::endpoint(const QString &path) const
     if (m_baseUrl.isEmpty()) {
         return QUrl();
     }
-    return QUrl(m_baseUrl + path);
+    // FromEncoded: "#stream" must reach the wire as %23stream. A literal '#'
+    // would be parsed as a fragment and stripped by QNetworkAccessManager.
+    return QUrl::fromEncoded(m_baseUrl.toUtf8() + path.toUtf8());
 }
 
 void MistralAPI::prepareRequest(QNetworkRequest &request, const QString &apiKey) const
@@ -152,9 +173,91 @@ QString MistralAPI::error() const
     return m_error;
 }
 
+QString MistralAPI::turnPath(const QString &remoteConversationId) const
+{
+    // %23, not '#': see endpoint().
+    if (remoteConversationId.isEmpty()) {
+        return QString("/conversations%23stream");
+    }
+    return QString("/conversations/%1%23stream").arg(remoteConversationId);
+}
+
+QByteArray MistralAPI::buildTurnBody(const QString &modelName,
+                                     const QString &systemPrompt,
+                                     const QString &userContent,
+                                     const QString &imagePath,
+                                     bool webSearch,
+                                     bool isCreate,
+                                     double temperature,
+                                     int maxTokens) const
+{
+    // The user message as a MessageInputEntry. content is a plain string for
+    // text, a chunk list when an image is attached.
+    QJsonObject input;
+    input["object"] = "entry";
+    input["type"] = "message.input";
+    input["role"] = "user";
+
+    const QString dataUrl = imagePath.isEmpty() ? QString() : imageToDataUrl(imagePath);
+    if (!dataUrl.isEmpty()) {
+        QJsonArray chunks;
+        if (!userContent.isEmpty()) {
+            QJsonObject textChunk;
+            textChunk["type"] = "text";
+            textChunk["text"] = userContent;
+            chunks.append(textChunk);
+        }
+        QJsonObject imageChunk;
+        imageChunk["type"] = "image_url";
+        imageChunk["image_url"] = dataUrl;
+        chunks.append(imageChunk);
+        input["content"] = chunks;
+    } else {
+        input["content"] = userContent;
+    }
+
+    QJsonObject requestBody;
+    QJsonArray inputs;
+    inputs.append(input);
+    requestBody["inputs"] = inputs;
+
+    if (isCreate) {
+        // Create-time only: model, instructions and tools are locked here.
+        requestBody["model"] = modelName;
+        if (!systemPrompt.trimmed().isEmpty()) {
+            requestBody["instructions"] = systemPrompt.trimmed();
+        }
+        if (webSearch) {
+            QJsonArray tools;
+            QJsonObject webSearchTool;
+            webSearchTool["type"] = "web_search";
+            tools.append(webSearchTool);
+            requestBody["tools"] = tools;
+        }
+    }
+
+    // Omit unset parameters so the API applies its own defaults.
+    QJsonObject completionArgs;
+    if (temperature >= 0.0) {
+        completionArgs["temperature"] = temperature;
+    }
+    if (maxTokens > 0) {
+        completionArgs["max_tokens"] = maxTokens;
+    }
+    if (!completionArgs.isEmpty()) {
+        requestBody["completion_args"] = completionArgs;
+    }
+
+    return QJsonDocument(requestBody).toJson(QJsonDocument::Compact);
+}
+
 void MistralAPI::sendMessage(const QString &apiKey,
                                const QString &modelName,
-                               const QVariant &messagesVariant,
+                               const QString &systemPrompt,
+                               const QString &userContent,
+                               const QString &imagePath,
+                               bool webSearch,
+                               const QString &remoteConversationId,
                                double temperature,
                                int maxTokens)
 {
@@ -173,69 +276,31 @@ void MistralAPI::sendMessage(const QString &apiKey,
         return;
     }
 
-    // Convert QVariant (QVariantList) to QJsonArray
-    QVariantList messagesList = messagesVariant.toList();
-    if (messagesList.isEmpty()) {
-        qWarning() << "Messages list is empty or invalid";
+    if (userContent.trimmed().isEmpty() && imagePath.isEmpty()) {
+        qWarning() << "Empty user turn";
         setError(tr("Failed to prepare messages for API"));
         return;
     }
 
-    QJsonArray messages;
-    for (const QVariant &msgVariant : messagesList) {
-        QVariantMap msgMap = msgVariant.toMap();
-        QJsonObject msgObj;
-        msgObj["role"] = msgMap["role"].toString();
-
-        // Vision messages use an array of {type, ...} parts instead of a
-        // string. Test by conversion rather than by type tag: a value that
-        // travelled through QML may arrive as any of several list flavours,
-        // while a string always converts to an empty list.
-        const QVariant contentVar = msgMap["content"];
-        const QVariantList parts = contentVar.toList();
-        if (!parts.isEmpty()) {
-            msgObj["content"] = QJsonArray::fromVariantList(parts);
-        } else {
-            msgObj["content"] = contentVar.toString();
-        }
-        messages.append(msgObj);
-    }
+    const bool isCreate = remoteConversationId.isEmpty();
 
     setIsBusy(true);
     setError(QString());
     m_streamBuffer.clear();
+    m_currentEvent.clear();
     m_timedOut = false;
     m_retryCount = 0;
     m_streamStarted = false;
-
-    // Build JSON request
-    QJsonObject requestBody;
-    requestBody["model"] = modelName;
-    requestBody["messages"] = messages;
-    requestBody["stream"] = true;
-
-    // Omit unset parameters so the API applies its own defaults
-    if (temperature >= 0.0) {
-        requestBody["temperature"] = temperature;
-    }
-    if (maxTokens > 0) {
-        requestBody["max_tokens"] = maxTokens;
-    }
-
-    // Mistral reports token usage in the last chunk on its own; the OpenAI
-    // dialect only does when asked, and rejects the field where unsupported.
-    if (m_streamUsageOption) {
-        QJsonObject streamOptions;
-        streamOptions["include_usage"] = true;
-        requestBody["stream_options"] = streamOptions;
-    }
-
-    QJsonDocument doc(requestBody);
+    m_streamDone = false;
 
     // Kept whole: a rate-limited request has to go out again byte for byte,
     // and the caller must not have to know that it ever came back.
     m_pendingApiKey = apiKey;
-    m_pendingBody = doc.toJson();
+    m_pendingBody = buildTurnBody(modelName, systemPrompt, userContent,
+                                  imagePath, webSearch, isCreate,
+                                  temperature, maxTokens);
+    m_pendingRemoteId = remoteConversationId;
+    m_pendingUserContent = userContent;
 
     // Announced here rather than once the POST leaves: the request may be held
     // back for a moment, and the empty assistant bubble has to belong to the
@@ -263,7 +328,7 @@ void MistralAPI::sendPendingChatRequest()
         return;
     }
 
-    QNetworkRequest request(endpoint("/chat/completions"));
+    QNetworkRequest request(endpoint(turnPath(m_pendingRemoteId)));
     request.setRawHeader("Accept", "text/event-stream");
     prepareRequest(request, m_pendingApiKey);
 
@@ -284,6 +349,8 @@ void MistralAPI::forgetPendingRequest()
 {
     m_pendingApiKey.clear();
     m_pendingBody.clear();
+    m_pendingRemoteId.clear();
+    m_pendingUserContent.clear();
     m_retryCount = 0;
 }
 
@@ -312,40 +379,27 @@ void MistralAPI::generateTitle(const QString &apiKey,
         return;
     }
 
-    // Build request for title generation (non-streaming)
-    QJsonArray messages;
-    QJsonObject systemMsg;
-    systemMsg["role"] = "system";
-    // "other" is deliberately described as a last resort: left to itself the
-    // model picks it far too often and every conversation ends up unlabelled.
-    systemMsg["content"] = QString(
+    // A title is a one-shot completion: create a conversation, ask, and ask
+    // the server not to store it. A plain string input keeps the body small.
+    QJsonObject requestBody;
+    requestBody["model"] = modelName;
+    requestBody["store"] = false;
+    requestBody["inputs"] = QString(
                 "Analyze the conversation excerpt sent by the user and reply with ONLY a "
                 "compact JSON object, no explanation, no code fences: "
                 "{\"title\":\"short conversation title, max 50 characters, same language as "
                 "the conversation\",\"category\":\"one of the labels below\"}. "
                 "Pick the single most specific matching category from this list: %1. "
-                "Use \"other\" only when no other label fits at all.")
+                "Use \"other\" only when no other label fits at all. The excerpt follows.\n\n"
+                + conversationText)
             .arg(Categories::all().join(", "));
-    messages.append(systemMsg);
 
-    QJsonObject userMsg;
-    userMsg["role"] = "user";
-    userMsg["content"] = conversationText;
-    messages.append(userMsg);
+    QByteArray jsonData = QJsonDocument(requestBody).toJson(QJsonDocument::Compact);
 
-    QJsonObject requestBody;
-    requestBody["model"] = modelName;
-    requestBody["messages"] = messages;
-    requestBody["stream"] = false;  // Non-streaming for title generation
-
-    QJsonDocument doc(requestBody);
-    QByteArray jsonData = doc.toJson();
-
-    // Configure HTTP request
-    QNetworkRequest request(endpoint("/chat/completions"));
+    // Non-streaming: the response is a single conversation.response JSON.
+    QNetworkRequest request(endpoint("/conversations"));
     prepareRequest(request, apiKey);
 
-    // Send request
     noteRequestSent();
     QNetworkReply *reply = m_networkManager->post(request, jsonData);
     // Carried on the reply so the result can be routed back to the right
@@ -376,8 +430,8 @@ void MistralAPI::fetchModels(const QString &apiKey)
     noteRequestSent();
     QNetworkReply *reply = m_networkManager->get(request);
     // Pinned to the reply: the active provider may change before it answers
-    reply->setProperty("providerId", m_providerId);
-    reply->setProperty("modelSource", int(m_modelSource));
+    reply->setProperty("providerId", QString("mistral"));
+    reply->setProperty("modelSource", int(Providers::MistralCatalogue));
 
     connect(reply, &QNetworkReply::finished,
             this, &MistralAPI::onModelsFetchFinished);
@@ -391,6 +445,7 @@ void MistralAPI::cancelRequest()
         m_requestTimer->stop();
         forgetPendingRequest();
         setIsBusy(false);
+        emit responseIncomplete();
         emit responseCompleted();
         return;
     }
@@ -443,6 +498,16 @@ void MistralAPI::onFinished()
         const int status = m_currentReply->attribute(
                     QNetworkRequest::HttpStatusCodeAttribute).toInt();
         if (shouldRetry(status)) {
+            // An append that may have reached the server must not be sent
+            // again blindly: it would duplicate the user's message in the
+            // remote history. Reconcile first (D5).
+            if (!m_pendingRemoteId.isEmpty() && !m_reconciling) {
+                m_currentReply->deleteLater();
+                m_currentReply = nullptr;
+                startReconcile();
+                return;
+            }
+
             const int wait = retryDelayMs(m_currentReply, m_retryCount);
             m_currentReply->deleteLater();
             m_currentReply = nullptr;
@@ -458,10 +523,18 @@ void MistralAPI::onFinished()
         }
     }
 
+    const bool complete = m_streamDone;
+
     m_currentReply->deleteLater();
     m_currentReply = nullptr;
     forgetPendingRequest();
     setIsBusy(false);
+
+    // A stream that ended without conversation.response.done means the answer
+    // was cut off (cancel, network drop): anything already shown is partial.
+    if (!complete) {
+        emit responseIncomplete();
+    }
 
     emit responseCompleted();
 }
@@ -549,9 +622,27 @@ void MistralAPI::processStreamData(const QByteArray &data)
         m_streamBuffer.remove(0, newlinePos + 1);
 
         if (!line.isEmpty()) {
-            parseStreamLine(line);
+            handleSseLine(line);
         }
     }
+}
+
+void MistralAPI::handleSseLine(const QString &line)
+{
+    // The Conversations API sends typed events: an "event: <name>" line names
+    // the next "data:" payload, and there is no [DONE] marker.
+    if (line.startsWith("event: ")) {
+        m_currentEvent = line.mid(7).trimmed();
+        return;
+    }
+    if (!line.startsWith("data: ")) {
+        return;
+    }
+
+    const QString jsonData = line.mid(6);
+    const QString event = m_currentEvent;
+    m_currentEvent.clear();
+    parseStreamLine(event, jsonData);
 }
 
 void MistralAPI::onTimeout()
@@ -561,6 +652,118 @@ void MistralAPI::onTimeout()
         m_currentReply->abort();
     }
 }
+
+// ---------------------------------------------------------------- reconcile
+
+void MistralAPI::startReconcile()
+{
+    // An append whose fate is unknown (timeout, dropped connection) must not
+    // be resent blindly: if it did reach the server, a second copy would land
+    // in the remote history. Ask the server what it already has first.
+    if (m_pendingRemoteId.isEmpty() || m_reconciling) {
+        return;
+    }
+
+    m_reconciling = true;
+    emit rateLimited(1, m_retryCount + 1, MAX_RATE_LIMIT_RETRIES);
+
+    QNetworkRequest request(endpoint(
+                QString("/conversations/%1/messages").arg(m_pendingRemoteId)));
+    prepareRequest(request, m_pendingApiKey);
+
+    noteRequestSent();
+    m_reconcileReply = m_networkManager->get(request);
+    connect(m_reconcileReply, &QNetworkReply::finished,
+            this, &MistralAPI::onReconcileFinished);
+}
+
+void MistralAPI::onReconcileFinished()
+{
+    if (!m_reconcileReply) {
+        return;
+    }
+
+    QNetworkReply *reply = m_reconcileReply;
+    m_reconcileReply = nullptr;
+    m_reconciling = false;
+    reply->deleteLater();
+
+    bool alreadyThere = false;
+    if (reply->error() == QNetworkReply::NoError) {
+        const QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
+        alreadyThere = remoteHasUserMessage(doc.object(), m_pendingUserContent);
+    } else {
+        qWarning() << "Reconcile failed:" << reply->errorString();
+    }
+
+    if (alreadyThere) {
+        // The server has the turn but never answered it (or the answer was
+        // lost): the remote history is intact, so the append can be retried
+        // without duplicating anything.
+        const int wait = retryDelayMs(nullptr, m_retryCount);
+        ++m_retryCount;
+        emit rateLimited(qMax(1, (wait + 500) / 1000),
+                         m_retryCount, MAX_RATE_LIMIT_RETRIES);
+        queueChatRequest(wait);
+        return;
+    }
+
+    // Either the turn never arrived (safe to resend) or the reconcile itself
+    // failed (resending is the only option left, and the stream guard still
+    // prevents a mid-answer retry). If the reconcile failed we cannot know,
+    // so surface it rather than risk a duplicate.
+    if (reply->error() == QNetworkReply::NoError) {
+        // Turn not present remotely: a plain retry is safe.
+        const int wait = retryDelayMs(nullptr, m_retryCount);
+        ++m_retryCount;
+        emit rateLimited(qMax(1, (wait + 500) / 1000),
+                         m_retryCount, MAX_RATE_LIMIT_RETRIES);
+        queueChatRequest(wait);
+    } else {
+        // Reconcile failed: give up with a clear message. Resending could
+        // duplicate the user's message in the remote history.
+        setError(tr("Connection lost and the conversation could not be "
+                    "verified. Check your connection and try again."));
+        setIsBusy(false);
+        forgetPendingRequest();
+        emit responseIncomplete();
+        emit responseCompleted();
+    }
+}
+
+bool MistralAPI::remoteHasUserMessage(const QJsonObject &messagesResponse,
+                                      const QString &userContent)
+{
+    const QJsonArray messages = messagesResponse["messages"].toArray();
+    const QString needle = userContent.trimmed();
+    if (needle.isEmpty()) {
+        return false;
+    }
+    for (const QJsonValue &value : messages) {
+        const QJsonObject msg = value.toObject();
+        if (msg["role"].toString() != "user") {
+            continue;
+        }
+        // content is a string, or a chunk list when the turn carried an image.
+        const QJsonValue content = msg["content"];
+        if (content.isString() && content.toString().trimmed() == needle) {
+            return true;
+        }
+        if (content.isArray()) {
+            const QJsonArray chunks = content.toArray();
+            for (const QJsonValue &chunk : chunks) {
+                const QJsonObject obj = chunk.toObject();
+                if (obj["type"].toString() == "text"
+                        && obj["text"].toString().trimmed() == needle) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+// ---------------------------------------------------------------- titles
 
 void MistralAPI::onTitleGenerationFinished()
 {
@@ -586,48 +789,42 @@ void MistralAPI::onTitleGenerationFinished()
                                       usage["completion_tokens"].toInt());
             }
 
-            QJsonArray choices = obj["choices"].toArray();
+            const QString content = outputsToText(obj["outputs"].toArray()).trimmed();
 
-            if (!choices.isEmpty()) {
-                QJsonObject choice = choices.at(0).toObject();
-                QJsonObject message = choice["message"].toObject();
-                QString content = message["content"].toString().trimmed();
+            QString title;
+            QString category;
 
-                QString title;
-                QString category;
-
-                // Extract the JSON object even if wrapped in fences or prose
-                int start = content.indexOf('{');
-                int end = content.lastIndexOf('}');
-                if (start >= 0 && end > start) {
-                    QJsonDocument titleDoc = QJsonDocument::fromJson(
-                                content.mid(start, end - start + 1).toUtf8());
-                    if (titleDoc.isObject()) {
-                        title = titleDoc.object()["title"].toString().trimmed();
-                        category = titleDoc.object()["category"].toString().trimmed().toLower();
-                    }
+            // Extract the JSON object even if wrapped in fences or prose
+            int start = content.indexOf('{');
+            int end = content.lastIndexOf('}');
+            if (start >= 0 && end > start) {
+                QJsonDocument titleDoc = QJsonDocument::fromJson(
+                            content.mid(start, end - start + 1).toUtf8());
+                if (titleDoc.isObject()) {
+                    title = titleDoc.object()["title"].toString().trimmed();
+                    category = titleDoc.object()["category"].toString().trimmed().toLower();
                 }
+            }
 
-                // Fallback: model ignored the JSON format, use raw content as title
-                if (title.isEmpty()) {
-                    title = content;
-                    if (title.startsWith("\"") && title.endsWith("\"")) {
-                        title = title.mid(1, title.length() - 2);
-                    }
+            // Fallback: model ignored the JSON format, use raw content as title
+            if (title.isEmpty()) {
+                title = content;
+                if (title.startsWith("\"") && title.endsWith("\"")) {
+                    title = title.mid(1, title.length() - 2);
                 }
+            }
 
-                if (!Categories::isValid(category)) {
-                    category = "other";
-                }
+            if (!Categories::isValid(category)) {
+                category = "other";
+            }
 
-                if (title.length() > 50) {
-                    title = title.left(47) + "...";
-                }
+            if (title.length() > 50) {
+                title = title.left(47) + "...";
+            }
 
-                if (!title.isEmpty()) {
-                    delivered = true;
-                    emit titleGenerated(title, category, targetId);
-                }
+            if (!title.isEmpty()) {
+                delivered = true;
+                emit titleGenerated(title, category, targetId);
             }
         }
     } else {
@@ -640,6 +837,31 @@ void MistralAPI::onTitleGenerationFinished()
 
     reply->deleteLater();
 }
+
+QString MistralAPI::outputsToText(const QJsonArray &outputs)
+{
+    // MessageOutputEntry content is a string, or a chunk list (thinking +
+    // text) for reasoning models: concatenate the text chunks.
+    QString text;
+    for (const QJsonValue &value : outputs) {
+        const QJsonObject entry = value.toObject();
+        const QJsonValue content = entry["content"];
+        if (content.isString()) {
+            text += content.toString();
+        } else if (content.isArray()) {
+            const QJsonArray chunks = content.toArray();
+            for (const QJsonValue &chunk : chunks) {
+                const QJsonObject obj = chunk.toObject();
+                if (obj["type"].toString() == "text") {
+                    text += obj["text"].toString();
+                }
+            }
+        }
+    }
+    return text;
+}
+
+// ---------------------------------------------------------------- catalogue
 
 void MistralAPI::onModelsFetchFinished()
 {
@@ -724,46 +946,76 @@ void MistralAPI::onModelsFetchFinished()
     emit modelsFetched(models, providerId);
 }
 
-void MistralAPI::parseStreamLine(const QString &line)
+// ---------------------------------------------------------------- SSE events
+
+void MistralAPI::parseStreamLine(const QString &event, const QString &jsonData)
 {
-    // SSE (Server-Sent Events) format uses "data: " as prefix
-    if (!line.startsWith("data: ")) {
+    // The Conversations API streams typed events; anything without a data
+    // payload we recognise is metadata we do not need (heartbeats, pings).
+    if (event == "conversation.created") {
+        const QJsonDocument doc = QJsonDocument::fromJson(jsonData.toUtf8());
+        const QString id = doc.object()["conversation_id"].toString();
+        if (!id.isEmpty()) {
+            m_remoteConversationId = id;
+            emit conversationCreated(id);
+        }
         return;
     }
 
-    QString jsonData = line.mid(6); // Remove "data: "
-
-    // Check for end-of-stream marker
-    if (jsonData == "[DONE]") {
+    if (event == "tool.execution.started" || event == "tool.execution.delta") {
+        const QJsonDocument doc = QJsonDocument::fromJson(jsonData.toUtf8());
+        const QString name = doc.object()["name"].toString();
+        if (!name.isEmpty()) {
+            emit toolActivity(name);
+        }
         return;
     }
 
-    QJsonDocument doc = QJsonDocument::fromJson(jsonData.toUtf8());
-    if (!doc.isObject()) {
-        return;
-    }
-
-    QJsonObject obj = doc.object();
-
-    // The final chunk before [DONE] carries token usage
-    if (obj.contains("usage") && obj["usage"].isObject()) {
-        QJsonObject usage = obj["usage"].toObject();
-        emit usageReceived(usage["prompt_tokens"].toInt(),
-                           usage["completion_tokens"].toInt());
-    }
-
-    // Extract delta content
-    QJsonArray choices = obj["choices"].toArray();
-    if (!choices.isEmpty()) {
-        QJsonObject choice = choices.at(0).toObject();
-        QJsonObject delta = choice["delta"].toObject();
-
-        if (delta.contains("content")) {
-            QString content = delta["content"].toString();
-            if (!content.isEmpty()) {
+    if (event == "message.output.delta") {
+        const QJsonDocument doc = QJsonDocument::fromJson(jsonData.toUtf8());
+        const QJsonValue content = doc.object()["content"];
+        // Reasoning models send content as a chunk list (thinking + text);
+        // only the text chunks belong on screen.
+        if (content.isString()) {
+            const QString text = content.toString();
+            if (!text.isEmpty()) {
                 m_streamStarted = true;
-                emit streamingResponse(content);
+                emit streamingResponse(text);
+            }
+        } else if (content.isArray()) {
+            const QJsonArray chunks = content.toArray();
+            for (const QJsonValue &chunk : chunks) {
+                const QJsonObject obj = chunk.toObject();
+                if (obj["type"].toString() == "text") {
+                    const QString text = obj["text"].toString();
+                    if (!text.isEmpty()) {
+                        m_streamStarted = true;
+                        emit streamingResponse(text);
+                    }
+                }
             }
         }
+        return;
     }
+
+    if (event == "conversation.response.done") {
+        m_streamDone = true;
+        const QJsonDocument doc = QJsonDocument::fromJson(jsonData.toUtf8());
+        const QJsonObject usage = doc.object()["usage"].toObject();
+        if (!usage.isEmpty()) {
+            emit usageReceived(usage["prompt_tokens"].toInt(),
+                               usage["completion_tokens"].toInt());
+        }
+        return;
+    }
+
+    if (event == "error") {
+        const QJsonDocument doc = QJsonDocument::fromJson(jsonData.toUtf8());
+        const QString message = doc.object()["message"].toString();
+        setError(tr("API Error: %1").arg(message.isEmpty()
+                                         ? jsonData : message));
+        return;
+    }
+
+    // Untyped data (no event line) or an event we do not handle: ignore.
 }
