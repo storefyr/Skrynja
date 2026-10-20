@@ -13,8 +13,6 @@
 #include <QJsonArray>
 #include <QVariant>
 
-#include "providers.h"
-
 // Talks to Mistral's Conversations API (/v1/conversations), the only Mistral
 // API that offers the web_search tool. The API is stateful: the first message
 // of a conversation creates it (POST /v1/conversations#stream) and carries
@@ -78,9 +76,7 @@ signals:
     void titleGenerated(const QString &title, const QString &category,
                         const QString &targetId);
     void titleGenerationFailed(const QString &targetId);
-    // The provider travels with the catalogue: by the time the answer lands,
-    // the user may have moved to a conversation pinned somewhere else.
-    void modelsFetched(const QVariantList &models, const QString &providerId);
+    void modelsFetched(const QVariantList &models);
     void modelsFetchFailed();
     // The provider turned the request away (429/503) and it will be sent
     // again: the answer is still coming, so this is not an error yet.

@@ -139,12 +139,10 @@ void ConversationManager::onMessageSent()
         emit streamingConversationIdChanged();
     }
 
-    m_streamingProvider = currentProviderId();
-
     // Added only once the request is actually in flight, so a rejected send
     // never leaves an empty assistant bubble behind.
     m_currentConversation->addAssistantMessage(QString(), m_activeModel,
-                                               m_streamingProvider);
+                                               Providers::ID);
     m_streamTimer->start();
 }
 
@@ -199,7 +197,7 @@ void ConversationManager::finishBackgroundResponse()
         msg.content = m_streamBuffer;
         msg.timestamp = QDateTime::currentMSecsSinceEpoch();
         msg.model = m_activeModel;
-        msg.provider = m_streamingProvider;
+        msg.provider = Providers::ID;
         conv->messages.append(msg);
     }
 
@@ -346,7 +344,7 @@ Conversation ConversationManager::conversationFromJson(const QJsonObject &obj)
     // saying so explicitly beats letting it drift with the default setting.
     conv.provider = obj["provider"].toString();
     if (conv.provider.isEmpty()) {
-        conv.provider = Providers::defaultId();
+        conv.provider = Providers::ID;
     }
     conv.model = obj["model"].toString();
     conv.systemPrompt = obj["systemPrompt"].toString();
@@ -504,8 +502,7 @@ void ConversationManager::createNewConversation()
     Conversation newConv;
     newConv.id = generateConversationId();
     newConv.title = ""; // Generated from the first exchange
-    newConv.provider = m_defaultProvider.isEmpty() ? Providers::defaultId()
-                                                   : m_defaultProvider;
+    newConv.provider = Providers::ID;
     newConv.createdAt = QDateTime::currentMSecsSinceEpoch();
     newConv.updatedAt = newConv.createdAt;
 
@@ -518,7 +515,6 @@ void ConversationManager::createNewConversation()
     m_settings.sync();
 
     emit currentConversationChanged();
-    emit currentProviderIdChanged();
     emit conversationCountChanged();
 }
 
@@ -554,7 +550,6 @@ void ConversationManager::loadConversation(const QString &conversationId)
     m_settings.sync();
 
     emit currentConversationChanged();
-    emit currentProviderIdChanged();
 }
 
 void ConversationManager::deleteConversation(const QString &conversationId)
@@ -752,7 +747,6 @@ QVariantMap ConversationManager::getConversationOverrides(const QString &convers
     overrides["systemPrompt"] = QString();
     overrides["title"] = QString();
     overrides["category"] = QString();
-    overrides["provider"] = m_defaultProvider;
 
     const Conversation *conv = findConversation(conversationId);
     if (conv) {
@@ -764,60 +758,6 @@ QVariantMap ConversationManager::getConversationOverrides(const QString &convers
     }
 
     return overrides;
-}
-
-QString ConversationManager::currentProviderId() const
-{
-    return conversationProvider(m_currentConversationId);
-}
-
-QString ConversationManager::conversationProvider(const QString &conversationId) const
-{
-    const Conversation *conv = findConversation(conversationId);
-    if (conv && !conv->provider.isEmpty()) {
-        return conv->provider;
-    }
-    return m_defaultProvider.isEmpty() ? Providers::defaultId() : m_defaultProvider;
-}
-
-void ConversationManager::setDefaultProvider(const QString &providerId)
-{
-    if (providerId.isEmpty() || m_defaultProvider == providerId) {
-        return;
-    }
-    m_defaultProvider = providerId;
-
-    // A conversation with no messages has not committed to anything yet, so it
-    // follows the new default rather than stranding the user on the provider
-    // that happened to be selected when the app started.
-    Conversation *conv = findConversation(m_currentConversationId);
-    if (conv && conv->messages.isEmpty() && conv->provider != providerId) {
-        conv->provider = providerId;
-        markDirty(conv->id);
-        saveDirtyConversations();
-        emit currentProviderIdChanged();
-    }
-}
-
-void ConversationManager::setConversationProvider(const QString &conversationId,
-                                                  const QString &providerId)
-{
-    Conversation *conv = findConversation(conversationId);
-    if (!conv || providerId.isEmpty() || conv->provider == providerId) {
-        return;
-    }
-
-    conv->provider = providerId;
-    // The model override was picked from the previous provider's catalogue and
-    // would be rejected by the new one. Dropping it falls back to that
-    // provider's default, which is the only model we know it serves.
-    conv->model.clear();
-    markDirty(conversationId);
-    saveDirtyConversations();
-
-    if (conversationId == m_currentConversationId) {
-        emit currentProviderIdChanged();
-    }
 }
 
 void ConversationManager::setConversationOverrides(const QString &conversationId,
@@ -1353,10 +1293,6 @@ QVariantMap ConversationManager::getStatistics() const
     qint64 totalAssistantChars = 0;
     QString longestConvTitle;
     QVariantMap categoryCounts;
-    // Counted from the answers themselves rather than from the token ledger:
-    // the ledger has no provider, and this way conversations written before
-    // 2.3 still count towards Mistral.
-    QVariantMap providerCounts;
     QVariantMap modelCounts;
 
     // Activity distribution: last 14 days (oldest first) and hour of day
@@ -1386,10 +1322,6 @@ QVariantMap ConversationManager::getStatistics() const
                 totalAssistantMessages++;
                 totalAssistantChars += msg.content.length();
 
-                if (!msg.provider.isEmpty()) {
-                    providerCounts[msg.provider] =
-                            providerCounts[msg.provider].toInt() + 1;
-                }
                 // Empty on pre-2.3 answers: the provider is known, the model
                 // never was, and a guess would be worse than a gap.
                 if (!msg.model.isEmpty()) {
@@ -1447,14 +1379,8 @@ QVariantMap ConversationManager::getStatistics() const
     stats["totalAssistantChars"] = totalAssistantChars;
     stats["categoryCounts"] = categoryCounts;
 
-    const QVariantList providerUsage = rankCounts(providerCounts, "provider");
     const QVariantList modelAnswers = rankCounts(modelCounts, "model");
-    stats["providerUsage"] = providerUsage;
     stats["modelAnswers"] = modelAnswers;
-    stats["topProvider"] = providerUsage.isEmpty() ? QString()
-                         : providerUsage.first().toMap()["provider"].toString();
-    stats["topProviderCount"] = providerUsage.isEmpty() ? 0
-                              : providerUsage.first().toMap()["count"].toInt();
     stats["topModel"] = modelAnswers.isEmpty() ? QString()
                       : modelAnswers.first().toMap()["model"].toString();
     stats["topModelCount"] = modelAnswers.isEmpty() ? 0

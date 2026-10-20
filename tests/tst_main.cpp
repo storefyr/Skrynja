@@ -528,75 +528,25 @@ private slots:
         QCOMPARE(stats["messageCount"].toInt(), 2);
     }
 
-    void conversationIsPinnedToItsProvider()
+    void answersRecordWhichModelProducedThem()
     {
         ConversationManager manager;
         manager.purgeAllConversations();
-        manager.setDefaultProvider("groq");
 
-        // The conversation that exists already has no messages, so it follows
-        manager.createNewConversation();
-        const QString groqId = manager.currentConversationId();
-        QCOMPARE(manager.currentProviderId(), QString("groq"));
-
-        manager.currentConversation()->addUserMessage("hello");
-        manager.saveCurrentConversation();
-
-        // Changing the default is for new conversations only
-        manager.setDefaultProvider("mistral");
-        manager.loadConversation(groqId);
-        QCOMPARE(manager.currentProviderId(), QString("groq"));
-
-        manager.createNewConversation();
-        QCOMPARE(manager.currentProviderId(), QString("mistral"));
-
-        // And the pin survives a restart
-        manager.saveCurrentConversation();
-        ConversationManager reopened;
-        QCOMPARE(reopened.conversationProvider(groqId), QString("groq"));
-    }
-
-    void movingAConversationDropsItsModelOverride()
-    {
-        ConversationManager manager;
-        manager.purgeAllConversations();
-        manager.setDefaultProvider("mistral");
-        manager.createNewConversation();
-
-        const QString id = manager.currentConversationId();
-        manager.setConversationOverrides(id, "mistral-large-latest", "Be brief");
-
-        manager.setConversationProvider(id, "groq");
-        QCOMPARE(manager.conversationProvider(id), QString("groq"));
-
-        const QVariantMap overrides = manager.getConversationOverrides(id);
-        // The model belonged to the provider we left; the prompt did not
-        QCOMPARE(overrides["model"].toString(), QString());
-        QCOMPARE(overrides["systemPrompt"].toString(), QString("Be brief"));
-    }
-
-    void answersRecordWhoProducedThem()
-    {
-        ConversationManager manager;
-        manager.purgeAllConversations();
-        manager.setDefaultProvider("groq");
-        manager.createNewConversation();
-
-        const QString id = manager.currentConversationId();
         manager.currentConversation()->addUserMessage("hello");
         manager.currentConversation()->addAssistantMessage(
-                    "hi", "llama-3.3-70b-versatile", "groq");
+                    "hi", "mistral-small-latest", "mistral");
         manager.saveCurrentConversation();
 
+        const QString id = manager.currentConversationId();
         manager.createNewConversation();
         manager.loadConversation(id);
-
         const QJsonArray json = manager.currentConversation()->toJsonArray();
-        // The user turn stays as it was, the answer carries its origin
+        // The user turn stays as it was, the answer carries its model
         QVERIFY(!json.at(0).toObject().contains("provider"));
-        QCOMPARE(json.at(1).toObject()["provider"].toString(), QString("groq"));
+        QCOMPARE(json.at(1).toObject()["provider"].toString(), QString("mistral"));
         QCOMPARE(json.at(1).toObject()["model"].toString(),
-                 QString("llama-3.3-70b-versatile"));
+                 QString("mistral-small-latest"));
     }
 
     void preProviderConversationsAreStampedMistral()
@@ -606,7 +556,6 @@ private slots:
         const QString dir = QStandardPaths::writableLocation(
                     QStandardPaths::AppDataLocation) + "/conversations";
         QVERIFY(QDir().mkpath(dir));
-
         // A file exactly as 2.2 wrote it: no provider anywhere
         const QString id = "11111111-2222-3333-4444-555555555555";
         QFile file(dir + "/" + id + ".json");
@@ -617,16 +566,12 @@ private slots:
                    "{\"role\":\"user\",\"content\":\"q\",\"timestamp\":1000},"
                    "{\"role\":\"assistant\",\"content\":\"a\",\"timestamp\":1001}]}");
         file.close();
-
         ConversationManager reopened;
-        // Only Mistral existed back then, so the answer's origin is known even
-        // though its model is not
-        QCOMPARE(reopened.conversationProvider(id), QString("mistral"));
-
         reopened.loadConversation(id);
         const QJsonArray json = reopened.currentConversation()->toJsonArray();
         QCOMPARE(json.count(), 2);
         QVERIFY(!json.at(0).toObject().contains("provider"));
+        // The answer is stamped mistral: the only provider that ever existed
         QCOMPARE(json.at(1).toObject()["provider"].toString(), QString("mistral"));
         QVERIFY(!json.at(1).toObject().contains("model"));
     }
@@ -669,37 +614,26 @@ private slots:
                  QString("cooking"));
     }
 
-    void statisticsRankProvidersAndModels()
+    void statisticsRankModels()
     {
         ConversationManager manager;
         manager.purgeAllConversations();
-        manager.setDefaultProvider("mistral");
-
         ConversationModel *model = manager.currentConversation();
         model->addUserMessage("one");
         model->addAssistantMessage("a", "mistral-small-latest", "mistral");
         model->addUserMessage("two");
         model->addAssistantMessage("b", "mistral-small-latest", "mistral");
         model->addUserMessage("three");
-        model->addAssistantMessage("c", "llama-3.3-70b-versatile", "groq");
-        // An answer from before 2.3: provider known, model never recorded
+        model->addAssistantMessage("c", "mistral-large-latest", "mistral");
+        // An answer from before models were recorded: no model, no count
         model->addUserMessage("four");
         model->addAssistantMessage("d", QString(), "mistral");
         manager.saveCurrentConversation();
-
         const QVariantMap stats = manager.getStatistics();
-        QCOMPARE(stats["topProvider"].toString(), QString("mistral"));
-        QCOMPARE(stats["topProviderCount"].toInt(), 3);
+        QVERIFY(!stats.contains("topProvider"));
+        QVERIFY(!stats.contains("providerUsage"));
         QCOMPARE(stats["topModel"].toString(), QString("mistral-small-latest"));
         QCOMPARE(stats["topModelCount"].toInt(), 2);
-
-        const QVariantList providers = stats["providerUsage"].toList();
-        QCOMPARE(providers.count(), 2);
-        // Most used first, and the groq answer is not lost
-        QCOMPARE(providers.at(1).toMap()["provider"].toString(), QString("groq"));
-        QCOMPARE(providers.at(1).toMap()["count"].toInt(), 1);
-
-        // The model-less answer counts for its provider but not as a model
         const QVariantList models = stats["modelAnswers"].toList();
         QCOMPARE(models.count(), 2);
         int total = 0;
@@ -713,15 +647,11 @@ private slots:
     {
         ConversationManager manager;
         manager.purgeAllConversations();
-        manager.setDefaultProvider("groq");
-        manager.createNewConversation();
-
         const QString id = manager.currentConversationId();
         manager.currentConversation()->addUserMessage("hi");
         manager.currentConversation()->addAssistantMessage(
-                    "hello", "llama-3.3-70b-versatile", "groq");
+                    "hello", "mistral-small-latest", "mistral");
         manager.saveCurrentConversation();
-
         const QJsonArray list = manager.getConversationsList();
         bool found = false;
         for (int i = 0; i < list.count(); ++i) {
@@ -730,8 +660,7 @@ private slots:
                 continue;
             }
             found = true;
-            QCOMPARE(obj["provider"].toString(), QString("groq"));
-            QCOMPARE(obj["lastModel"].toString(), QString("llama-3.3-70b-versatile"));
+            QCOMPARE(obj["lastModel"].toString(), QString("mistral-small-latest"));
             // A role called "model" would shadow the delegate's model object
             QVERIFY(!obj.contains("model"));
         }
@@ -1291,110 +1220,60 @@ private slots:
 
         QSettings raw("harbour-skrynja", "Skrynja");
         QVERIFY(!raw.contains("apiKey"));
-        QVERIFY(!raw.value("providers/mistral/apiKeyEnc").toString()
+        QVERIFY(!raw.value("apiKeyEnc").toString()
                 .contains("sk-test-secret-value"));
 
         reopened.clearApiKey();
         QVERIFY(!reopened.hasApiKey());
     }
 
-    void legacyPlainKeyIsMigrated()
+    void legacyProviderSettingsAreMigrated()
     {
         {
             SettingsManager settings;
             settings.clearApiKey();
         }
-        // Simulate a pre-2.1 install: no provider entry, key in clear text
+        // Simulate a SailCat install: key and model under providers/mistral/
         {
             QSettings raw("harbour-skrynja", "Skrynja");
-            raw.remove("provider");
-            raw.remove("providers");
-            raw.setValue("apiKey", "sk-legacy-key");
-            raw.setValue("modelName", "mistral-large-latest");
+            raw.remove("apiKeyEnc");
+            raw.remove("modelName");
+            raw.remove("models");
+            raw.setValue("providers/mistral/apiKeyEnc",
+                     SecureStore::obfuscate("sk-legacy-key"));
+            raw.setValue("providers/mistral/modelName", "mistral-large-latest");
             raw.sync();
         }
 
         SettingsManager migrated;
         QCOMPARE(migrated.apiKey(), QString("sk-legacy-key"));
-        // The provider it belonged to is Mistral, and the model follows it
-        QCOMPARE(migrated.providerId(), QString("mistral"));
         QCOMPARE(migrated.modelName(), QString("mistral-large-latest"));
 
+        // The multi-provider entries are gone, the single-provider ones remain
         QSettings raw("harbour-skrynja", "Skrynja");
-        QVERIFY(!raw.contains("apiKey"));
-        QVERIFY(!raw.contains("apiKeyEnc"));
-        QVERIFY(!raw.value("providers/mistral/apiKeyEnc").toString().isEmpty());
+        QVERIFY(!raw.contains("providers"));
+        QVERIFY(!raw.contains("provider"));
+        QVERIFY(!raw.value("apiKeyEnc").toString().isEmpty());
     }
 
-    void eachProviderKeepsItsOwnKey()
+    void resolveModelFallsBackToStoredDefault()
     {
         SettingsManager settings;
-        settings.setProviderId("mistral");
-        settings.setApiKey("sk-mistral");
-        settings.setProviderId("groq");
-        // Switching provider must not carry the previous key over
-        QCOMPARE(settings.apiKey(), QString());
-        settings.setApiKey("gsk-groq");
-
-        settings.setProviderId("mistral");
-        QCOMPARE(settings.apiKey(), QString("sk-mistral"));
-        settings.setProviderId("groq");
-        QCOMPARE(settings.apiKey(), QString("gsk-groq"));
-
-        // And they survive a restart, still separately
-        SettingsManager reopened;
-        QCOMPARE(reopened.providerId(), QString("groq"));
-        QCOMPARE(reopened.apiKey(), QString("gsk-groq"));
-
-        reopened.clearApiKey();
-        reopened.setProviderId("mistral");
-        reopened.clearApiKey();
-    }
-
-    void unknownProviderFallsBackToDefault()
-    {
-        SettingsManager settings;
-        settings.setProviderId("definitely-not-a-provider");
-        QCOMPARE(settings.providerId(), Providers::defaultId());
-    }
-
-    void customEndpointNeedsAnAddress()
-    {
-        SettingsManager settings;
-        settings.setProviderId("custom");
-        settings.setCustomBaseUrl("");
-        // No key required, but nowhere to send the request either
-        QVERIFY(!settings.hasApiKey());
-
-        settings.setCustomBaseUrl("http://192.168.1.10:11434/v1/");
-        // The trailing slash goes: callers append "/chat/completions"
-        QCOMPARE(settings.providerBaseUrl(), QString("http://192.168.1.10:11434/v1"));
-        QVERIFY(settings.hasApiKey());
-
-        settings.setProviderId("mistral");
-    }
-
-    void modelOverrideDoesNotFollowToAnotherProvider()
-    {
-        SettingsManager settings;
-        settings.setProviderId("groq");
 
         QVariantList catalogue;
         QVariantMap entry;
-        entry["id"] = "llama-3.3-70b-versatile";
+        entry["id"] = "mistral-small-latest";
         entry["vision"] = false;
         catalogue.append(entry);
         settings.updateModelCache(catalogue);
 
         // The fetched catalogue replaces a model it does not serve
-        QCOMPARE(settings.modelName(), QString("llama-3.3-70b-versatile"));
-        // A Mistral override is not sent to Groq
-        QCOMPARE(settings.resolveModel("mistral-large-latest"),
-                 QString("llama-3.3-70b-versatile"));
-        QCOMPARE(settings.resolveModel("llama-3.3-70b-versatile"),
-                 QString("llama-3.3-70b-versatile"));
-
-        settings.setProviderId("mistral");
+        QCOMPARE(settings.modelName(), QString("mistral-small-latest"));
+        // A model the catalogue does not serve is rejected
+        QCOMPARE(settings.resolveModel("some-other-model"),
+                 QString("mistral-small-latest"));
+        QCOMPARE(settings.resolveModel("mistral-small-latest"),
+                 QString("mistral-small-latest"));
     }
 
     void chatStyleRejectsUnknownValues()
@@ -1454,29 +1333,6 @@ private slots:
         QCOMPARE(settings.estimatedCost("some-future-model", 1000, 1000), -1.0);
     }
 
-    void freeTierCostsNothing()
-    {
-        SettingsManager settings;
-        settings.setProviderId("groq");
-
-        QVariantList catalogue;
-        QVariantMap entry;
-        // Priced at Mistral, free here: the provider decides, not the name
-        entry["id"] = "mistral-saba-24b";
-        entry["vision"] = false;
-        catalogue.append(entry);
-        settings.updateModelCache(catalogue);
-
-        QVERIFY(settings.modelPricing("mistral-saba-24b")["known"].toBool());
-        QCOMPARE(settings.estimatedCost("mistral-saba-24b", 1000000, 1000000), 0.0);
-
-        // A model this provider does not serve is still an unknown
-        QVERIFY(!settings.modelPricing("some-future-model")["known"].toBool());
-
-        settings.setProviderId("mistral");
-        // Back on a paid provider the price list applies again
-        QVERIFY(settings.estimatedCost("mistral-saba-24b", 1000000, 0) > 0.0);
-    }
 };
 
 class TestProviders : public QObject
@@ -1484,39 +1340,30 @@ class TestProviders : public QObject
     Q_OBJECT
 
 private slots:
-    void registryIsConsistent()
+    void constantsDescribeMistral()
     {
-        const QList<Providers::Provider> all = Providers::all();
-        QVERIFY(all.count() >= 2);
-        QVERIFY(Providers::isValid(Providers::defaultId()));
-
-        QStringList seen;
-        for (int i = 0; i < all.count(); ++i) {
-            const Providers::Provider &p = all.at(i);
-            QVERIFY(!p.id.isEmpty());
-            QVERIFY(!p.name.isEmpty());
-            QVERIFY(!seen.contains(p.id));
-            seen.append(p.id);
-
-            if (p.baseUrl.isEmpty()) {
-                // Only the custom entry has no address of its own, and it
-                // cannot offer a catalogue either
-                QCOMPARE(p.id, QString("custom"));
-                QVERIFY(p.fallbackModels.isEmpty());
-            } else {
-                QVERIFY(p.baseUrl.startsWith("https://"));
-                QVERIFY(!p.baseUrl.endsWith('/'));
-                // Every preset must be usable before /v1/models is fetched
-                QVERIFY(!p.fallbackModels.isEmpty());
-                QVERIFY(p.fallbackModels.contains(p.defaultModel));
-            }
-        }
+        QCOMPARE(Providers::ID, QString("mistral"));
+        QCOMPARE(Providers::NAME, QString("Mistral AI"));
+        QCOMPARE(Providers::BASE_URL, QString("https://api.mistral.ai/v1"));
+        QVERIFY(Providers::KEY_URL.contains("mistral.ai"));
+        QVERIFY(!Providers::REGION.isEmpty());
     }
 
-    void unknownIdYieldsTheDefault()
+    void fallbackCatalogueIsUsableBeforeTheFirstFetch()
     {
-        QCOMPARE(Providers::byId("nope").id, Providers::defaultId());
-        QVERIFY(!Providers::isValid("nope"));
+        const QStringList fallback = Providers::fallbackModels();
+        QVERIFY(!fallback.isEmpty());
+        // The default must always be offered
+        QVERIFY(fallback.contains(Providers::defaultModel()));
+        // No duplicates
+        QStringList sorted = fallback;
+        sorted.sort();
+        QVERIFY(std::adjacent_find(sorted.begin(), sorted.end()) == sorted.end());
+    }
+
+    void defaultModelIsAChatModel()
+    {
+        QVERIFY(Providers::isChatModelId(Providers::defaultModel()));
     }
 
     void nonChatModelsAreFilteredOut()

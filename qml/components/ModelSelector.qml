@@ -6,9 +6,7 @@ Dialog {
     allowedOrientations: Orientation.All
 
     property var onModelSelected: function(model) {}
-    // Provider whose catalogue is listed, and the model currently in use for
-    // whatever asked: both belong to a conversation, not to the app.
-    property string providerId: settingsManager.providerId
+    // The model currently in use for whatever asked.
     property string currentModel: settingsManager.modelName
 
     function prettyModelName(id) {
@@ -20,12 +18,12 @@ Dialog {
     }
 
     Component.onCompleted: {
-        var models = settingsManager.availableModelsFor(providerId)
+        var models = settingsManager.availableModels()
         for (var i = 0; i < models.length; i++) {
             modelListModel.append({
                 name: prettyModelName(models[i]),
                 value: models[i],
-                desc: settingsManager.isVisionModelFor(providerId, models[i])
+                desc: settingsManager.isVisionModel(models[i])
                       ? qsTr("Vision capable") : ""
             })
         }
@@ -40,23 +38,12 @@ Dialog {
         model: modelListModel
 
         // As the list header, the dialog banner keeps the items below it.
-        // The provider goes in a label of its own: DialogHeader has no
-        // description, unlike PageHeader.
         header: Column {
             width: modelSelectorDialog.width
             spacing: Theme.paddingSmall
 
             DialogHeader {
                 title: qsTr("Select Model")
-            }
-
-            Label {
-                x: Theme.horizontalPageMargin
-                width: parent.width - 2 * Theme.horizontalPageMargin
-                text: settingsManager.providerNameFor(modelSelectorDialog.providerId)
-                font.pixelSize: Theme.fontSizeExtraSmall
-                color: Theme.secondaryColor
-                truncationMode: TruncationMode.Fade
             }
 
             // Positioner padding needs QtQuick 2.6; this file imports 2.0

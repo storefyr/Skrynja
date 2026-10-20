@@ -136,6 +136,21 @@ en mettant à jour le dernier message au fur et à mesure que les chunks arriven
 - `setRemoteConversationId()`, `remoteConversationId()` — suivi de l'id distant
 - `markConversationDirty()` / `isConversationDirty()` — gestion des réponses annulées
 
+#### Providers (`providers.h/cpp`)
+**Responsabilité**: Constantes Mistral et filtres du catalogue de modèles.
+
+Mistral AI est le seul fournisseur : l'API Conversations (`/v1/conversations`)
+n'existe nulle part ailleurs. Ce qui reste de l'ancien registre multi-fournisseurs
+est réduit à :
+
+- `ID`, `NAME`, `BASE_URL`, `KEY_URL`, `REGION` — constantes de l'API Mistral
+- `fallbackModels()` / `defaultModel()` — catalogue de secours utilisé avant
+  le premier appel à `/v1/models`
+- `isChatModelId()` — filtre les entrées du catalogue qui ne sont pas des
+  modèles de chat (embeddings, speech, image, moderation)
+- `looksLikeVisionModel()` — devine le support des images d'après le nom du
+  modèle ; faux en cas de doute (le bouton pièce jointe reste caché)
+
 #### SettingsManager (`settingsmanager.h/cpp`)
 
 **Responsabilité**: Gestion persistante des paramètres utilisateur.

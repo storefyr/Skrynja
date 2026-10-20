@@ -6,7 +6,6 @@ Dialog {
 
     allowedOrientations: Orientation.All
 
-    property var providerList: settingsManager.availableProviders()
     property var availableModelsList: settingsManager.availableModels()
     property var chatStyleList: settingsManager.availableChatStyles()
     property var autoTitleModeList: settingsManager.availableAutoTitleModes()
@@ -15,10 +14,6 @@ Dialog {
     canAccept: true
 
     onAccepted: {
-        // The provider is already applied; the address it needs is not.
-        if (settingsManager.providerId === "custom") {
-            settingsManager.customBaseUrl = baseUrlField.text.trim()
-        }
         settingsManager.apiKey = apiKeyField.text.trim()
 
         var selectedModel = modelComboBox.visible && modelComboBox.currentItem
@@ -144,67 +139,10 @@ Dialog {
                 text: qsTr("API Configuration")
             }
 
-            ComboBox {
-                id: providerComboBox
-                label: qsTr("Provider")
-                description: qsTr("Used by new conversations. An existing one keeps the provider it started with.")
-                width: parent.width
-
-                menu: ContextMenu {
-                    Repeater {
-                        model: settingsPage.providerList
-
-                        MenuItem {
-                            text: modelData.freeTier
-                                  ? qsTr("%1 - free tier").arg(modelData.name)
-                                  : modelData.name
-                            property string providerValue: modelData.id
-                            // Reacting to the click rather than to currentItem:
-                            // the menu is populated after the index is restored,
-                            // and that must not read as a user choice.
-                            onClicked: settingsPage.applyProvider(providerValue)
-                        }
-                    }
-                }
-
-                Component.onCompleted: {
-                    for (var i = 0; i < settingsPage.providerList.length; i++) {
-                        if (settingsPage.providerList[i].id === settingsManager.providerId) {
-                            currentIndex = i
-                            return
-                        }
-                    }
-                }
-            }
-
             Label {
                 x: Theme.horizontalPageMargin
                 width: parent.width - 2 * Theme.horizontalPageMargin
-                text: qsTr("Hosted in %1").arg(settingsManager.providerRegion)
-                font.pixelSize: Theme.fontSizeExtraSmall
-                color: Theme.secondaryColor
-                wrapMode: Text.WordWrap
-            }
-
-            TextField {
-                id: baseUrlField
-                width: parent.width
-                visible: settingsManager.providerId === "custom"
-                label: qsTr("Endpoint base URL")
-                placeholderText: qsTr("https://host/v1")
-                text: settingsManager.customBaseUrl
-                inputMethodHints: Qt.ImhNoPredictiveText | Qt.ImhNoAutoUppercase | Qt.ImhUrlCharactersOnly
-
-                EnterKey.enabled: text.length > 0
-                EnterKey.iconSource: "image://theme/icon-m-enter-accept"
-                EnterKey.onClicked: focus = false
-            }
-
-            Label {
-                x: Theme.horizontalPageMargin
-                width: parent.width - 2 * Theme.horizontalPageMargin
-                visible: settingsManager.providerId === "custom"
-                text: qsTr("Anything OpenAI-compatible, up to a llama.cpp or Ollama server on your own network.")
+                text: qsTr("Hosted in France (EU)")
                 font.pixelSize: Theme.fontSizeExtraSmall
                 color: Theme.secondaryColor
                 wrapMode: Text.WordWrap
@@ -213,8 +151,7 @@ Dialog {
             Label {
                 x: Theme.horizontalPageMargin
                 width: parent.width - 2 * Theme.horizontalPageMargin
-                visible: settingsManager.providerKeyUrl !== ""
-                text: qsTr("To get an API key, visit %1").arg(settingsManager.providerKeyUrl)
+                text: qsTr("To get an API key, visit console.mistral.ai")
                 font.pixelSize: Theme.fontSizeExtraSmall
                 color: Theme.secondaryColor
                 wrapMode: Text.WordWrap
@@ -223,12 +160,8 @@ Dialog {
             TextField {
                 id: apiKeyField
                 width: parent.width
-                label: settingsManager.providerKeyRequired
-                       ? qsTr("%1 API key").arg(settingsManager.providerName)
-                       : qsTr("%1 API key (optional)").arg(settingsManager.providerName)
-                placeholderText: settingsManager.providerKeyRequired
-                                 ? qsTr("Enter your API key")
-                                 : qsTr("Leave empty to stay anonymous")
+                label: qsTr("Mistral AI API key")
+                placeholderText: qsTr("Enter your API key")
                 text: settingsManager.apiKey
                 echoMode: settingsPage.revealKey ? TextInput.Normal : TextInput.Password
                 inputMethodHints: Qt.ImhNoPredictiveText | Qt.ImhNoAutoUppercase | Qt.ImhSensitiveData
@@ -248,7 +181,7 @@ Dialog {
             Label {
                 x: Theme.horizontalPageMargin
                 width: parent.width - 2 * Theme.horizontalPageMargin
-                text: qsTr("The key is stored scrambled in an owner-only file on this device and is only ever sent to %1. Each provider keeps its own key.").arg(settingsManager.providerBaseUrl)
+                text: qsTr("The key is stored scrambled in an owner-only file on this device and is only ever sent to api.mistral.ai.")
                 font.pixelSize: Theme.fontSizeExtraSmall
                 color: Theme.secondaryColor
                 wrapMode: Text.WordWrap
@@ -618,7 +551,7 @@ Dialog {
             Label {
                 x: Theme.horizontalPageMargin
                 width: parent.width - 2 * Theme.horizontalPageMargin
-                text: qsTr("Powered by %1 • MIT License").arg(settingsManager.providerName)
+                text: qsTr("Powered by Mistral AI • MIT License")
                 wrapMode: Text.WordWrap
                 font.pixelSize: Theme.fontSizeExtraSmall
                 color: Theme.secondaryColor
@@ -652,7 +585,7 @@ Dialog {
         target: mistralApi
 
         onModelsFetched: {
-            settingsManager.updateModelCache(models, providerId)
+            settingsManager.updateModelCache(models)
             settingsPage.availableModelsList = settingsManager.availableModels()
             modelComboBox.selectCurrentModel()
             modelNameField.text = settingsManager.modelName
@@ -661,26 +594,7 @@ Dialog {
 
     Component.onCompleted: fetchModelsIfNeeded()
 
-    // Applied straight away rather than on Save: the key field and the model
-    // list below it both belong to the selected provider.
-    function applyProvider(providerValue) {
-        if (providerValue === settingsManager.providerId) {
-            return
-        }
-        // Whatever was typed belongs to the provider being left, and the field
-        // is about to be overwritten: keep it there.
-        settingsManager.apiKey = apiKeyField.text.trim()
-        settingsManager.providerId = providerValue
-        apiKeyField.text = settingsManager.apiKey
-        availableModelsList = settingsManager.availableModels()
-        modelComboBox.selectCurrentModel()
-        modelNameField.text = settingsManager.modelName
-        fetchModelsIfNeeded()
-    }
-
     function fetchModelsIfNeeded() {
-        // The cache is per provider, so a switch to one never queried before
-        // fetches even though the previous provider had a fresh list.
         if (settingsManager.hasApiKey && settingsManager.modelCacheStale()) {
             mistralApi.fetchModels(settingsManager.apiKey)
         }

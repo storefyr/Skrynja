@@ -429,9 +429,6 @@ void MistralAPI::fetchModels(const QString &apiKey)
 
     noteRequestSent();
     QNetworkReply *reply = m_networkManager->get(request);
-    // Pinned to the reply: the active provider may change before it answers
-    reply->setProperty("providerId", QString("mistral"));
-    reply->setProperty("modelSource", int(Providers::MistralCatalogue));
 
     connect(reply, &QNetworkReply::finished,
             this, &MistralAPI::onModelsFetchFinished);
@@ -883,10 +880,6 @@ void MistralAPI::onModelsFetchFinished()
         return;
     }
 
-    const QString providerId = reply->property("providerId").toString();
-    const Providers::ModelSource modelSource =
-            Providers::ModelSource(reply->property("modelSource").toInt());
-
     QJsonArray data = doc.object()["data"].toArray();
     QStringList ids;
     QVariantList models;
@@ -895,40 +888,21 @@ void MistralAPI::onModelsFetchFinished()
         QJsonObject modelObj = value.toObject();
         QString id = modelObj["id"].toString();
         QJsonObject caps = modelObj["capabilities"].toObject();
-        bool vision = false;
 
-        if (modelSource == Providers::MistralCatalogue) {
-            // Keep only current chat models; dated snapshots add noise, but
-            // some new models ship under an undated id with no -latest alias
-            static const QRegularExpression datedSuffix("-\\d{4}$");
-            if (!caps["completion_chat"].toBool() || id.contains(datedSuffix)) {
-                continue;
-            }
-            vision = caps["vision"].toBool();
-        } else {
-            // The OpenAI catalogue describes nothing but an id, and mixes in
-            // embeddings, speech and image models. Filter by name, and drop
-            // entries the provider says cannot complete anything.
-            if (!Providers::isChatModelId(id)) {
-                continue;
-            }
-            if (modelObj.contains("max_completion_tokens")
-                    && modelObj["max_completion_tokens"].toInt() == 0) {
-                continue;
-            }
-            // Some of them do fill in capabilities; believe them over the name.
-            vision = caps.contains("vision") ? caps["vision"].toBool()
-                                             : Providers::looksLikeVisionModel(id);
+        // Keep only current chat models; dated snapshots add noise, but
+        // some new models ship under an undated id with no -latest alias
+        static const QRegularExpression datedSuffix("-\\d{4}$");
+        if (!caps["completion_chat"].toBool() || id.contains(datedSuffix)) {
+            continue;
         }
 
         if (ids.contains(id)) {
             continue;
         }
         ids.append(id);
-
         QVariantMap entry;
         entry["id"] = id;
-        entry["vision"] = vision;
+        entry["vision"] = caps["vision"].toBool();
         models.append(entry);
     }
 
@@ -943,7 +917,7 @@ void MistralAPI::onModelsFetchFinished()
         return a.toMap()["id"].toString() < b.toMap()["id"].toString();
     });
 
-    emit modelsFetched(models, providerId);
+    emit modelsFetched(models);
 }
 
 // ---------------------------------------------------------------- SSE events

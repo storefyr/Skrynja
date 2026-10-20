@@ -39,19 +39,9 @@ Page {
         : (conversationModelOverride !== "" ? conversationModelOverride
                                             : settingsManager.modelName)
 
-    // The conversation is pinned to a provider, which is not necessarily the
-    // one selected in the settings: everything on this page asks about that
-    // one, from the key used to send to the models offered in the picker.
-    readonly property string conversationProvider: conversationManager.currentProviderId
-    readonly property string providerLabel:
-        settingsManager.providerNameFor(conversationProvider)
-    readonly property bool providerReady:
-        settingsManager.hasApiKeyFor(conversationProvider)
-
-    // A model override recorded under another provider would be rejected here,
-    // so it is checked against this provider's catalogue.
+    readonly property bool providerReady: settingsManager.hasApiKey
     readonly property string activeModel:
-        settingsManager.resolveModelFor(conversationProvider, requestedModel)
+        settingsManager.resolveModel(requestedModel)
 
     onStatusChanged: {
         if (status === PageStatus.Active) {
@@ -101,12 +91,10 @@ Page {
 
         header: PageHeader {
             title: "Skrynja"
-            // Who is going to answer, spelled out: the provider is a property
-            // of the conversation, not of the app. A trailing asterisk marks a
+            // Which model is going to answer. A trailing asterisk marks a
             // model pinned to this conversation.
-            description: chatPage.providerLabel + " \u00b7 "
-                         + (chatPage.conversationModelOverride !== ""
-                            ? chatPage.activeModel + " *" : chatPage.activeModel)
+            description: chatPage.conversationModelOverride !== ""
+                            ? chatPage.activeModel + " *" : chatPage.activeModel
         }
 
         // The two pulleys used to carry the same seven entries, which made both
@@ -147,7 +135,7 @@ Page {
         ViewPlaceholder {
             enabled: conversationModel.count === 0
             text: firstUse ? qsTr("Welcome to Skrynja") : qsTr("Start a conversation")
-            hintText: firstUse ? qsTr("Pick a provider and enter its API key to get started") : qsTr("Type a message below")
+            hintText: firstUse ? qsTr("Enter your Mistral API key to get started") : qsTr("Type a message below")
         }
 
         delegate: MessageBubble {
@@ -159,7 +147,6 @@ Page {
             timestamp: model.timestamp
             imagePath: model.imagePath
             messageModel: model.messageModel
-            messageProvider: model.provider
 
             onPinToggled: {
                 conversationModel.togglePinned(index)
@@ -396,7 +383,7 @@ Page {
                 IconButton {
                     id: attachButton
                     anchors.verticalCenter: parent.verticalCenter
-                    visible: settingsManager.isVisionModelFor(chatPage.conversationProvider,
+                    visible: settingsManager.isVisionModel(
                                                               chatPage.activeModel)
                     icon.source: "image://theme/icon-m-attach"
                     icon.highlighted: chatPage.attachedImagePath !== ""
@@ -709,9 +696,7 @@ Page {
     Connections {
         target: mistralApi
 
-        // The catalogue is filed under the provider it was fetched for, never
-        // under the one that happens to be selected when it lands.
-        onModelsFetched: settingsManager.updateModelCache(models, providerId)
+        onModelsFetched: settingsManager.updateModelCache(models)
     }
 
     Component.onCompleted: {
@@ -750,15 +735,12 @@ Page {
         onTriggered: firstLaunchDialog.open()
     }
 
-    // Each provider has its own catalogue and its own cache, so opening a
-    // conversation pinned elsewhere may be the first time we need that one.
     function fetchModelsIfNeeded() {
         if (mistralApi.isBusy) {
             return
         }
-        if (settingsManager.hasApiKeyFor(conversationProvider)
-                && settingsManager.modelCacheStaleFor(conversationProvider)) {
-            mistralApi.fetchModels(settingsManager.apiKeyFor(conversationProvider))
+        if (settingsManager.hasApiKey && settingsManager.modelCacheStale()) {
+            mistralApi.fetchModels(settingsManager.apiKey)
         }
     }
 
@@ -777,7 +759,7 @@ Page {
         var digest = conversationManager.conversationDigest(conversationId)
         if (digest) {
             mistralApi.generateTitle(
-                        settingsManager.apiKeyFor(chatPage.conversationProvider),
+                        settingsManager.apiKey,
                         chatPage.activeModel, digest, conversationId)
         }
     }
@@ -904,14 +886,10 @@ Page {
 
     ModelSelector {
         id: modelSelector
-        // The picker lists what this conversation's provider serves, which is
-        // not necessarily the provider selected in the settings.
-        providerId: chatPage.conversationProvider
         currentModel: chatPage.activeModel
 
         // Acts on this conversation rather than on the global default: the
-        // button sits next to its input, and the conversation may well be
-        // talking to another provider entirely.
+        // button sits next to its input.
         onModelSelected: function(selectedModel) {
             conversationManager.setConversationOverrides(
                         conversationManager.currentConversationId(),

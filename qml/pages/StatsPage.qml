@@ -18,9 +18,7 @@ Page {
     property var categoryList: buildCategoryList()
     property int maxCategoryCount: categoryList.length > 0 ? categoryList[0].count : 1
     // Both already sorted most-used first in C++, so [0] is the maximum.
-    property var providerUsage: stats.providerUsage || []
     property var modelAnswers: (stats.modelAnswers || []).slice(0, 6)
-    property int maxProviderCount: providerUsage.length > 0 ? providerUsage[0].count : 1
     property int maxModelCount: modelAnswers.length > 0 ? modelAnswers[0].count : 1
     property var funStats: conversationManager.getFunStats()
     property var topWords: funStats.topWords || []
@@ -138,7 +136,7 @@ Page {
 
     function formatCost(value) {
         if (value < 0) return qsTr("n/a")
-        // A provider that bills nothing within its rate limits, not a rounding
+        // A model whose price is not in the table, not a rounding
         // artefact: zero is the real answer there.
         if (value === 0) return qsTr("free")
         if (value < 0.01) return "< $0.01"
@@ -333,111 +331,17 @@ Page {
                 }
             }
 
-            // Who does the answering
+            // Which models do the answering
             SectionHeader {
-                text: qsTr("Providers and models")
-                visible: statsPage.providerUsage.length > 0
+                text: qsTr("Models")
+                visible: statsPage.modelAnswers.length > 0
             }
 
             Column {
                 x: Theme.horizontalPageMargin
                 width: parent.width - 2 * Theme.horizontalPageMargin
                 spacing: Theme.paddingSmall
-                visible: statsPage.providerUsage.length > 0
-
-                Item {
-                    width: parent.width
-                    height: topProviderCaption.height
-
-                    Label {
-                        id: topProviderCaption
-                        anchors.left: parent.left
-                        text: qsTr("Most used provider")
-                        font.pixelSize: Theme.fontSizeExtraSmall
-                        color: Theme.secondaryColor
-                    }
-
-                    Label {
-                        anchors.right: parent.right
-                        text: settingsManager.providerNameFor(statsPage.stats.topProvider || "")
-                        font.pixelSize: Theme.fontSizeSmall
-                        color: Theme.highlightColor
-                    }
-                }
-
-                Item {
-                    width: parent.width
-                    height: topModelCaption.height
-                    visible: (statsPage.stats.topModel || "") !== ""
-
-                    Label {
-                        id: topModelCaption
-                        anchors.left: parent.left
-                        text: qsTr("Most used model")
-                        font.pixelSize: Theme.fontSizeExtraSmall
-                        color: Theme.secondaryColor
-                    }
-
-                    Label {
-                        anchors.left: topModelCaption.right
-                        anchors.leftMargin: Theme.paddingMedium
-                        anchors.right: parent.right
-                        horizontalAlignment: Text.AlignRight
-                        text: statsPage.stats.topModel || ""
-                        font.pixelSize: Theme.fontSizeSmall
-                        color: Theme.highlightColor
-                        truncationMode: TruncationMode.Fade
-                    }
-                }
-
-                Label {
-                    width: parent.width
-                    text: qsTr("Answers per provider")
-                    font.pixelSize: Theme.fontSizeTiny
-                    color: Theme.secondaryColor
-                }
-
-                Repeater {
-                    model: statsPage.providerUsage
-
-                    Item {
-                        width: parent.width
-                        height: Theme.fontSizeSmall + Theme.paddingMedium
-
-                        Label {
-                            id: rowName
-                            anchors.left: parent.left
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: parent.width * 0.35
-                            text: settingsManager.providerNameFor(modelData.provider)
-                            font.pixelSize: Theme.fontSizeExtraSmall
-                            color: Theme.primaryColor
-                            truncationMode: TruncationMode.Fade
-                        }
-
-                        Rectangle {
-                            anchors {
-                                left: rowName.right
-                                leftMargin: Theme.paddingMedium
-                                verticalCenter: parent.verticalCenter
-                            }
-                            height: Theme.paddingMedium
-                            radius: height / 2
-                            color: Theme.highlightColor
-                            width: (parent.width * 0.45) * statsPage.chartProgress
-                                   * modelData.count / Math.max(1, statsPage.maxProviderCount)
-                        }
-
-                        Label {
-                            anchors.right: parent.right
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: modelData.count
-                            font.pixelSize: Theme.fontSizeExtraSmall
-                            color: Theme.secondaryColor
-                        }
-                    }
-                }
-
+                visible: statsPage.modelAnswers.length > 0
                 Label {
                     width: parent.width
                     visible: statsPage.modelAnswers.length > 0
@@ -487,11 +391,10 @@ Page {
                     }
                 }
 
-                // Counted from the answers, not from the token ledger, which
-                // has no provider. Pre-2.3 answers carry a provider, no model.
+                // Counted from the answers, not from the token ledger.
                 Label {
                     width: parent.width
-                    text: qsTr("Counted from the answers themselves. Answers received before this app recorded models appear under their provider only.")
+                    text: qsTr("Counted from the answers themselves. Answers received before this app recorded models are not counted.")
                     font.pixelSize: Theme.fontSizeTiny
                     color: Theme.secondaryColor
                     wrapMode: Text.WordWrap
@@ -781,7 +684,7 @@ Page {
 
                 Label {
                     width: parent.width
-                    text: qsTr("Estimate based on public list prices, in US dollars. Only usage recorded by this app is counted - check your provider console for the real invoice.")
+                    text: qsTr("Estimate based on public list prices, in US dollars. Only usage recorded by this app is counted - check your Mistral console for the real invoice.")
                     font.pixelSize: Theme.fontSizeTiny
                     color: Theme.secondaryColor
                     wrapMode: Text.WordWrap

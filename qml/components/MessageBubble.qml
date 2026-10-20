@@ -14,9 +14,7 @@ ListItem {
     property double timestamp: 0
     property string imagePath: ""
     // Who produced this answer. Both empty on user turns; on assistant turns
-    // written before 2.3 the provider is known and the model is not.
     property string messageModel: ""
-    property string messageProvider: ""
 
     signal pinToggled()
 
@@ -181,18 +179,10 @@ ListItem {
             color: Theme.secondaryColor
         }
 
-        // Origin of the answer. A conversation may have changed provider
-        // halfway through, and without this the transcript would not say so.
+        // Which model produced this answer.
         Label {
             width: parent.width
-            text: {
-                if (messageItem.messageProvider === "") {
-                    return ""
-                }
-                var name = settingsManager.providerNameFor(messageItem.messageProvider)
-                return messageItem.messageModel === ""
-                        ? name : name + " \u00b7 " + messageItem.messageModel
-            }
+            text: messageItem.messageModel
             visible: !messageItem.isUser && text !== "" && content !== ""
             horizontalAlignment: messageItem.textAlignment
             font.pixelSize: Theme.fontSizeTiny

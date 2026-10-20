@@ -22,13 +22,8 @@ Page {
 
             PageHeader {
                 title: conversationDetails.title || qsTr("Conversation")
-                description: {
-                    var when = Qt.formatDateTime(
+                description: Qt.formatDateTime(
                                 new Date(conversationDetails.updatedAt || 0), "dd/MM/yyyy hh:mm")
-                    var provider = conversationDetails.provider || ""
-                    return provider === "" ? when
-                        : settingsManager.providerNameFor(provider) + " · " + when
-                }
             }
 
             // Animated stats panel

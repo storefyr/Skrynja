@@ -38,21 +38,12 @@ class ConversationManager : public QObject
     // Conversation currently receiving a streamed answer, empty when idle.
     // Lets the history show which one is still being written to.
     Q_PROPERTY(QString streamingConversationId READ streamingConversationId NOTIFY streamingConversationIdChanged)
-    // Provider of the conversation on screen. A conversation is pinned to the
-    // provider it was created with, so changing the default in the settings
-    // does not silently redirect an ongoing conversation elsewhere.
-    Q_PROPERTY(QString currentProviderId READ currentProviderId NOTIFY currentProviderIdChanged)
-
 public:
     explicit ConversationManager(QObject *parent = nullptr);
 
     ConversationModel* currentConversation() const { return m_currentConversation; }
     int conversationCount() const { return m_conversations.count(); }
     QString streamingConversationId() const { return m_streamingConversationId; }
-    QString currentProviderId() const;
-
-    // Default for conversations created from now on. Fed by the settings.
-    void setDefaultProvider(const QString &providerId);
 
     Q_INVOKABLE void createNewConversation();
     Q_INVOKABLE void loadConversation(const QString &conversationId);
@@ -92,11 +83,6 @@ public:
     Q_INVOKABLE void setConversationOverrides(const QString &conversationId,
                                               const QString &model,
                                               const QString &systemPrompt);
-    // Moves a conversation to another provider. The answers already received
-    // are left alone; only what comes next goes to the new endpoint.
-    Q_INVOKABLE void setConversationProvider(const QString &conversationId,
-                                             const QString &providerId);
-    Q_INVOKABLE QString conversationProvider(const QString &conversationId) const;
 
     // The remote conversation id of the current conversation, empty when the
     // remote conversation has not been created yet. Pass it to
@@ -135,7 +121,6 @@ signals:
     void streamingUpdated();
     void responseFinished(const QString &conversationId);
     void streamingConversationIdChanged();
-    void currentProviderIdChanged();
     void tokenUsageChanged(const QString &conversationId,
                            int promptTokens, int completionTokens);
 
@@ -158,10 +143,7 @@ private:
     QTimer *m_streamTimer;
     QString m_streamBuffer;
     QString m_activeModel;
-    QString m_defaultProvider;
     QString m_streamingConversationId;
-    // Provider the in-flight answer is coming from, recorded with it
-    QString m_streamingProvider;
     bool m_streamDirty;
     qint64 m_totalPromptTokens;
     qint64 m_totalCompletionTokens;

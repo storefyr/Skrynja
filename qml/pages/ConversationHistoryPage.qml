@@ -189,18 +189,34 @@ Page {
                 }
                 spacing: Theme.paddingMedium
 
-                // Carries the provider, the streaming pulse and the unread
-                // light at once, which frees the title line.
-                ProviderBadge {
-                    id: providerBadge
+                // The streaming pulse and the unread light, carried by a
+                // small dot on the row.
+                Rectangle {
+                    id: statusDot
                     anchors.verticalCenter: parent.verticalCenter
-                    provider: model.provider || ""
-                    streaming: model.id === conversationManager.streamingConversationId
-                    unread: model.unread ? true : false
+                    width: Theme.paddingSmall
+                    height: width
+                    radius: width / 2
+                    visible: model.id === conversationManager.streamingConversationId
+                             || model.unread
+                    color: Theme.highlightColor
+                    SequentialAnimation {
+                        running: model.id === conversationManager.streamingConversationId
+                        loops: Animation.Infinite
+                        alwaysRunToEnd: true
+                        NumberAnimation {
+                            target: statusDot; property: "opacity"
+                            from: 1; to: 0.25; duration: 600
+                        }
+                        NumberAnimation {
+                            target: statusDot; property: "opacity"
+                            from: 0.25; to: 1; duration: 600
+                        }
+                    }
                 }
 
                 Column {
-                    width: parent.width - providerBadge.width - parent.spacing
+                    width: parent.width - statusDot.width - parent.spacing
                     spacing: Theme.paddingSmall
 
                     Label {
@@ -208,7 +224,7 @@ Page {
                         text: model.title || qsTr("Empty conversation")
                         color: conversationItem.highlighted ? Theme.highlightColor : Theme.primaryColor
                         font.pixelSize: Theme.fontSizeMedium
-                        font.bold: providerBadge.streaming || providerBadge.unread
+                        font.bold: statusDot.visible
                         truncationMode: TruncationMode.Fade
                     }
 
@@ -262,19 +278,10 @@ Page {
                         }
                     }
 
-                    // Who answers here. The badge already says which provider,
-                    // so this line is mostly about the model.
+                    // Which model answered last.
                     Label {
                         width: parent.width
-                        text: {
-                            var provider = model.provider || ""
-                            if (provider === "") {
-                                return ""
-                            }
-                            var name = settingsManager.providerNameFor(provider)
-                            var used = model.lastModel || ""
-                            return used === "" ? name : name + " · " + used
-                        }
+                        text: model.lastModel || ""
                         visible: text !== ""
                         color: conversationItem.highlighted ? Theme.secondaryHighlightColor
                                                             : Theme.secondaryColor

@@ -43,9 +43,7 @@ DISTFILES += qml/harbour-skrynja.qml \
     qml/components/CountUpLabel.qml \
     qml/components/RatioDonut.qml \
     qml/components/CategoryChip.qml \
-    qml/components/ProviderBadge.qml \
     qml/components/Categories.js \
-    qml/components/ProvidersUi.js \
     rpm/harbour-skrynja.spec \
     harbour-skrynja.desktop
 
