@@ -19,8 +19,8 @@
 int main(int argc, char *argv[])
 {
     QGuiApplication *app = SailfishApp::application(argc, argv);
-    app->setOrganizationName("harbour-sailcat");
-    app->setApplicationName("SailCat");
+    app->setOrganizationName("harbour-skrynja");
+    app->setApplicationName("Skrynja");
 
     QQuickView *view = SailfishApp::createView();
 
@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
 
     // Load initial translation based on settings
     QString language = settingsManager.language();
-    QString translationFile = QString("harbour-sailcat-%1").arg(language);
+    QString translationFile = QString("harbour-skrynja-%1").arg(language);
     if (translator->load(translationFile, SailfishApp::pathTo("translations").toLocalFile())) {
         app->installTranslator(translator);
     }
@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
     // Lambda to switch language dynamically
     auto switchLanguage = [app, translator, view](const QString &lang) {
         app->removeTranslator(translator);
-        QString translationFile = QString("harbour-sailcat-%1").arg(lang);
+        QString translationFile = QString("harbour-skrynja-%1").arg(lang);
         if (translator->load(translationFile, SailfishApp::pathTo("translations").toLocalFile())) {
             app->installTranslator(translator);
         }
@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
     context->setContextProperty("settingsManager", &settingsManager);
 
     // Load main QML
-    view->setSource(SailfishApp::pathTo("qml/harbour-sailcat.qml"));
+    view->setSource(SailfishApp::pathTo("qml/harbour-skrynja.qml"));
     view->show();
 
     return app->exec();

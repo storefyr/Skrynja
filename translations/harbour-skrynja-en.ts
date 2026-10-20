@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS>
-<TS version="2.1" language="fi">
+<TS version="2.1" language="en">
 <context>
     <name>Categories</name>
     <message>
         <source>Code</source>
-        <translation>Koodi</translation>
+        <translation>Code</translation>
     </message>
     <message>
         <source>Debugging</source>
-        <translation>Virheenkorjaus</translation>
+        <translation>Debugging</translation>
     </message>
     <message>
         <source>DevOps</source>
@@ -25,110 +25,114 @@
     </message>
     <message>
         <source>Writing</source>
-        <translation>Kirjoittaminen</translation>
+        <translation>Writing</translation>
     </message>
     <message>
         <source>Translation</source>
-        <translation>Käännös</translation>
+        <translation>Translation</translation>
     </message>
     <message>
         <source>Learning</source>
-        <translation>Oppiminen</translation>
+        <translation>Learning</translation>
     </message>
     <message>
         <source>Research</source>
-        <translation>Tutkimus</translation>
+        <translation>Research</translation>
     </message>
     <message>
         <source>Maths</source>
-        <translation>Matematiikka</translation>
+        <translation>Maths</translation>
     </message>
     <message>
         <source>Science</source>
-        <translation>Tiede</translation>
+        <translation>Science</translation>
     </message>
     <message>
         <source>Business</source>
-        <translation>Liiketoiminta</translation>
+        <translation>Business</translation>
     </message>
     <message>
         <source>Finance</source>
-        <translation>Talous</translation>
+        <translation>Finance</translation>
     </message>
     <message>
         <source>Career</source>
-        <translation>Ura</translation>
+        <translation>Career</translation>
     </message>
     <message>
         <source>Legal</source>
-        <translation>Laki</translation>
+        <translation>Legal</translation>
     </message>
     <message>
         <source>Health</source>
-        <translation>Terveys</translation>
+        <translation>Health</translation>
     </message>
     <message>
         <source>Cooking</source>
-        <translation>Ruoanlaitto</translation>
+        <translation>Cooking</translation>
     </message>
     <message>
         <source>Travel</source>
-        <translation>Matkailu</translation>
+        <translation>Travel</translation>
     </message>
     <message>
         <source>Home</source>
-        <translation>Koti</translation>
+        <translation>Home</translation>
     </message>
     <message>
         <source>Gaming</source>
-        <translation>Pelit</translation>
+        <translation>Gaming</translation>
     </message>
     <message>
         <source>Music</source>
-        <translation>Musiikki</translation>
+        <translation>Music</translation>
     </message>
     <message>
         <source>Books &amp; Movies</source>
-        <translation>Kirjat ja elokuvat</translation>
+        <translation>Books &amp; Movies</translation>
     </message>
     <message>
         <source>Sports</source>
-        <translation>Urheilu</translation>
+        <translation>Sports</translation>
     </message>
     <message>
         <source>Relationships</source>
-        <translation>Ihmissuhteet</translation>
+        <translation>Relationships</translation>
     </message>
     <message>
         <source>Productivity</source>
-        <translation>Tuottavuus</translation>
+        <translation>Productivity</translation>
     </message>
     <message>
         <source>Ideas</source>
-        <translation>Ideat</translation>
+        <translation>Ideas</translation>
     </message>
     <message>
         <source>Practical</source>
-        <translation>Käytännöllinen</translation>
+        <translation>Practical</translation>
     </message>
     <message>
         <source>Other</source>
-        <translation>Muu</translation>
+        <translation>Other</translation>
     </message>
 </context>
 <context>
     <name>ChatPage</name>
     <message>
-        <source>New conversation</source>
-        <translation>Uusi keskustelu</translation>
+        <source>Settings &amp; About</source>
+        <translation>Settings &amp; About</translation>
     </message>
     <message>
-        <source>Welcome to SailCat</source>
-        <translation>Welcome to SailCat</translation>
+        <source>New conversation</source>
+        <translation>New conversation</translation>
+    </message>
+    <message>
+        <source>Welcome to Skrynja</source>
+        <translation>Welcome to Skrynja</translation>
     </message>
     <message>
         <source>Pick a provider and enter its API key to get started</source>
-        <translation>Valitse palveluntarjoaja ja syötä sen API-avain aloittaaksesi</translation>
+        <translation>Pick a provider and enter its API key to get started</translation>
     </message>
     <message>
         <source>Start a conversation</source>
@@ -143,97 +147,93 @@
         <translation>Type a message...</translation>
     </message>
     <message>
-        <source>1. Pick a provider in Settings
-2. Paste the API key it gives you
-3. Start chatting!</source>
-        <translation>1. Valitse palveluntarjoaja asetuksista
-2. Liitä sen antama API-avain
-3. Aloita keskustelu!</translation>
-    </message>
-    <message>
-        <source>Conversation exported</source>
-        <translation>Keskustelu viety</translation>
-    </message>
-    <message>
-        <source>Export conversation</source>
-        <translation>Vie keskustelu</translation>
-    </message>
-    <message>
-        <source>Export failed</source>
-        <translation>Vienti epäonnistui</translation>
-    </message>
-    <message>
         <source>Get Started</source>
-        <translation>Aloita</translation>
-    </message>
-    <message>
-        <source>Getting Started</source>
-        <translation>Aloittaminen</translation>
-    </message>
-    <message>
-        <source>The one you pick. SailCat talks to Mistral AI, Scaleway, OVHcloud, Groq or any OpenAI-compatible endpoint, with your own account. Several of them have a free tier, and the European ones keep your conversations on this side of the Atlantic.</source>
-        <translation>Se, jonka valitset. SailCat puhuu Mistral AI:n, Scalewayn, OVHcloudin, Groqin tai minkä tahansa OpenAI-yhteensopivan päätepisteen kanssa omalla tililläsi. Useilla on ilmainen taso, ja eurooppalaiset pitävät keskustelusi tällä puolella Atlanttia.</translation>
-    </message>
-    <message>
-        <source>This conversation now uses %1</source>
-        <translation>Tämä keskustelu käyttää nyt mallia %1</translation>
-    </message>
-    <message>
-        <source>Pinned messages</source>
-        <translation>Kiinnitetyt viestit</translation>
-    </message>
-    <message>
-        <source>Privacy &amp; Storage</source>
-        <translation>Yksityisyys ja tallennus</translation>
-    </message>
-    <message>
-        <source>Settings &amp; About</source>
-        <translation>Asetukset ja tietoja</translation>
-    </message>
-    <message>
-        <source>Tokens: %1 total - last: %2 in / %3 out</source>
-        <translation>Tokenit: %1 yhteensä - viimeisin: %2 sisään / %3 ulos</translation>
+        <translation>Get Started</translation>
     </message>
     <message>
         <source>Which AI answers you?</source>
-        <translation>Mikä tekoäly vastaa sinulle?</translation>
+        <translation>Which AI answers you?</translation>
+    </message>
+    <message>
+        <source>The one you pick. Skrynja talks to Mistral AI, Scaleway, OVHcloud, Groq or any OpenAI-compatible endpoint, with your own account. Several of them have a free tier, and the European ones keep your conversations on this side of the Atlantic.</source>
+        <translation>The one you pick. Skrynja talks to Mistral AI, Scaleway, OVHcloud, Groq or any OpenAI-compatible endpoint, with your own account. Several of them have a free tier, and the European ones keep your conversations on this side of the Atlantic.</translation>
+    </message>
+    <message>
+        <source>Privacy &amp; Storage</source>
+        <translation>Privacy &amp; Storage</translation>
+    </message>
+    <message>
+        <source>Getting Started</source>
+        <translation>Getting Started</translation>
+    </message>
+    <message>
+        <source>1. Pick a provider in Settings
+2. Paste the API key it gives you
+3. Start chatting!</source>
+        <translation>1. Pick a provider in Settings
+2. Paste the API key it gives you
+3. Start chatting!</translation>
+    </message>
+    <message>
+        <source>Conversation exported</source>
+        <translation>Conversation exported</translation>
+    </message>
+    <message>
+        <source>Export conversation</source>
+        <translation>Export conversation</translation>
+    </message>
+    <message>
+        <source>Export failed</source>
+        <translation>Export failed</translation>
+    </message>
+    <message>
+        <source>This conversation now uses %1</source>
+        <translation>This conversation now uses %1</translation>
+    </message>
+    <message>
+        <source>Pinned messages</source>
+        <translation>Pinned messages</translation>
+    </message>
+    <message>
+        <source>Tokens: %1 total - last: %2 in / %3 out</source>
+        <translation>Tokens: %1 total - last: %2 in / %3 out</translation>
     </message>
     <message>
         <source>• Your conversations are stored locally on your device
 • No sync with any web interface
 • Each provider keeps its own key, stored scrambled
 • Your data stays on your phone</source>
-        <translation>• Keskustelusi tallennetaan paikallisesti laitteellesi
-• Ei synkronointia minkään verkkokäyttöliittymän kanssa
-• Jokaisella palveluntarjoajalla on oma avaimensa, salattuna
-• Tietosi pysyvät puhelimessasi</translation>
+        <translation>• Your conversations are stored locally on your device
+• No sync with any web interface
+• Each provider keeps its own key, stored scrambled
+• Your data stays on your phone</translation>
     </message>
     <message>
         <source>Prompt library</source>
-        <translation>Kehotekirjasto</translation>
+        <translation>Prompt library</translation>
     </message>
     <message>
         <source>Conversation settings</source>
-        <translation>Keskustelun asetukset</translation>
+        <translation>Conversation settings</translation>
     </message>
     <message numerus="yes">
         <source>Context limited: %n older message(s) not sent</source>
         <translation>
-            <numerusform>Konteksti rajattu: %n vanha viesti jätetty lähettämättä</numerusform>
-            <numerusform>Konteksti rajattu: %n vanhaa viestiä jätetty lähettämättä</numerusform>
+            <numerusform>Context limited: %n older message(s) not sent</numerusform>
+            <numerusform>Context limited: %n older message(s) not sent</numerusform>
         </translation>
     </message>
     <message>
         <source>Tokens: %1 total</source>
-        <translation>Tokeneita: %1 yhteensä</translation>
+        <translation>Tokens: %1 total</translation>
     </message>
     <message>
         <source>Provider busy - retrying in %1 s (%2/%3)</source>
-        <translation>Palveluntarjoaja ruuhkautunut - uusi yritys %1 s kuluttua (%2/%3)</translation>
+        <translation>Provider busy - retrying in %1 s (%2/%3)</translation>
     </message>
     <message>
         <source>Provider busy - retrying (%1/%2)</source>
-        <translation>Palveluntarjoaja ruuhkautunut - yritetään uudelleen (%1/%2)</translation>
+        <translation>Provider busy - retrying (%1/%2)</translation>
     </message>
 </context>
 <context>
@@ -241,75 +241,75 @@
     <message numerus="yes">
         <source>%n day(s)</source>
         <translation>
-            <numerusform>%n päivä</numerusform>
-            <numerusform>%n päivää</numerusform>
+            <numerusform>%n day</numerusform>
+            <numerusform>%n days</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n hour(s)</source>
         <translation>
-            <numerusform>%n tunti</numerusform>
-            <numerusform>%n tuntia</numerusform>
+            <numerusform>%n hour</numerusform>
+            <numerusform>%n hours</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n minute(s)</source>
         <translation>
-            <numerusform>%n minuutti</numerusform>
-            <numerusform>%n minuuttia</numerusform>
+            <numerusform>%n minute</numerusform>
+            <numerusform>%n minutes</numerusform>
         </translation>
     </message>
     <message>
         <source>Assistant</source>
-        <translation>Avustaja</translation>
+        <translation>Assistant</translation>
     </message>
     <message>
         <source>Conversation</source>
-        <translation>Keskustelu</translation>
+        <translation>Conversation</translation>
     </message>
     <message>
         <source>Conversation rhythm</source>
-        <translation>Keskustelun rytmi</translation>
+        <translation>Conversation rhythm</translation>
     </message>
     <message>
         <source>Less than a minute</source>
-        <translation>Alle minuutti</translation>
+        <translation>Less than a minute</translation>
     </message>
     <message>
         <source>Load this conversation</source>
-        <translation>Lataa tämä keskustelu</translation>
+        <translation>Load this conversation</translation>
     </message>
     <message>
         <source>Messages</source>
-        <translation>Viestit</translation>
+        <translation>Messages</translation>
     </message>
     <message>
         <source>No messages</source>
-        <translation>Ei viestejä</translation>
+        <translation>No messages</translation>
     </message>
     <message>
         <source>Single exchange</source>
-        <translation>Yksittäinen viestinvaihto</translation>
+        <translation>Single exchange</translation>
     </message>
     <message>
         <source>This conversation is empty</source>
-        <translation>Tämä keskustelu on tyhjä</translation>
+        <translation>This conversation is empty</translation>
     </message>
     <message>
         <source>You</source>
-        <translation>Sinä</translation>
+        <translation>You</translation>
     </message>
     <message>
         <source>messages</source>
-        <translation>viestiä</translation>
+        <translation>messages</translation>
     </message>
     <message>
         <source>tokens</source>
-        <translation>tokenia</translation>
+        <translation>tokens</translation>
     </message>
     <message>
         <source>written by AI</source>
-        <translation>tekoälyn kirjoittamaa</translation>
+        <translation>written by AI</translation>
     </message>
 </context>
 <context>
@@ -317,216 +317,216 @@
     <message numerus="yes">
         <source>%n conversation(s)</source>
         <translation>
-            <numerusform>%n keskustelu</numerusform>
-            <numerusform>%n keskustelua</numerusform>
+            <numerusform>%n conversation</numerusform>
+            <numerusform>%n conversations</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n match(es)</source>
         <translation>
-            <numerusform>%n osuma</numerusform>
-            <numerusform>%n osumaa</numerusform>
+            <numerusform>%n match</numerusform>
+            <numerusform>%n matches</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n message(s)</source>
         <translation>
-            <numerusform>%n viesti</numerusform>
-            <numerusform>%n viestiä</numerusform>
+            <numerusform>%n message</numerusform>
+            <numerusform>%n messages</numerusform>
         </translation>
     </message>
     <message>
         <source>Activity - last 14 days</source>
-        <translation>Aktiivisuus - viimeiset 14 päivää</translation>
+        <translation>Activity - last 14 days</translation>
     </message>
     <message>
         <source>Conversation History</source>
-        <translation>Keskusteluhistoria</translation>
+        <translation>Conversation History</translation>
     </message>
     <message>
         <source>Copy as text</source>
-        <translation>Kopioi tekstinä</translation>
+        <translation>Copy as text</translation>
     </message>
     <message>
         <source>Delete</source>
-        <translation>Poista</translation>
+        <translation>Delete</translation>
     </message>
     <message>
         <source>Deleting</source>
-        <translation>Poistetaan</translation>
+        <translation>Deleting</translation>
     </message>
     <message>
         <source>Empty conversation</source>
-        <translation>Tyhjä keskustelu</translation>
+        <translation>Empty conversation</translation>
     </message>
     <message>
         <source>New conversation</source>
-        <translation>Uusi keskustelu</translation>
+        <translation>New conversation</translation>
     </message>
     <message>
         <source>No conversations</source>
-        <translation>Ei keskusteluja</translation>
+        <translation>No conversations</translation>
     </message>
     <message>
         <source>No results</source>
-        <translation>Ei tuloksia</translation>
+        <translation>No results</translation>
     </message>
     <message>
         <source>Purge all conversations</source>
-        <translation>Tyhjennä kaikki keskustelut</translation>
+        <translation>Purge all conversations</translation>
     </message>
     <message>
         <source>Purging all conversations</source>
-        <translation>Tyhjennetään kaikki keskustelut</translation>
+        <translation>Purging all conversations</translation>
     </message>
     <message>
         <source>Search in conversations...</source>
-        <translation>Hae keskusteluista...</translation>
+        <translation>Search in conversations...</translation>
     </message>
     <message>
         <source>Start chatting to create conversations</source>
-        <translation>Aloita keskustelu luodaksesi keskusteluja</translation>
+        <translation>Start chatting to create conversations</translation>
     </message>
     <message>
         <source>Try different search terms</source>
-        <translation>Kokeile eri hakusanoja</translation>
+        <translation>Try different search terms</translation>
     </message>
     <message>
         <source>View details</source>
-        <translation>Näytä tiedot</translation>
+        <translation>View details</translation>
     </message>
     <message>
         <source>Conversation settings</source>
-        <translation>Keskustelun asetukset</translation>
+        <translation>Conversation settings</translation>
     </message>
     <message>
         <source>Auto-label conversations</source>
-        <translation>Merkitse keskustelut automaattisesti</translation>
+        <translation>Auto-label conversations</translation>
     </message>
     <message numerus="yes">
         <source>%n conversation(s) relabelled</source>
         <translation>
-            <numerusform>%n keskustelu merkitty uudelleen</numerusform>
-            <numerusform>%n keskustelua merkitty uudelleen</numerusform>
+            <numerusform>%n conversation(s) relabelled</numerusform>
+            <numerusform>%n conversation(s) relabelled</numerusform>
         </translation>
     </message>
     <message>
         <source>Nothing to relabel</source>
-        <translation>Ei uudelleenmerkittävää</translation>
+        <translation>Nothing to relabel</translation>
     </message>
     <message>
         <source>Settings &amp; About</source>
-        <translation>Asetukset ja tietoja</translation>
+        <translation>Settings &amp; About</translation>
     </message>
     <message>
         <source>Yesterday</source>
-        <translation>Eilen</translation>
+        <translation>Yesterday</translation>
     </message>
 </context>
 <context>
     <name>ConversationManager</name>
     <message>
         <source>New conversation</source>
-        <translation>Uusi keskustelu</translation>
+        <translation>New conversation</translation>
     </message>
     <message>
         <source>Match in title</source>
-        <translation>Osuma otsikossa</translation>
+        <translation>Match in title</translation>
     </message>
     <message>
         <source>Untitled</source>
-        <translation>Nimetön</translation>
+        <translation>Untitled</translation>
     </message>
 </context>
 <context>
     <name>ConversationSettingsPage</name>
     <message>
         <source>Conversation settings</source>
-        <translation>Keskustelun asetukset</translation>
+        <translation>Conversation settings</translation>
     </message>
     <message>
         <source>Title</source>
-        <translation>Otsikko</translation>
+        <translation>Title</translation>
     </message>
     <message>
         <source>Conversation title</source>
-        <translation>Keskustelun otsikko</translation>
+        <translation>Conversation title</translation>
     </message>
     <message>
         <source>Category</source>
-        <translation>Luokka</translation>
+        <translation>Category</translation>
     </message>
     <message>
         <source>Topic</source>
-        <translation>Aihe</translation>
+        <translation>Topic</translation>
     </message>
     <message>
         <source>Used by the statistics page</source>
-        <translation>Käytetään tilastosivulla</translation>
+        <translation>Used by the statistics page</translation>
     </message>
     <message>
         <source>Provider and model</source>
-        <translation>Palveluntarjoaja ja malli</translation>
+        <translation>Provider and model</translation>
     </message>
     <message>
         <source>Model for this conversation</source>
-        <translation>Tämän keskustelun malli</translation>
+        <translation>Model for this conversation</translation>
     </message>
     <message>
         <source>Overrides the default model of that provider</source>
-        <translation>Korvaa kyseisen palveluntarjoajan oletusmallin</translation>
+        <translation>Overrides the default model of that provider</translation>
     </message>
     <message>
         <source>Use default (%1)</source>
-        <translation>Käytä oletusta (%1)</translation>
+        <translation>Use default (%1)</translation>
     </message>
     <message>
         <source>System prompt</source>
-        <translation>Järjestelmäkehote</translation>
+        <translation>System prompt</translation>
     </message>
     <message>
         <source>Custom system prompt</source>
-        <translation>Mukautettu järjestelmäkehote</translation>
+        <translation>Custom system prompt</translation>
     </message>
     <message>
         <source>Replaces the global system prompt for this conversation only</source>
-        <translation>Korvaa yleisen järjestelmäkehotteen vain tässä keskustelussa</translation>
+        <translation>Replaces the global system prompt for this conversation only</translation>
     </message>
     <message>
         <source>Instruction</source>
-        <translation>Ohje</translation>
+        <translation>Instruction</translation>
     </message>
     <message>
         <source>Enter a system prompt...</source>
-        <translation>Kirjoita järjestelmäkehote...</translation>
+        <translation>Enter a system prompt...</translation>
     </message>
     <message>
         <source>Asking the model...</source>
-        <translation>Kysytään mallilta...</translation>
+        <translation>Asking the model...</translation>
     </message>
     <message>
         <source>Suggest a title</source>
-        <translation>Ehdota otsikkoa</translation>
+        <translation>Suggest a title</translation>
     </message>
     <message>
         <source>Reads the conversation and proposes a title and a category.</source>
-        <translation>Lukee keskustelun ja ehdottaa otsikkoa ja luokkaa.</translation>
+        <translation>Reads the conversation and proposes a title and a category.</translation>
     </message>
     <message>
         <source>Answers come from</source>
-        <translation>Vastaukset tulevat palvelusta</translation>
+        <translation>Answers come from</translation>
     </message>
     <message>
         <source>This conversation only. New conversations use the provider set in Settings.</source>
-        <translation>Vain tämä keskustelu. Uudet käyttävät asetuksissa valittua palveluntarjoajaa.</translation>
+        <translation>This conversation only. New conversations use the provider set in Settings.</translation>
     </message>
     <message>
         <source>The rest of this conversation goes to %1, using its own API key. The answers already received do not change.</source>
-        <translation>Loppuosa tästä keskustelusta menee palveluun %1 sen omalla API-avaimella. Jo saadut vastaukset eivät muutu.</translation>
+        <translation>The rest of this conversation goes to %1, using its own API key. The answers already received do not change.</translation>
     </message>
     <message>
         <source>No API key for this provider yet - add it in Settings before sending.</source>
-        <translation>Tälle palveluntarjoajalle ei ole vielä API-avainta - lisää se asetuksiin ennen lähettämistä.</translation>
+        <translation>No API key for this provider yet - add it in Settings before sending.</translation>
     </message>
 </context>
 <context>
@@ -534,63 +534,63 @@
     <message numerus="yes">
         <source>%n message(s)</source>
         <translation>
-            <numerusform>%n viesti</numerusform>
-            <numerusform>%n viestiä</numerusform>
+            <numerusform>%n message</numerusform>
+            <numerusform>%n messages</numerusform>
         </translation>
     </message>
     <message>
         <source>No conversation</source>
-        <translation>Ei keskustelua</translation>
+        <translation>No conversation</translation>
     </message>
     <message numerus="yes">
         <source>%n conversation(s)</source>
         <translation>
-            <numerusform>%n keskustelu</numerusform>
-            <numerusform>%n keskustelua</numerusform>
+            <numerusform>%n conversation</numerusform>
+            <numerusform>%n conversations</numerusform>
         </translation>
     </message>
     <message>
         <source>Tokens this month: %1</source>
-        <translation>Tokenit tässä kuussa: %1</translation>
+        <translation>Tokens this month: %1</translation>
     </message>
     <message>
         <source>Tokens: %1</source>
-        <translation>Tokenit: %1</translation>
+        <translation>Tokens: %1</translation>
     </message>
 </context>
 <context>
     <name>MessageBubble</name>
     <message>
-        <source>You</source>
-        <translation>Sinä</translation>
-    </message>
-    <message>
-        <source>Assistant</source>
-        <translation>Avustaja</translation>
-    </message>
-    <message>
         <source>Copy</source>
-        <translation>Kopioi</translation>
-    </message>
-    <message>
-        <source>Unpin</source>
-        <translation>Poista kiinnitys</translation>
-    </message>
-    <message>
-        <source>Pin</source>
-        <translation>Kiinnitä</translation>
+        <translation>Copy</translation>
     </message>
     <message>
         <source>Copy code</source>
-        <translation>Kopioi koodi</translation>
+        <translation>Copy code</translation>
     </message>
     <message>
         <source>Edit</source>
-        <translation>Muokkaa</translation>
+        <translation>Edit</translation>
+    </message>
+    <message>
+        <source>Pin</source>
+        <translation>Pin</translation>
     </message>
     <message>
         <source>Regenerate</source>
-        <translation>Luo uudelleen</translation>
+        <translation>Regenerate</translation>
+    </message>
+    <message>
+        <source>Unpin</source>
+        <translation>Unpin</translation>
+    </message>
+    <message>
+        <source>You</source>
+        <translation>You</translation>
+    </message>
+    <message>
+        <source>Assistant</source>
+        <translation>Assistant</translation>
     </message>
 </context>
 <context>
@@ -605,80 +605,88 @@
     </message>
     <message>
         <source>Failed to prepare messages for API</source>
-        <translation>Viestien valmistelu API:lle epäonnistui</translation>
+        <translation>Failed to prepare messages for API</translation>
     </message>
     <message>
         <source>Request timed out. Please check your connection.</source>
-        <translation>Pyyntö aikakatkaistiin. Tarkista yhteytesi.</translation>
+        <translation>Request timed out. Please check your connection.</translation>
     </message>
     <message>
         <source>No endpoint configured. Please pick a provider in settings.</source>
-        <translation>Päätepistettä ei ole määritetty. Valitse palveluntarjoaja asetuksista.</translation>
+        <translation>No endpoint configured. Please pick a provider in settings.</translation>
     </message>
     <message>
         <source>Rate limit reached. Free tiers allow about one request per second - wait a few seconds before sending again.</source>
-        <translation>Pyyntöraja saavutettu. Ilmaiset tasot sallivat noin yhden pyynnön sekunnissa - odota muutama sekunti ennen uutta lähetystä.</translation>
+        <translation>Rate limit reached. Free tiers allow about one request per second - wait a few seconds before sending again.</translation>
     </message>
 </context>
 <context>
     <name>ModelSelector</name>
     <message>
         <source>Select Model</source>
-        <translation>Valitse malli</translation>
+        <translation>Select Model</translation>
     </message>
     <message>
         <source>Vision capable</source>
-        <translation>Tukee kuvia</translation>
+        <translation>Vision capable</translation>
     </message>
 </context>
 <context>
     <name>PinnedMessagesPage</name>
     <message>
         <source>Long-press a message and select Pin</source>
-        <translation>Paina viestiä pitkään ja valitse Kiinnitä</translation>
+        <translation>Long-press a message and select Pin</translation>
     </message>
     <message>
         <source>No pinned messages</source>
-        <translation>Ei kiinnitettyjä viestejä</translation>
+        <translation>No pinned messages</translation>
     </message>
     <message>
         <source>Pinned messages</source>
-        <translation>Kiinnitetyt viestit</translation>
+        <translation>Pinned messages</translation>
     </message>
 </context>
 <context>
     <name>PromptLibraryPage</name>
     <message>
         <source>Prompt library</source>
-        <translation>Kehotekirjasto</translation>
+        <translation>Prompt library</translation>
     </message>
     <message>
         <source>Tap a prompt to add it to the message you are writing.</source>
-        <translation>Napauta kehotetta lisätäksesi sen kirjoittamaasi viestiin.</translation>
+        <translation>Tap a prompt to add it to the message you are writing.</translation>
     </message>
     <message>
         <source>New prompt</source>
-        <translation>Uusi kehote</translation>
+        <translation>New prompt</translation>
     </message>
     <message>
         <source>No saved prompts</source>
-        <translation>Ei tallennettuja kehotteita</translation>
+        <translation>No saved prompts</translation>
     </message>
     <message>
         <source>Use the pulley menu to save one</source>
-        <translation>Tallenna sellainen vetovalikosta</translation>
+        <translation>Use the pulley menu to save one</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>Edit</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>Copy</translation>
     </message>
     <message>
         <source>Delete</source>
-        <translation>Poista</translation>
+        <translation>Delete</translation>
     </message>
     <message>
         <source>Deleting</source>
-        <translation>Poistetaan</translation>
+        <translation>Deleting</translation>
     </message>
     <message>
         <source>Edit prompt</source>
-        <translation>Muokkaa kehotetta</translation>
+        <translation>Edit prompt</translation>
     </message>
     <message>
         <source>Save</source>
@@ -690,50 +698,46 @@
     </message>
     <message>
         <source>Name</source>
-        <translation>Nimi</translation>
+        <translation>Name</translation>
     </message>
     <message>
         <source>Optional name</source>
-        <translation>Valinnainen nimi</translation>
+        <translation>Optional name</translation>
     </message>
     <message>
         <source>Prompt</source>
-        <translation>Kehote</translation>
+        <translation>Prompt</translation>
     </message>
     <message>
         <source>Enter the prompt text...</source>
-        <translation>Kirjoita kehotteen teksti...</translation>
-    </message>
-    <message>
-        <source>Edit</source>
-        <translation>Muokkaa</translation>
-    </message>
-    <message>
-        <source>Copy</source>
-        <translation>Kopioi</translation>
+        <translation>Enter the prompt text...</translation>
     </message>
 </context>
 <context>
     <name>QObject</name>
     <message>
         <source>France (EU)</source>
-        <translation>Ranska (EU)</translation>
+        <translation>France (EU)</translation>
     </message>
     <message>
         <source>United States</source>
-        <translation>Yhdysvallat</translation>
+        <translation>United States</translation>
     </message>
     <message>
         <source>Wherever you point it</source>
-        <translation>Minne osoitat</translation>
+        <translation>Wherever you point it</translation>
     </message>
     <message>
         <source>Custom endpoint</source>
-        <translation>Mukautettu päätepiste</translation>
+        <translation>Custom endpoint</translation>
     </message>
 </context>
 <context>
     <name>SettingsPage</name>
+    <message>
+        <source>Settings &amp; About</source>
+        <translation>Settings &amp; About</translation>
+    </message>
     <message>
         <source>Save</source>
         <translation>Save</translation>
@@ -748,11 +752,11 @@
     </message>
     <message>
         <source>To get an API key, visit %1</source>
-        <translation>Saat API-avaimen osoitteesta %1</translation>
+        <translation>To get an API key, visit %1</translation>
     </message>
     <message>
         <source>%1 API key</source>
-        <translation>%1-API-avain</translation>
+        <translation>%1 API key</translation>
     </message>
     <message>
         <source>Enter your API key</source>
@@ -767,6 +771,18 @@
         <translation>Clearing API key</translation>
     </message>
     <message>
+        <source>Language</source>
+        <translation>Language</translation>
+    </message>
+    <message>
+        <source>Application Language</source>
+        <translation>Application Language</translation>
+    </message>
+    <message>
+        <source>Select the language for the interface</source>
+        <translation>Select the language for the interface</translation>
+    </message>
+    <message>
         <source>Model</source>
         <translation>Model</translation>
     </message>
@@ -775,180 +791,164 @@
         <translation>Select the model to use</translation>
     </message>
     <message>
-        <source>About</source>
-        <translation>Tietoja</translation>
-    </message>
-    <message>
-        <source>Application Language</source>
-        <translation>Sovelluksen kieli</translation>
-    </message>
-    <message>
-        <source>Code assistant</source>
-        <translation>Koodiavustaja</translation>
-    </message>
-    <message>
-        <source>Concise</source>
-        <translation>Tiivis</translation>
-    </message>
-    <message>
-        <source>Custom</source>
-        <translation>Mukautettu</translation>
-    </message>
-    <message>
-        <source>Custom system prompt</source>
-        <translation>Mukautettu järjestelmäkehote</translation>
-    </message>
-    <message>
-        <source>Custom temperature</source>
-        <translation>Mukautettu lämpötila</translation>
-    </message>
-    <message>
-        <source>Enter a custom system prompt...</source>
-        <translation>Kirjoita mukautettu järjestelmäkehote...</translation>
-    </message>
-    <message>
-        <source>Generation</source>
-        <translation>Generointi</translation>
-    </message>
-    <message>
-        <source>Instruction sent before every conversation</source>
-        <translation>Ohje, joka lähetetään ennen jokaista keskustelua</translation>
-    </message>
-    <message>
-        <source>Language</source>
-        <translation>Kieli</translation>
-    </message>
-    <message>
-        <source>Limit response length</source>
-        <translation>Rajoita vastauksen pituutta</translation>
-    </message>
-    <message>
-        <source>Lower is more focused, higher is more creative</source>
-        <translation>Matalampi on täsmällisempi, korkeampi luovempi</translation>
+        <source>Powered by %1 • MIT License</source>
+        <translation>Powered by %1 • MIT License</translation>
     </message>
     <message>
         <source>Made with &lt;3 for Sailfish OS</source>
-        <translation>Tehty &lt;3:lla Sailfish OS:lle</translation>
+        <translation>Made with &lt;3 for Sailfish OS</translation>
+    </message>
+    <message>
+        <source>About</source>
+        <translation>About</translation>
+    </message>
+    <message>
+        <source>Code assistant</source>
+        <translation>Code assistant</translation>
+    </message>
+    <message>
+        <source>Concise</source>
+        <translation>Concise</translation>
+    </message>
+    <message>
+        <source>Custom</source>
+        <translation>Custom</translation>
+    </message>
+    <message>
+        <source>Custom system prompt</source>
+        <translation>Custom system prompt</translation>
+    </message>
+    <message>
+        <source>Custom temperature</source>
+        <translation>Custom temperature</translation>
+    </message>
+    <message>
+        <source>Enter a custom system prompt...</source>
+        <translation>Enter a custom system prompt...</translation>
+    </message>
+    <message>
+        <source>Generation</source>
+        <translation>Generation</translation>
+    </message>
+    <message>
+        <source>Instruction sent before every conversation</source>
+        <translation>Instruction sent before every conversation</translation>
+    </message>
+    <message>
+        <source>Limit response length</source>
+        <translation>Limit response length</translation>
+    </message>
+    <message>
+        <source>Lower is more focused, higher is more creative</source>
+        <translation>Lower is more focused, higher is more creative</translation>
     </message>
     <message>
         <source>Max tokens</source>
-        <translation>Tokenien enimmäismäärä</translation>
+        <translation>Max tokens</translation>
     </message>
     <message>
         <source>Maximum number of tokens per response</source>
-        <translation>Tokenien enimmäismäärä vastausta kohden</translation>
+        <translation>Maximum number of tokens per response</translation>
     </message>
     <message>
         <source>None</source>
-        <translation>Ei mitään</translation>
+        <translation>None</translation>
     </message>
     <message>
         <source>Persona</source>
-        <translation>Persoona</translation>
+        <translation>Persona</translation>
     </message>
     <message>
-        <source>Powered by %1 • MIT License</source>
-        <translation>Taustalla %1 • MIT-lisenssi</translation>
-    </message>
-    <message>
-        <source>SailCat is an elegant chat client for Mistral AI and other OpenAI-compatible providers, designed for Sailfish OS.</source>
-        <translation>SailCat on tyylikäs chat-asiakas Mistral AI:lle ja muille OpenAI-yhteensopiville palveluntarjoajille, suunniteltu Sailfish OS:lle.</translation>
-    </message>
-    <message>
-        <source>Select the language for the interface</source>
-        <translation>Valitse käyttöliittymän kieli</translation>
-    </message>
-    <message>
-        <source>Settings &amp; About</source>
-        <translation>Asetukset ja tietoja</translation>
+        <source>Skrynja is an elegant chat client for Mistral AI and other OpenAI-compatible providers, designed for Sailfish OS.</source>
+        <translation>Skrynja is an elegant chat client for Mistral AI and other OpenAI-compatible providers, designed for Sailfish OS.</translation>
     </message>
     <message>
         <source>Source code on GitHub</source>
-        <translation>Lähdekoodi GitHubissa</translation>
+        <translation>Source code on GitHub</translation>
     </message>
     <message>
         <source>Statistics</source>
-        <translation>Tilastot</translation>
+        <translation>Statistics</translation>
     </message>
     <message>
         <source>System prompt</source>
-        <translation>Järjestelmäkehote</translation>
+        <translation>System prompt</translation>
     </message>
     <message>
         <source>Temperature</source>
-        <translation>Lämpötila</translation>
+        <translation>Temperature</translation>
     </message>
     <message>
         <source>This model can analyze images</source>
-        <translation>Tämä malli voi analysoida kuvia</translation>
+        <translation>This model can analyze images</translation>
     </message>
     <message>
         <source>Translator</source>
-        <translation>Kääntäjä</translation>
+        <translation>Translator</translation>
     </message>
     <message>
         <source>Version %1</source>
-        <translation>Versio %1</translation>
+        <translation>Version %1</translation>
     </message>
     <message>
         <source>View statistics</source>
-        <translation>Näytä tilastot</translation>
+        <translation>View statistics</translation>
     </message>
     <message>
         <source>• Conversations stored locally
 • No sync with any web interface
 • Uses your own account with the provider</source>
-        <translation>• Keskustelut tallennetaan paikallisesti
-• Ei synkronointia verkkokäyttöliittymän kanssa
-• Käyttää omaa tiliäsi palveluntarjoajalla</translation>
+        <translation>• Conversations stored locally
+• No sync with any web interface
+• Uses your own account with the provider</translation>
     </message>
     <message>
         <source>Prompt library</source>
-        <translation>Kehotekirjasto</translation>
+        <translation>Prompt library</translation>
     </message>
     <message>
         <source>Show API key</source>
-        <translation>Näytä API-avain</translation>
+        <translation>Show API key</translation>
     </message>
     <message>
         <source>The key is stored scrambled in an owner-only file on this device and is only ever sent to %1. Each provider keeps its own key.</source>
-        <translation>Avain tallennetaan salattuna vain sinun luettavissa olevaan tiedostoon tällä laitteella, ja se lähetetään vain palveluun %1. Jokaisella palveluntarjoajalla on oma avaimensa.</translation>
+        <translation>The key is stored scrambled in an owner-only file on this device and is only ever sent to %1. Each provider keeps its own key.</translation>
     </message>
     <message>
         <source>Appearance</source>
-        <translation>Ulkoasu</translation>
+        <translation>Appearance</translation>
     </message>
     <message>
         <source>Conversation style</source>
-        <translation>Keskustelun tyyli</translation>
+        <translation>Conversation style</translation>
     </message>
     <message>
         <source>How messages are laid out in the chat</source>
-        <translation>Miten viestit asetellaan keskustelussa</translation>
+        <translation>How messages are laid out in the chat</translation>
     </message>
     <message>
         <source>Show timestamps</source>
-        <translation>Näytä aikaleimat</translation>
+        <translation>Show timestamps</translation>
     </message>
     <message>
         <source>Display the time under each message</source>
-        <translation>Näytä kellonaika jokaisen viestin alla</translation>
+        <translation>Display the time under each message</translation>
     </message>
     <message>
         <source>Enter sends the message</source>
-        <translation>Enter lähettää viestin</translation>
+        <translation>Enter sends the message</translation>
     </message>
     <message>
         <source>Turn this off to type a new line with Enter and send with the message button</source>
-        <translation>Poista käytöstä, niin Enter tekee rivinvaihdon ja viesti lähetetään viestipainikkeella</translation>
+        <translation>Turn this off to type a new line with Enter and send with the message button</translation>
     </message>
     <message>
         <source>Limit conversation context</source>
-        <translation>Rajoita keskustelun kontekstia</translation>
+        <translation>Limit conversation context</translation>
     </message>
     <message>
         <source>Send only the most recent messages. Keeps long conversations cheap and avoids hitting the model context limit.</source>
-        <translation>Lähettää vain uusimmat viestit. Pitää pitkät keskustelut edullisina ja välttää mallin kontekstirajan.</translation>
+        <translation>Send only the most recent messages. Keeps long conversations cheap and avoids hitting the model context limit.</translation>
     </message>
     <message numerus="yes">
         <source>%n message(s)</source>
@@ -959,75 +959,75 @@
     </message>
     <message>
         <source>Messages kept</source>
-        <translation>Säilytettävät viestit</translation>
+        <translation>Messages kept</translation>
     </message>
     <message>
         <source>Bubbles</source>
-        <translation>Kuplat</translation>
+        <translation>Bubbles</translation>
     </message>
     <message>
         <source>Compact</source>
-        <translation>Tiivis</translation>
+        <translation>Compact</translation>
     </message>
     <message>
         <source>Cards</source>
-        <translation>Kortit</translation>
+        <translation>Cards</translation>
     </message>
     <message>
         <source>Flat</source>
-        <translation>Litteä</translation>
+        <translation>Flat</translation>
     </message>
     <message>
         <source>Rounded bubbles aligned left and right, like a messaging app.</source>
-        <translation>Pyöristetyt kuplat vasemmalla ja oikealla, kuten viestisovelluksessa.</translation>
+        <translation>Rounded bubbles aligned left and right, like a messaging app.</translation>
     </message>
     <message>
         <source>Dense rows with a short speaker prefix. Fits the most text on screen.</source>
-        <translation>Tiiviit rivit lyhyellä puhujamerkinnällä. Näyttää eniten tekstiä kerralla.</translation>
+        <translation>Dense rows with a short speaker prefix. Fits the most text on screen.</translation>
     </message>
     <message>
         <source>Each message in its own panel with a header.</source>
-        <translation>Jokainen viesti omassa paneelissaan otsikon kanssa.</translation>
+        <translation>Each message in its own panel with a header.</translation>
     </message>
     <message>
         <source>Full width rows with a tinted background on your messages.</source>
-        <translation>Koko leveyden rivit, omat viestisi sävytetyllä taustalla.</translation>
+        <translation>Full width rows with a tinted background on your messages.</translation>
     </message>
     <message>
         <source>Provider</source>
-        <translation>Palveluntarjoaja</translation>
+        <translation>Provider</translation>
     </message>
     <message>
         <source>Used by new conversations. An existing one keeps the provider it started with.</source>
-        <translation>Käytetään uusissa keskusteluissa. Olemassa oleva keskustelu säilyttää palveluntarjoajan, jolla se aloitettiin.</translation>
+        <translation>Used by new conversations. An existing one keeps the provider it started with.</translation>
     </message>
     <message>
         <source>%1 - free tier</source>
-        <translation>%1 - ilmainen taso</translation>
+        <translation>%1 - free tier</translation>
     </message>
     <message>
         <source>Hosted in %1</source>
-        <translation>Sijainti: %1</translation>
+        <translation>Hosted in %1</translation>
     </message>
     <message>
         <source>Endpoint base URL</source>
-        <translation>Päätepisteen perus-URL</translation>
+        <translation>Endpoint base URL</translation>
     </message>
     <message>
         <source>Anything OpenAI-compatible, up to a llama.cpp or Ollama server on your own network.</source>
-        <translation>Mikä tahansa OpenAI-yhteensopiva, jopa oma llama.cpp- tai Ollama-palvelin verkossasi.</translation>
+        <translation>Anything OpenAI-compatible, up to a llama.cpp or Ollama server on your own network.</translation>
     </message>
     <message>
         <source>%1 API key (optional)</source>
-        <translation>%1-API-avain (valinnainen)</translation>
+        <translation>%1 API key (optional)</translation>
     </message>
     <message>
         <source>Leave empty to stay anonymous</source>
-        <translation>Jätä tyhjäksi pysyäksesi nimettömänä</translation>
+        <translation>Leave empty to stay anonymous</translation>
     </message>
     <message>
         <source>Model identifier</source>
-        <translation>Mallin tunniste</translation>
+        <translation>Model identifier</translation>
     </message>
     <message>
         <source>https://host/v1</source>
@@ -1035,31 +1035,31 @@
     </message>
     <message>
         <source>Automatic titles</source>
-        <translation>Automaattiset otsikot</translation>
+        <translation>Automatic titles</translation>
     </message>
     <message>
         <source>Ask the model</source>
-        <translation>Kysy mallilta</translation>
+        <translation>Ask the model</translation>
     </message>
     <message>
         <source>Off</source>
-        <translation>Pois</translation>
+        <translation>Off</translation>
     </message>
     <message>
         <source>On device</source>
-        <translation>Laitteella</translation>
+        <translation>On device</translation>
     </message>
     <message>
         <source>Best titles, but one extra request per conversation. Free tiers count those.</source>
-        <translation>Parhaat otsikot, mutta yksi ylimääräinen pyyntö keskustelua kohden. Ilmaiset tasot laskevat ne mukaan.</translation>
+        <translation>Best titles, but one extra request per conversation. Free tiers count those.</translation>
     </message>
     <message>
         <source>Conversations keep their first question as a title and stay uncategorized.</source>
-        <translation>Keskustelut säilyttävät ensimmäisen kysymyksensä otsikkona eivätkä saa luokkaa.</translation>
+        <translation>Conversations keep their first question as a title and stay uncategorized.</translation>
     </message>
     <message>
         <source>Titles and categories worked out on the phone. Costs nothing, no request sent.</source>
-        <translation>Otsikot ja luokat päätellään puhelimessa. Ei maksa mitään, ei pyyntöjä.</translation>
+        <translation>Titles and categories worked out on the phone. Costs nothing, no request sent.</translation>
     </message>
 </context>
 <context>
@@ -1067,253 +1067,253 @@
     <message numerus="yes">
         <source>%n character(s)</source>
         <translation>
-            <numerusform>%n merkki</numerusform>
-            <numerusform>%n merkkiä</numerusform>
+            <numerusform>%n character</numerusform>
+            <numerusform>%n characters</numerusform>
         </translation>
     </message>
     <message>
         <source>AI: %1 chars</source>
-        <translation>Tekoäly: %1 merkkiä</translation>
+        <translation>AI: %1 chars</translation>
     </message>
     <message>
         <source>Activity by hour</source>
-        <translation>Aktiivisuus tunneittain</translation>
+        <translation>Activity by hour</translation>
     </message>
     <message>
         <source>Completion tokens</source>
-        <translation>Vastaustokenit</translation>
+        <translation>Completion tokens</translation>
     </message>
     <message>
         <source>Conversations</source>
-        <translation>Keskustelut</translation>
+        <translation>Conversations</translation>
     </message>
     <message>
         <source>First message</source>
-        <translation>Ensimmäinen viesti</translation>
+        <translation>First message</translation>
     </message>
     <message>
         <source>Last 14 days</source>
-        <translation>Viimeiset 14 päivää</translation>
+        <translation>Last 14 days</translation>
     </message>
     <message>
         <source>Longest conversation</source>
-        <translation>Pisin keskustelu</translation>
+        <translation>Longest conversation</translation>
     </message>
     <message>
         <source>Longest message</source>
-        <translation>Pisin viesti</translation>
+        <translation>Longest message</translation>
     </message>
     <message>
         <source>Messages</source>
-        <translation>Viestit</translation>
+        <translation>Messages</translation>
     </message>
     <message>
         <source>Never</source>
-        <translation>Ei koskaan</translation>
+        <translation>Never</translation>
     </message>
     <message>
         <source>No recent activity</source>
-        <translation>Ei viimeaikaista toimintaa</translation>
+        <translation>No recent activity</translation>
     </message>
     <message>
         <source>None</source>
-        <translation>Ei mitään</translation>
+        <translation>None</translation>
     </message>
     <message>
         <source>Peak: %1 messages/day</source>
-        <translation>Huippu: %1 viestiä/päivä</translation>
+        <translation>Peak: %1 messages/day</translation>
     </message>
     <message>
         <source>Peak: %1 tokens/day</source>
-        <translation>Huippu: %1 tokenia/päivä</translation>
+        <translation>Peak: %1 tokens/day</translation>
     </message>
     <message>
         <source>Prompt tokens</source>
-        <translation>Kehotetokenit</translation>
+        <translation>Prompt tokens</translation>
     </message>
     <message>
         <source>Question categories</source>
-        <translation>Kysymyskategoriat</translation>
+        <translation>Question categories</translation>
     </message>
     <message>
         <source>Records</source>
-        <translation>Ennätykset</translation>
+        <translation>Records</translation>
     </message>
     <message>
         <source>Statistics</source>
-        <translation>Tilastot</translation>
+        <translation>Statistics</translation>
     </message>
     <message>
         <source>Storage</source>
-        <translation>Tallennustila</translation>
+        <translation>Storage</translation>
     </message>
     <message>
         <source>Today</source>
-        <translation>Tänään</translation>
+        <translation>Today</translation>
     </message>
     <message>
         <source>Tokens - last 14 days</source>
-        <translation>Tokenit - viimeiset 14 päivää</translation>
+        <translation>Tokens - last 14 days</translation>
     </message>
     <message>
         <source>Tokens this month</source>
-        <translation>Tokenit tässä kuussa</translation>
+        <translation>Tokens this month</translation>
     </message>
     <message>
         <source>Tokens used</source>
-        <translation>Käytetyt tokenit</translation>
+        <translation>Tokens used</translation>
     </message>
     <message>
         <source>Who writes more?</source>
-        <translation>Kumpi kirjoittaa enemmän?</translation>
+        <translation>Who writes more?</translation>
     </message>
     <message>
         <source>You: %1 chars</source>
-        <translation>Sinä: %1 merkkiä</translation>
+        <translation>You: %1 chars</translation>
     </message>
     <message>
         <source>%1 abandoned</source>
-        <translation>%1 hylättyä</translation>
+        <translation>%1 abandoned</translation>
     </message>
     <message>
         <source>%1 chars</source>
-        <translation>%1 merkkiä</translation>
+        <translation>%1 chars</translation>
     </message>
     <message>
         <source>%1 model switches</source>
-        <translation>%1 mallinvaihtoa</translation>
+        <translation>%1 model switches</translation>
     </message>
     <message>
         <source>Average hour: %1h</source>
-        <translation>Keskimääräinen tunti: %1</translation>
+        <translation>Average hour: %1h</translation>
     </message>
     <message>
         <source>Avg: %1min</source>
-        <translation>Ka. %1min</translation>
+        <translation>Avg: %1min</translation>
     </message>
     <message>
         <source>Avg: %1s</source>
-        <translation>Ka. %1s</translation>
+        <translation>Avg: %1s</translation>
     </message>
     <message>
         <source>Badges</source>
-        <translation>Kunniamerkit</translation>
+        <translation>Badges</translation>
     </message>
     <message>
         <source>Chaotic</source>
-        <translation>Kaoottinen</translation>
+        <translation>Chaotic</translation>
     </message>
     <message>
         <source>Concise</source>
-        <translation>Tiivis</translation>
+        <translation>Concise</translation>
     </message>
     <message>
         <source>Conversation Ghost</source>
-        <translation>Keskusteluhaamu</translation>
+        <translation>Conversation Ghost</translation>
     </message>
     <message>
         <source>Early Bird</source>
-        <translation>Aamuvirkku</translation>
+        <translation>Early Bird</translation>
     </message>
     <message>
         <source>Explorer</source>
-        <translation>Tutkija</translation>
+        <translation>Explorer</translation>
     </message>
     <message>
         <source>Finisher</source>
-        <translation>Viimeistelijä</translation>
+        <translation>Finisher</translation>
     </message>
     <message>
         <source>Ghost</source>
-        <translation>Haamu</translation>
+        <translation>Ghost</translation>
     </message>
     <message>
         <source>Longest Message</source>
-        <translation>Pisin viesti</translation>
+        <translation>Longest Message</translation>
     </message>
     <message>
         <source>Loyal</source>
-        <translation>Uskollinen</translation>
+        <translation>Loyal</translation>
     </message>
     <message>
         <source>Model Hopper</source>
-        <translation>Mallihyppijä</translation>
+        <translation>Model Hopper</translation>
     </message>
     <message>
         <source>Night Owl</source>
-        <translation>Yökyöpeli</translation>
+        <translation>Night Owl</translation>
     </message>
     <message>
         <source>Normal</source>
-        <translation>Tavallinen</translation>
+        <translation>Normal</translation>
     </message>
     <message>
         <source>Novelist</source>
-        <translation>Romaanikirjailija</translation>
+        <translation>Novelist</translation>
     </message>
     <message>
         <source>Snail</source>
-        <translation>Etana</translation>
+        <translation>Snail</translation>
     </message>
     <message>
         <source>Speed Typist</source>
-        <translation>Pikanäppäilijä</translation>
+        <translation>Speed Typist</translation>
     </message>
     <message>
         <source>Speedy</source>
-        <translation>Salamannopea</translation>
+        <translation>Speedy</translation>
     </message>
     <message>
         <source>Top words in AI replies</source>
-        <translation>Tekoälyn yleisimmät sanat</translation>
+        <translation>Top words in AI replies</translation>
     </message>
     <message>
         <source>Wanderer</source>
-        <translation>Vaeltaja</translation>
+        <translation>Wanderer</translation>
     </message>
     <message>
         <source>n/a</source>
-        <translation>ei tietoa</translation>
+        <translation>n/a</translation>
     </message>
     <message>
         <source>Estimated cost</source>
-        <translation>Arvioitu kustannus</translation>
+        <translation>Estimated cost</translation>
     </message>
     <message>
         <source>Total</source>
-        <translation>Yhteensä</translation>
+        <translation>Total</translation>
     </message>
     <message>
         <source>Estimate based on public list prices, in US dollars. Only usage recorded by this app is counted - check your provider console for the real invoice.</source>
-        <translation>Arvio julkisiin listahintoihin perustuen, Yhdysvaltain dollareina. Vain tämän sovelluksen kirjaama käyttö lasketaan - tarkista todellinen lasku palveluntarjoajasi konsolista.</translation>
+        <translation>Estimate based on public list prices, in US dollars. Only usage recorded by this app is counted - check your provider console for the real invoice.</translation>
     </message>
     <message>
         <source>free</source>
-        <translation>ilmainen</translation>
+        <translation>free</translation>
     </message>
     <message>
         <source>Providers and models</source>
-        <translation>Palveluntarjoajat ja mallit</translation>
+        <translation>Providers and models</translation>
     </message>
     <message>
         <source>Most used provider</source>
-        <translation>Käytetyin palveluntarjoaja</translation>
+        <translation>Most used provider</translation>
     </message>
     <message>
         <source>Most used model</source>
-        <translation>Käytetyin malli</translation>
+        <translation>Most used model</translation>
     </message>
     <message>
         <source>Answers per provider</source>
-        <translation>Vastaukset palveluntarjoajittain</translation>
+        <translation>Answers per provider</translation>
     </message>
     <message>
         <source>Answers per model</source>
-        <translation>Vastaukset malleittain</translation>
+        <translation>Answers per model</translation>
     </message>
     <message>
         <source>Counted from the answers themselves. Answers received before this app recorded models appear under their provider only.</source>
-        <translation>Laskettu itse vastauksista. Ennen mallien kirjaamista saadut vastaukset näkyvät vain palveluntarjoajansa kohdalla.</translation>
+        <translation>Counted from the answers themselves. Answers received before this app recorded models appear under their provider only.</translation>
     </message>
 </context>
 </TS>

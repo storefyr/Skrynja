@@ -4,7 +4,31 @@ Instructions for AI coding agents (Mistral Vibe, Claude Code, etc.) working on t
 
 ## Project
 
-SailCat is a native Sailfish OS chat client for Mistral AI. Qt/C++ backend, QML/Silica frontend, SSE streaming for real-time responses.
+Skrynja is a native Sailfish OS chat client for Mistral AI, built on the **Conversations API**
+(`/v1/conversations`) — not Chat Completions. That API is stateful (the server remembers the
+conversation) and is the only one that offers the `web_search` tool. Qt/C++ backend, QML/Silica
+frontend, SSE streaming for real-time responses. Forked from SailCat (harbour-sailcat).
+
+## Migration status
+
+The codebase is inherited from SailCat and is being rewritten step by step.
+As of v0.1.0 the rename (app name, packaging, paths, docs) is done, but
+`src/mistralapi.cpp` still speaks Chat Completions (`/v1/chat/completions`) and
+`src/providers.cpp` still lists the old providers. The sections below describe
+the **target** architecture and the decisions already locked in; when a doc and
+the code disagree, trust the code and note the gap. The API rewrite is tracked
+in `docs/ROADMAP.md`.
+
+Locked decisions (do not relitigate in code reviews):
+
+- Mistral AI only; no other provider, no custom endpoint.
+- Context-limit trimming removed (server keeps the full history).
+- Model fixed per conversation (create-time only).
+- Edit and regenerate removed for now (needs entry-level restart).
+- Retry after an ambiguous failure reconciles via `GET .../messages` first.
+- A cancelled answer marks the conversation dirty; the next message restarts it.
+- Old local conversations start fresh server-side (no replay migration).
+- Conversation history lives on Mistral's servers; this is documented to users.
 
 ## Hard Constraints
 
@@ -14,23 +38,48 @@ These are non-negotiable. Violating them produces code that does not compile or 
 2. **QML: QtQuick 2.0 + Sailfish.Silica 1.0.** No QtQuick.Controls, no ToolTip, no `additionalContent`, no Qt Labs modules. Only Silica components. Past crashes were caused by exactly this (see git log).
 3. **Harbour rules.** App name keeps the `harbour-` prefix. Only Harbour-allowed imports (Sailfish.Silica, Sailfish.Pickers, QtQuick, QtQuick.Layouts, Nemo.Configuration, Nemo.Notifications). `Sailfish.TransferEngine` and `Sailfish.Share` are NOT allowed.
 4. **JavaScript in QML is ES5.** No arrow functions, no `let`/`const` in older QML contexts, no template literals.
+5. **`#stream` in URLs is a fragment, not a path.** `QUrl("https://api.mistral.ai/v1/conversations#stream")`
+   would send the request without `#stream`. Always percent-encode it (`%23stream`) or set the
+   request target manually. The unit tests cover this.
 
 ## Architecture
 
-- `src/mistralapi.{h,cpp}` — HTTP + SSE streaming to `POST https://api.mistral.ai/v1/chat/completions`. Signals: `streamingResponse(content)`, `responseCompleted()`, `messageSent()`, `titleGenerated(title)`.
+- `src/mistralapi.{h,cpp}` — HTTP + SSE streaming to the Conversations API. Endpoints:
+  `POST /v1/conversations#stream` (create), `POST /v1/conversations/{id}#stream` (append),
+  `POST /v1/conversations/{id}/restart#stream` (after a cancelled answer),
+  `GET /v1/conversations/{id}/messages` (reconcile before retry),
+  `DELETE /v1/conversations/{id}` (delete), `GET /v1/models` (catalogue).
+  Signals: `streamingResponse(content)`, `responseCompleted()`, `messageSent()`,
+  `titleGenerated(title)`, `conversationCreated(id)`, `toolActivity(name)`, `sourcesReceived(list)`.
 - `src/conversationmodel.{h,cpp}` — QAbstractListModel of messages (`role`, `content`, `timestamp`, `pinned`, `imagePath`).
-- `src/conversationmanager.{h,cpp}` — persistence (one JSON file per conversation under `AppDataLocation`), current conversation lifecycle, `buildApiMessages()`, statistics, search.
-- `src/settingsmanager.{h,cpp}` — QSettings wrapper: `apiKey` (stored obfuscated), `modelName`, `nextMessageModel`, `language`, `contextMessageLimit`, `chatStyle`, `savedPrompts`.
+- `src/conversationmanager.{h,cpp}` — persistence (one JSON file per conversation under `AppDataLocation`),
+  current conversation lifecycle, remote `conversation_id` tracking, dirty flag after a cancelled
+  answer, statistics, search.
+- `src/settingsmanager.{h,cpp}` — QSettings wrapper: `apiKey` (stored obfuscated), `modelName`,
+  `webSearch` toggle, `language`, `chatStyle`, `savedPrompts`.
 - `src/securestore.{h,cpp}` — owner-only file permissions and salted obfuscation for the API key.
 - `src/categories.{h,cpp}` — conversation categories and the local keyword classifier. Mirrored for display in `qml/components/Categories.js`.
-- `qml/pages/ChatPage.qml` — main chat UI. `qml/components/MessageBubble.qml` — message rendering with regex-based markdown. `qml/pages/SettingsPage.qml` — settings dialog.
+- `src/providers.{h,cpp}` — kept from SailCat for the model-catalogue parsing only; there is a single provider (Mistral AI) and no provider picker.
+- `qml/pages/ChatPage.qml` — main chat UI. `qml/components/MessageBubble.qml` — message rendering with regex-based markdown and source chips. `qml/pages/SettingsPage.qml` — settings dialog.
 
-All C++ classes are exposed to QML as context properties: `mistralApi`, `conversationModel`, `conversationManager`, `settingsManager` (registered in `src/harbour-sailcat.cpp`).
+All C++ classes are exposed to QML as context properties: `mistralApi`, `conversationModel`, `conversationManager`, `settingsManager` (registered in `src/harbour-skrynja.cpp`).
+
+## Conversations API semantics (important)
+
+- **Create-time only:** `model`, `instructions` (system prompt) and `tools` (web_search) are set when
+  the conversation is created. Per-turn parameters go in `completion_args` (`temperature`, `max_tokens`).
+- **Append is not idempotent.** If a request may have reached the server, reconcile with
+  `GET /v1/conversations/{id}/messages` before sending again.
+- **Restart returns a new `conversation_id`.** The old one must be deleted and the new one persisted.
+- **SSE events are typed**, sent as `event: <name>` + `data: {...}`: `conversation.created`,
+  `tool.execution.started/delta/done`, `message.output.delta` (text chunks), `conversation.response.done`
+  (usage). There is no `[DONE]` marker.
+- **Reasoning models** return `content` as a list of chunks (thinking + text), not a plain string.
 
 ## Translations
 
-`translations/harbour-sailcat-<code>.ts`, one per entry in `SettingsManager::availableLanguages()`:
-en, fr, de, es, fi, it, nb_NO. Adding a language means adding the `.ts` file, the code in
+`translations/harbour-skrynja-<code>.ts`, one per entry in `SettingsManager::availableLanguages()`:
+en, fr, de, es, fi, it, nb_NO, sv. Adding a language means adding the `.ts` file, the code in
 `availableLanguages()`, the `TRANSLATIONS` list in the `.pro`, and the entry in the SettingsPage
 language ComboBox — the ComboBox order must match `availableLanguages()`.
 
@@ -46,18 +95,18 @@ docker run --rm -it -v $(pwd):/home/sailfish/src -w /home/sailfish/src \
 Unit tests live in `tests/` (QtTest, no Silica dependency — the C++ classes are pure Qt). They run in CI on plain Ubuntu Qt and block releases. Locally:
 
 ```bash
-cd tests && qmake tests.pro && make && ./tst_sailcat
+cd tests && qmake tests.pro && make && ./tst_skrynja
 ```
 
-When changing `src/` behavior, extend `tests/tst_main.cpp` accordingly. QML remains manually tested: hot-deploy without rebuilding via `scp qml/... nemo@<device-ip>:/usr/share/harbour-sailcat/qml/...` then restart the app.
+When changing `src/` behavior, extend `tests/tst_main.cpp` accordingly. QML remains manually tested: hot-deploy without rebuilding via `scp qml/... nemo@<device-ip>:/usr/share/harbour-skrynja/qml/...` then restart the app.
 
-New source files must be added to `harbour-sailcat.pro` (SOURCES/HEADERS) and new QML files to the `OTHER_FILES`/install sections. New user-visible strings must use `qsTr()`.
+New source files must be added to `harbour-skrynja.pro` (SOURCES/HEADERS) and new QML files to the `OTHER_FILES`/install sections. New user-visible strings must use `qsTr()`.
 
 ## Conventions
 
 - **Everything in English**: code, comments, commit messages, tags, docs.
 - **Commits**: one-liner, very concise, conventional prefix (`feat:`, `fix:`, `chore:`). No emoji, no "Co-authored-by" or AI attribution lines.
-- **Tags/releases**: semver `vX.Y.Z`, prefer patch bumps for most changes. Pushing a tag triggers the release CI (`.github/workflows/build-docker.yml`), which builds armv7hl/aarch64/i486 and creates the GitHub release. Bump the version in `rpm/harbour-sailcat.spec` and `harbour-sailcat.yaml` when releasing.
+- **Tags/releases**: semver `vX.Y.Z`, starting at `v0.1.0` for Skrynja (the SailCat 2.x history stays with SailCat). Pushing a tag triggers the release CI (`.github/workflows/build-docker.yml`), which builds armv7hl/aarch64/i486 and creates the GitHub release. Bump the version in `rpm/harbour-skrynja.spec` and `harbour-skrynja.yaml` when releasing.
 - Match existing code style: 4-space indent in C++ and QML, Qt naming (`m_` member prefix, camelCase).
 
 ## Working Style
@@ -69,12 +118,21 @@ New source files must be added to `harbour-sailcat.pro` (SOURCES/HEADERS) and ne
 - If a build or test fails, report the actual error output — do not claim success without verifying.
 - Feature work is specified in `docs/features/`. When asked to implement a feature, read its spec file first and follow it; update `docs/ROADMAP.md` status when done.
 
-## Mistral API Quick Reference
+## Mistral Conversations API Quick Reference
 
 ```
-POST https://api.mistral.ai/v1/chat/completions
+POST https://api.mistral.ai/v1/conversations%23stream
 Authorization: Bearer <key>
-{"model": "...", "messages": [{"role": "user|assistant|system", "content": "..."}], "stream": true}
+{"model": "...", "instructions": "...", "tools": [{"type": "web_search"}],
+ "inputs": [{"object": "entry", "type": "message.input", "role": "user", "content": "..."}],
+ "completion_args": {"temperature": 0.7}}
+
+POST https://api.mistral.ai/v1/conversations/{id}%23stream   (append; inputs + completion_args only)
+POST https://api.mistral.ai/v1/conversations/{id}/restart%23stream  (from_entry_id; returns a NEW id)
+GET  https://api.mistral.ai/v1/conversations/{id}/messages   (reconcile)
+DELETE https://api.mistral.ai/v1/conversations/{id}
 ```
 
-SSE response: lines of `data: {"choices":[{"delta":{"content":"..."}}]}` terminated by `data: [DONE]`. Parsing lives in `MistralAPI::parseStreamLine()`; UTF-8-safe buffering in `processStreamData()`.
+SSE response: typed events, `event: <name>` followed by `data: {...}`. Text chunks arrive as
+`event: message.output.delta` with `data.content`; usage arrives in `conversation.response.done`.
+Parsing lives in `MistralAPI::parseStreamLine()`; UTF-8-safe buffering in `processStreamData()`.

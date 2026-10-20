@@ -79,7 +79,7 @@ Dialog {
 
             Label {
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: "SailCat"
+                text: "Skrynja"
                 font.pixelSize: Theme.fontSizeExtraLarge
                 color: Theme.highlightColor
             }
@@ -607,8 +607,8 @@ Dialog {
             Label {
                 x: Theme.horizontalPageMargin
                 width: parent.width - 2 * Theme.horizontalPageMargin
-                text: qsTr("SailCat is an elegant chat client for Mistral AI and other " +
-                      "OpenAI-compatible providers, designed for Sailfish OS.")
+                text: qsTr("Skrynja is an elegant chat client for Mistral AI, " +
+                      "built on the Conversations API with web search, designed for Sailfish OS.")
                 wrapMode: Text.WordWrap
                 font.pixelSize: Theme.fontSizeSmall
                 color: Theme.primaryColor
@@ -617,7 +617,7 @@ Dialog {
             Label {
                 x: Theme.horizontalPageMargin
                 width: parent.width - 2 * Theme.horizontalPageMargin
-                text: qsTr("• Conversations stored locally\n• No sync with any web interface\n• Uses your own account with the provider")
+                text: qsTr("• Conversations copied locally on your device\n• History also stored on Mistral's servers (Conversations API)\n• No sync with any web interface\n• Uses your own Mistral account")
                 wrapMode: Text.WordWrap
                 font.pixelSize: Theme.fontSizeExtraSmall
                 color: Theme.secondaryColor
@@ -626,7 +626,7 @@ Dialog {
             Button {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: qsTr("Source code on GitHub")
-                onClicked: Qt.openUrlExternally("https://github.com/nicosouv/harbour-sailcat")
+                onClicked: Qt.openUrlExternally("https://github.com/nicosouv/harbour-skrynja")
             }
 
             Label {

@@ -6,7 +6,7 @@
 
 ## Approach
 
-The four backend classes are pure Qt (no Silica), so they compile and run against stock Ubuntu Qt 5. A single QtTest binary (`tests/tst_sailcat`) runs three suites; a dedicated `unit-tests` CI job runs on `ubuntu-22.04` for every manual build, PR, push to main and tag — and `create-release` now requires it, so a red test blocks the release.
+The four backend classes are pure Qt (no Silica), so they compile and run against stock Ubuntu Qt 5. A single QtTest binary (`tests/tst_skrynja`) runs three suites; a dedicated `unit-tests` CI job runs on `ubuntu-22.04` for every manual build, PR, push to main and tag — and `create-release` now requires it, so a red test blocks the release.
 
 ## Coverage
 
@@ -22,5 +22,5 @@ The four backend classes are pure Qt (no Silica), so they compile and run agains
 ## Local run
 
 ```bash
-cd tests && qmake tests.pro && make && ./tst_sailcat
+cd tests && qmake tests.pro && make && ./tst_skrynja
 ```

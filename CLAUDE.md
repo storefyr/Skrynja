@@ -4,10 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-SailCat is a native Sailfish OS chat client for Mistral AI and other OpenAI-compatible
-providers (Scaleway, OVHcloud, Groq, or any custom endpoint), built with Qt/C++ backend
-and QML/Silica frontend. The app uses streaming SSE (Server-Sent Events) to display
-real-time AI responses.
+Skrynja is a native Sailfish OS chat client for **Mistral AI only**, built on the
+**Conversations API** (`/v1/conversations`) — not Chat Completions. The Conversations API is
+stateful (the server remembers the history) and is the only Mistral API that offers the
+`web_search` tool, which is the point of the fork. Qt/C++ backend, QML/Silica frontend,
+streaming SSE (Server-Sent Events) to display real-time AI responses.
+
+Forked from SailCat. The rename is done; the API rewrite is in progress — see
+`docs/ROADMAP.md` and the "Migration status" section in `AGENTS.md`.
 
 ## Build Commands
 
@@ -61,21 +65,22 @@ Four QObject classes are exposed to QML as context properties, plus two helper
 namespaces:
 
 1. **MistralAPI** (`src/mistralapi.*`)
-   - Manages HTTP communication with the selected provider. Despite the name it is
-     provider-agnostic: `setEndpoint()` supplies the base URL and the per-provider
-     quirks, and `main()` calls it whenever the provider changes. Never hardcode a
-     host here again
-   - Implements SSE streaming parser for real-time responses
-   - Parses `data: [DONE]` and JSON chunks from stream
+   - Manages HTTP communication with Mistral's Conversations API (`https://api.mistral.ai/v1/conversations`).
+     Mistral AI is the only provider; there is no endpoint switching
+   - Endpoints: `POST /v1/conversations#stream` (create: model + instructions + tools are set here),
+     `POST /v1/conversations/{id}#stream` (append: inputs + completion_args only),
+     `POST /v1/conversations/{id}/restart#stream` (after a cancelled answer; returns a NEW id),
+     `GET /v1/conversations/{id}/messages` (reconcile before retrying an ambiguous failure),
+     `DELETE /v1/conversations/{id}`, `GET /v1/models`
+   - Parses the typed SSE events (`event: message.output.delta`, `tool.execution.*`,
+     `conversation.response.done` with usage, `conversation.created` with the id) — there is no `[DONE]` marker
    - Enforces TLS 1.2+, peer verification and no redirects on every request
-   - Spaces requests out (1.2 s, every kind of call, every provider but `custom`)
-     and resends a `429`/`502`/`503`/`529` up to three times, honouring
-     `Retry-After`. The retry is invisible above this layer: `messageSent()` fires
-     once, when the request is accepted rather than per attempt, and `isBusy` never
-     drops in between. See `docs/features/22-rate-limits.md`
+   - Spaces requests out (1.2 s, every kind of call) and resends a `429`/`502`/`503`/`529`
+     up to three times, honouring `Retry-After`. Before resending an append after an
+     ambiguous failure, reconcile with `GET .../messages` so a message is never appended twice
    - Signals: `streamingResponse()`, `responseCompleted()`, `messageSent()`,
      `usageReceived()`, `sideRequestUsage()`, `titleGenerated()`, `modelsFetched()`,
-     `rateLimited()`
+     `rateLimited()`, `conversationCreated()`, `toolActivity()`, `sourcesReceived()`
    - Properties: `isBusy`, `error`
 
 2. **ConversationModel** (`src/conversationmodel.*`)
@@ -94,27 +99,25 @@ namespaces:
    - Owns the conversation list and the current ConversationModel
    - Storage: one JSON file per conversation under `AppDataLocation/conversations/`,
      written atomically, owner-only, with dirty tracking so a save touches one file.
-     Migrates the pre-2.1 single QSettings blob on first launch
-   - `buildApiMessages(contextLimit, systemPrompt)` is the **single** place a request
-     payload is built: trims history, expands images into multimodal parts,
-     prepends the system prompt, drops the pending empty assistant bubble
+     Each conversation also stores its remote `conversation_id` (empty until the first
+     message has been answered server-side) and a `dirty` flag set when an answer was
+     cancelled mid-stream. Migrates the pre-2.1 single QSettings blob on first launch
+   - The request payload is no longer rebuilt per turn: only the new user message is
+     sent as `inputs`; history lives server-side. The system prompt travels as
+     `instructions` at conversation creation
    - `autoLabelConversation()` gives a conversation a title and a category without
      a request, which is what `autoTitleMode` defaults to
-   - Per-conversation overrides: `provider`, `model`, `systemPrompt`, `category`, title.
-     A conversation is **pinned to its provider**: the setting only decides what a new
-     conversation starts with, and moving one is an explicit action that drops the
-     model override
+   - Per-conversation overrides: `model` (fixed at creation), `systemPrompt`, `category`, title,
+     web-search toggle. There is no provider override: Mistral AI only
    - Statistics, fun stats, search, markdown export, cost input (`modelUsage`)
 
 4. **SettingsManager** (`src/settingsmanager.*`)
    - Wraps QSettings for persistent configuration, file kept owner-only
    - API key stored scrambled via SecureStore, never in clear text
-   - The key, the default model and the model cache live under `providers/<id>/`:
-     switching provider swaps the whole set. `resolveModel()` keeps a per-conversation
-     model override from being sent to a provider that does not serve it
-   - Properties: `providerId`, `customBaseUrl`, `apiKey`, `modelName`,
-     `nextMessageModel`, `language`, `temperature`, `maxTokens`, `systemPrompt`,
-     `contextMessageLimit`, `chatStyle`, `autoTitleMode`, `showTimestamps`,
+   - Single Mistral key, default model and model cache (no `providers/<id>/` split
+     anymore — one provider)
+   - Properties: `apiKey`, `modelName`, `webSearch`, `language`, `temperature`,
+     `maxTokens`, `systemPrompt`, `chatStyle`, `autoTitleMode`, `showTimestamps`,
      `savedPrompts`
    - `autoTitleMode` (`local` by default, `ai`, `off`) decides whether naming a
      conversation is worth a request. On a free tier it is the only call the app
@@ -130,10 +133,9 @@ Helpers (plain namespaces, not QObjects):
 - **SecureStore** (`src/securestore.*`) - owner-only file permissions and salted
   obfuscation for the API key. See `docs/features/20-audit-followup.md` for the
   threat model and the migration rules.
-- **Providers** (`src/providers.*`) - the endpoint registry: Mistral AI, Scaleway,
-  OVHcloud, Groq and a custom OpenAI-compatible entry, with the quirks that differ
-  between them (catalogue shape, `stream_options.include_usage`, key required, free
-  tier). See `docs/features/21-multi-provider.md`.
+- **Providers** (`src/providers.*`) - inherited from SailCat; currently still lists
+  Mistral AI, Scaleway, OVHcloud, Groq and custom, but only the Mistral catalogue
+  parsing is used. The other entries are removed as part of the API rewrite.
 - **Categories** (`src/categories.*`) - the 28 conversation categories and a local
   keyword classifier used when the model answers "other". Display labels and colors
   live in `qml/components/Categories.js` and **must stay in sync**. The classifier
@@ -165,15 +167,19 @@ User sends message → ChatPage.sendMessage()
   → conversationModel.addUserMessage()
   → conversationManager.saveCurrentConversation()   // before the round trip
   → ChatPage.dispatchRequest()
-  → conversationManager.buildApiMessages(contextLimit, systemPrompt)
-  → mistralApi.sendMessage(apiKey, model, messages, temperature, maxTokens)
+  → mistralApi.sendMessage(apiKey, model, systemPrompt, userMessage, temperature,
+                           maxTokens, webSearch, remoteConversationId)
   → emit messageSent() → conversationModel.addAssistantMessage("")
-  → POST https://api.mistral.ai/v1/chat/completions
-  → SSE stream chunks → mistralApi.onReadyRead()
-  → parseStreamLine() extracts JSON
-  → emit streamingResponse(content)
-  → ChatPage accumulates into streamingContent, marks streamPending
-  → streamFlushTimer (90 ms) → conversationModel.updateLastAssistantMessage()
+  → POST /v1/conversations%23stream        (first message: creates the conversation)
+  → POST /v1/conversations/{id}%23stream   (later messages: appends)
+  → SSE events → mistralApi.onReadyRead()
+  → parseStreamLine() dispatches on the event name
+  → conversationCreated(id) → persisted in the conversation JSON
+  → toolActivity("web_search") → "Searching the web…" indicator
+  → message.output.delta → emit streamingResponse(content)
+  → conversation.response.done → emit usageReceived(...)
+  → ConversationManager accumulates, marks streamPending
+  → streamTimer (90 ms) → conversationModel.updateLastAssistantMessage()
   → ListView automatically updates
 ```
 
@@ -181,12 +187,15 @@ Invariants worth keeping:
 
 - The empty assistant bubble is added on `messageSent()`, not before the call. A
   request the API layer rejects must not leave a placeholder behind.
-- Nothing but `buildApiMessages()` assembles a payload. Regenerate, retry and send
-  all go through `dispatchRequest()`.
-- **The endpoint follows the conversation, not the settings.** `main()` connects both
-  `ConversationManager::currentProviderIdChanged` and `SettingsManager::providerChanged`
-  to `MistralAPI::setEndpoint`. QML asks `SettingsManager` about a *given* provider
-  through the `...For(providerId)` family; it never configures the API layer itself.
+- **Only the new user message goes on the wire.** History lives server-side; the
+  client sends `inputs` (plus `instructions`/`tools`/`model` at creation). Retry and
+  send all go through `dispatchRequest()`; edit/regenerate are removed for now.
+- **Append is not idempotent.** After an ambiguous failure, `MistralAPI` reconciles
+  with `GET /v1/conversations/{id}/messages` before resending. Never resend an append
+  blindly.
+- **A cancelled answer marks the conversation dirty.** The next message goes through
+  `POST /v1/conversations/{id}/restart#stream` with `from_entry_id`; restart returns a
+  NEW `conversation_id`, which replaces the stored one, and the old one is deleted.
 - **No QML owns streaming state.** `ConversationManager::bindApi()` wires the API
   signals and accumulates the answer, because the chat page is destroyed whenever
   the user swipes back to the history. Anything that must survive that (accumulation,
@@ -204,45 +213,60 @@ Swiping back from the chat pops it; the history pushes a fresh one when a
 conversation is opened. Never assume a `ChatPage` instance exists — look it up by
 `objectName: "chatPage"` and handle null.
 
-## Provider Integration
+## Mistral Conversations API Integration
 
-### Endpoint
+### Endpoints
 
 ```
-POST <provider base URL>/chat/completions
+POST   https://api.mistral.ai/v1/conversations%23stream        (create; %23 = literal '#')
+POST   https://api.mistral.ai/v1/conversations/{id}%23stream   (append)
+POST   https://api.mistral.ai/v1/conversations/{id}/restart%23stream
+GET    https://api.mistral.ai/v1/conversations/{id}/messages  (reconcile)
+DELETE https://api.mistral.ai/v1/conversations/{id}
+GET    https://api.mistral.ai/v1/models
 ```
 
-The base URL comes from `Providers::byId()`, or from the user for a custom endpoint:
-`https://api.mistral.ai/v1`, `https://api.scaleway.ai/v1`,
-`https://oai.endpoints.kepler.ai.cloud.ovh.net/v1`, `https://api.groq.com/openai/v1`.
-
-### Request Format
+### Request Format (create)
 ```json
 {
   "model": "mistral-small-latest",
-  "messages": [
-    {"role": "user", "content": "Hello"},
-    {"role": "assistant", "content": "Hi!"}
-  ],
-  "stream": true
+  "instructions": "You are a helpful assistant.",
+  "tools": [{"type": "web_search"}],
+  "inputs": [{"object": "entry", "type": "message.input", "role": "user", "content": "Hello"}],
+  "completion_args": {"temperature": 0.7, "max_tokens": 1024}
 }
 ```
 
+Append requests carry only `inputs` and `completion_args`.
+
 ### SSE Stream Format
 ```
-data: {"choices":[{"delta":{"content":"Hello"}}]}
-data: {"choices":[{"delta":{"content":" there"}}]}
-data: [DONE]
+event: conversation.created
+data: {"conversation_id": "019b...", ...}
+
+event: tool.execution.started
+data: {"name": "web_search", "arguments": "{\"query\":\"...\"}"}
+
+event: message.output.delta
+data: {"content": "Hello"}
+
+event: conversation.response.done
+data: {"usage": {"prompt_tokens": 12, "completion_tokens": 34, ...}}
 ```
 
-The `MistralAPI::parseStreamLine()` method handles parsing these SSE events and extracting content deltas.
+`MistralAPI::parseStreamLine()` dispatches on the `event:` name. For reasoning models
+`content` in `message.output.delta` is a list of chunks (thinking + text), not a plain string.
+
+### `#stream` is a URL fragment
+`QUrl` treats `#stream` as a fragment and `QNetworkAccessManager` does not send
+fragments in the request line. Percent-encode it (`%23stream`) — see the unit tests.
 
 ## Key Development Notes
 
 ### QML Hot Reload
 QML files can be updated without rebuilding C++:
 ```bash
-scp qml/pages/ChatPage.qml nemo@<device-ip>:/usr/share/harbour-sailcat/qml/pages/
+scp qml/pages/ChatPage.qml nemo@<device-ip>:/usr/share/harbour-skrynja/qml/pages/
 # Then restart the app
 ```
 
@@ -250,14 +274,14 @@ scp qml/pages/ChatPage.qml nemo@<device-ip>:/usr/share/harbour-sailcat/qml/pages
 ```bash
 # View app logs on device/emulator
 devel-su
-journalctl -f | grep sailcat
+journalctl -f | grep skrynja
 ```
 
 ### CI/CD Workflows
 - **build-docker.yml** - Triggered on `v*.*.*` tags or manual dispatch
   - Extracts version from `GITHUB_REF` (e.g., `refs/tags/v1.0.0` → `1.0.0`)
   - Uses `0.1.0` for manual builds without tags (RPM forbids `-` in Version)
-  - Updates `rpm/harbour-sailcat.spec` with extracted version
+  - Updates `rpm/harbour-skrynja.spec` with extracted version
   - Builds for armv7hl, aarch64, i486 in parallel
   - Creates GitHub release with changelog (tag builds only)
 - **pr-build.yml** - Validates PRs with armv7hl build
@@ -272,12 +296,10 @@ journalctl -f | grep sailcat
 4. **Streaming Only** - The app relies on SSE streaming; non-streaming mode not implemented
    (title generation is the one exception and uses a plain request)
 5. **API key handling** - Never log it, never write it in clear text, never widen the
-   permissions of the settings file. Keys are per provider: a key must never be sent
-   to a host other than the one it was entered for. See `src/securestore.*`.
+   permissions of the settings file. One Mistral key; it is only ever sent to
+   `api.mistral.ai`. See `src/securestore.*`.
 6. **Category identifiers** - `src/categories.cpp` and `qml/components/Categories.js`
    hold the same list twice; changing one without the other silently degrades to "Other".
-   `qml/components/ProvidersUi.js` keys off the provider ids the same way, and falls
-   back to the neutral custom-endpoint colour.
 7. **Never expose a QML role or list key named `model`** - it shadows the delegate's own
    model object and turns every other lookup into `undefined`. The message model exposes
    `messageModel`; the conversation list has no such key at all.
@@ -289,10 +311,10 @@ qml/pages/              # Main UI pages
 qml/components/         # Reusable delegates and Categories.js
 qml/cover/              # Active cover
 tests/                  # QtTest suite, gates CI
-rpm/harbour-sailcat.spec # RPM packaging spec
-harbour-sailcat.pro     # QMake project file
-harbour-sailcat.yaml    # Sailfish build config
-harbour-sailcat.desktop # Desktop launcher entry
+rpm/harbour-skrynja.spec # RPM packaging spec
+harbour-skrynja.pro     # QMake project file
+harbour-skrynja.yaml    # Sailfish build config
+harbour-skrynja.desktop # Desktop launcher entry
 ```
 
 ## Testing
@@ -307,10 +329,11 @@ Manual testing checklist from DEVELOPMENT.md:
 
 Test API directly:
 ```bash
-curl -X POST https://api.mistral.ai/v1/chat/completions \
+curl -X POST 'https://api.mistral.ai/v1/conversations%23stream' \
   -H "Authorization: Bearer YOUR_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"model":"mistral-small-latest","messages":[{"role":"user","content":"Test"}],"stream":true}'
+  -H "Accept: text/event-stream" \
+  -d '{"model":"mistral-small-latest","tools":[{"type":"web_search"}],"inputs":"Test"}'
 ```
 - memory message de commit, tag, commentaaire, code, tout doit etre en anglais
 - memory Sailfish utilise Qt 5.6

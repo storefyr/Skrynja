@@ -2,7 +2,7 @@
 
 **Status:** done (v1.9.20)
 **Depends on:** 14 (animation patterns)
-**Touches:** `src/conversationmanager.{h,cpp}`, `qml/components/CountUpLabel.qml` (new), `qml/components/RatioDonut.qml` (new), `qml/pages/ConversationDetailPage.qml`, `qml/pages/ConversationHistoryPage.qml`, `qml/pages/StatsPage.qml`, `harbour-sailcat.pro`
+**Touches:** `src/conversationmanager.{h,cpp}`, `qml/components/CountUpLabel.qml` (new), `qml/components/RatioDonut.qml` (new), `qml/pages/ConversationDetailPage.qml`, `qml/pages/ConversationHistoryPage.qml`, `qml/pages/StatsPage.qml`, `harbour-skrynja.pro`
 
 ## Backend
 

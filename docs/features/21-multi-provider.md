@@ -1,4 +1,9 @@
-# 21 — Multiple providers (v2.3.0)
+# 21 — Multiple providers (v2.3.0) — REMOVED IN SKRYNJA
+
+> **Historical spec, kept for reference.** Skrynja is a fork of SailCat, and this feature
+> is one of the things the fork removes: `/v1/conversations` exists only on
+> `api.mistral.ai`, so Scaleway, OVHcloud, Groq and custom endpoints cannot be kept.
+> See `docs/ROADMAP.md` ("Removed in the fork").
 
 SailCat was written against `api.mistral.ai` and hardcoded it in three places. Every
 API worth talking to speaks the same OpenAI chat-completions dialect, so the endpoint

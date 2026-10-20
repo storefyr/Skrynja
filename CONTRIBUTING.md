@@ -1,12 +1,12 @@
-# Contributing to SailCat
+# Contributing to Skrynja
 
-Merci de votre intérêt pour contribuer à SailCat ! 🎉
+Merci de votre intérêt pour contribuer à Skrynja ! 🎉
 
 ## Comment contribuer
 
 ### Signaler des bugs
 
-Si vous trouvez un bug, ouvrez une [issue](https://github.com/nicosouv/harbour-sailcat/issues) en incluant :
+Si vous trouvez un bug, ouvrez une [issue](https://github.com/nicosouv/harbour-skrynja/issues) en incluant :
 
 - Une description claire du problème
 - Les étapes pour reproduire le bug
@@ -37,8 +37,8 @@ Pour proposer une nouvelle fonctionnalité :
 
 2. **Clone** votre fork
    ```bash
-   git clone https://github.com/votre-username/harbour-sailcat.git
-   cd harbour-sailcat
+   git clone https://github.com/votre-username/harbour-skrynja.git
+   cd harbour-skrynja
    ```
 
 3. **Créez une branche** pour votre fonctionnalité
@@ -170,7 +170,7 @@ Pour l'instant, les tests sont manuels :
 Voir [ARCHITECTURE.md](ARCHITECTURE.md) pour une compréhension détaillée de l'architecture.
 
 ```
-harbour-sailcat/
+harbour-skrynja/
 ├── src/                 # Backend Qt C++
 │   ├── mistralapi.*     # API client
 │   ├── conversationmodel.*

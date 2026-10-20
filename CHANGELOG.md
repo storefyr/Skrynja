@@ -1,17 +1,63 @@
 # Changelog
 
-All notable changes to SailCat will be documented in this file.
+All notable changes to Skrynja will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-10-20
+
+Skrynja is a fork of [SailCat](https://github.com/nicosouv/harbour-sailcat),
+rewritten around Mistral's Conversations API. This is the first release.
+
+### Changed (breaking)
+
+- **Rewritten to use the Conversations API** (`/v1/conversations`) instead of
+  Chat Completions (`/v1/chat/completions`). The API is stateful: the server
+  remembers the conversation, so the client only appends new messages.
+- **Web search is now possible.** Mistral's `web_search` tool only exists on the
+  Conversations API. A toggle in Settings (and per conversation) enables it; the
+  chat shows a "Searching the web…" indicator while the model searches and lists
+  sources with the answer.
+- **Mistral AI only.** Scaleway, OVHcloud, Groq and custom endpoints speak the
+  OpenAI dialect and do not support `/v1/conversations`, so the provider picker
+  is gone.
+- **Context limit trimming removed.** With server-side history there is nothing
+  to trim locally; the server keeps the full conversation.
+- **The model is fixed per conversation.** It is chosen when the conversation is
+  created; start a new conversation to switch models.
+- **Edit and regenerate removed.** They require entry-level restart, which is
+  deferred to a later release.
+- **Migration: existing conversations start fresh server-side.** Old messages
+  stay visible locally, but the remote conversation only begins with the next
+  message sent.
+
+### Added
+
+- Remote conversation tracking: each local conversation stores the
+  `conversation_id` returned by Mistral.
+- Reconciliation before retry: after an ambiguous failure (timeout, network
+  drop) the client fetches `GET /v1/conversations/{id}/messages` and compares
+  before sending again, so a message is never appended twice.
+- Cancelled answers are marked dirty; the next message restarts the
+  conversation server-side from before the cancelled turn
+  (`POST /v1/conversations/{id}/restart#stream`).
+- Deleting a conversation also deletes it server-side
+  (`DELETE /v1/conversations/{id}`).
+- Privacy notice: conversation history lives on Mistral's servers with this API.
+
+## Previous history
+
+Skrynja inherits the history of SailCat. The entries below are from the SailCat
+changelog and describe versions released under the SailCat name.
+
 ## [2.3.0] - 2026-09-13
 
 ### Added
 
-- **SailCat is no longer tied to Mistral.** Every backend it can talk to speaks the
+- **Skrynja is no longer tied to Mistral.** Every backend it can talk to speaks the
   same OpenAI chat-completions dialect, so the API layer now takes its endpoint from
   the selected provider instead of hardcoding `api.mistral.ai`. Presets ship for
   Mistral AI, Scaleway, OVHcloud AI Endpoints and Groq, plus a custom entry that takes
@@ -347,5 +393,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/nicosouv/harbour-sailcat/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/nicosouv/harbour-sailcat/releases/tag/v1.0.0
+[Unreleased]: https://github.com/nicosouv/harbour-skrynja/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/nicosouv/harbour-skrynja/releases/tag/v1.0.0

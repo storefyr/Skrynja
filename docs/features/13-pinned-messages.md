@@ -2,7 +2,7 @@
 
 **Status:** done (v1.9.17)
 **Depends on:** nothing
-**Touches:** `src/conversationmodel.{h,cpp}`, `src/conversationmanager.{h,cpp}`, `qml/components/MessageBubble.qml`, `qml/pages/ChatPage.qml`, `qml/pages/PinnedMessagesPage.qml` (new), `harbour-sailcat.pro`
+**Touches:** `src/conversationmodel.{h,cpp}`, `src/conversationmanager.{h,cpp}`, `qml/components/MessageBubble.qml`, `qml/pages/ChatPage.qml`, `qml/pages/PinnedMessagesPage.qml` (new), `harbour-skrynja.pro`
 
 ## Goal
 

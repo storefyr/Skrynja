@@ -53,7 +53,7 @@ const int MAX_SAVED_PROMPTS = 100;
 
 SettingsManager::SettingsManager(QObject *parent)
     : QObject(parent)
-    , m_settings("harbour-sailcat", "SailCat")
+    , m_settings("harbour-skrynja", "Skrynja")
     , m_providerId(Providers::defaultId())
     , m_temperature(-1.0)
     , m_maxTokens(0)
@@ -636,7 +636,7 @@ bool SettingsManager::modelCacheStale() const
 
 QStringList SettingsManager::availableLanguages() const
 {
-    // Codes must match the translations/harbour-sailcat-<code>.ts file names
+    // Codes must match the translations/harbour-skrynja-<code>.ts file names
     return QStringList()
         << "en"
         << "fr"

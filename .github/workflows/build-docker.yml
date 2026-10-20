@@ -36,8 +36,8 @@ jobs:
 
       - name: Update spec version
         run: |
-          sed -i "s/^Version:.*/Version:    ${{ steps.version.outputs.version }}/" rpm/harbour-sailcat.spec
-          cat rpm/harbour-sailcat.spec | grep "^Version:"
+          sed -i "s/^Version:.*/Version:    ${{ steps.version.outputs.version }}/" rpm/harbour-skrynja.spec
+          cat rpm/harbour-skrynja.spec | grep "^Version:"
 
       - name: Build RPM
         uses: R1tschY/sailfish-build-rpm@v1
@@ -76,7 +76,7 @@ jobs:
           make -j2
 
       - name: Run tests
-        run: cd tests && ./tst_sailcat
+        run: cd tests && ./tst_skrynja
 
   create-release:
     needs: [build, unit-tests]
@@ -128,7 +128,7 @@ jobs:
         id: release_body
         run: |
           cat > release_notes.md << 'EOF'
-          # SailCat ${{ steps.version.outputs.version }}
+          # Skrynja ${{ steps.version.outputs.version }}
 
           ## 🐱⛵ Installation
 
@@ -143,7 +143,7 @@ jobs:
           ```bash
           # Transfer the RPM to your device, then:
           devel-su
-          pkcon install-local harbour-sailcat-*.rpm
+          pkcon install-local harbour-skrynja-*.rpm
           ```
 
           Or use File Browser to tap on the RPM file.
@@ -154,7 +154,7 @@ jobs:
 
           ## 🚀 Quick Start
 
-          1. Launch **SailCat** from your app drawer
+          1. Launch **Skrynja** from your app drawer
           2. Pull down and select **Settings**
           3. Enter your Mistral AI API key (get one free at [console.mistral.ai](https://console.mistral.ai))
           4. Choose your preferred model (Small/Large/Pixtral)
@@ -162,14 +162,14 @@ jobs:
 
           ## ℹ️ About
 
-          SailCat is a native Sailfish OS client for Le Chat de Mistral AI with:
+          Skrynja is a native Sailfish OS client for Le Chat de Mistral AI with:
           - Real-time streaming responses
           - Native Silica UI
           - Multiple model support
           - Conversation history
           - Secure local API key storage
 
-          For more info, see the [README](https://github.com/nicosouv/harbour-sailcat/blob/main/README.md).
+          For more info, see the [README](https://github.com/nicosouv/harbour-skrynja/blob/main/README.md).
           EOF
           cat release_notes.md
 

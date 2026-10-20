@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS>
-<TS version="2.1" language="de">
+<TS version="2.1" language="fr">
 <context>
     <name>Categories</name>
     <message>
@@ -9,7 +9,7 @@
     </message>
     <message>
         <source>Debugging</source>
-        <translation>Debugging</translation>
+        <translation>Débogage</translation>
     </message>
     <message>
         <source>DevOps</source>
@@ -17,7 +17,7 @@
     </message>
     <message>
         <source>Data</source>
-        <translation>Daten</translation>
+        <translation>Données</translation>
     </message>
     <message>
         <source>Design</source>
@@ -25,15 +25,15 @@
     </message>
     <message>
         <source>Writing</source>
-        <translation>Schreiben</translation>
+        <translation>Rédaction</translation>
     </message>
     <message>
         <source>Translation</source>
-        <translation>Übersetzung</translation>
+        <translation>Traduction</translation>
     </message>
     <message>
         <source>Learning</source>
-        <translation>Lernen</translation>
+        <translation>Apprentissage</translation>
     </message>
     <message>
         <source>Research</source>
@@ -41,11 +41,11 @@
     </message>
     <message>
         <source>Maths</source>
-        <translation>Mathe</translation>
+        <translation>Maths</translation>
     </message>
     <message>
         <source>Science</source>
-        <translation>Wissenschaft</translation>
+        <translation>Science</translation>
     </message>
     <message>
         <source>Business</source>
@@ -53,43 +53,43 @@
     </message>
     <message>
         <source>Finance</source>
-        <translation>Finanzen</translation>
+        <translation>Finance</translation>
     </message>
     <message>
         <source>Career</source>
-        <translation>Karriere</translation>
+        <translation>Carrière</translation>
     </message>
     <message>
         <source>Legal</source>
-        <translation>Recht</translation>
+        <translation>Juridique</translation>
     </message>
     <message>
         <source>Health</source>
-        <translation>Gesundheit</translation>
+        <translation>Santé</translation>
     </message>
     <message>
         <source>Cooking</source>
-        <translation>Kochen</translation>
+        <translation>Cuisine</translation>
     </message>
     <message>
         <source>Travel</source>
-        <translation>Reisen</translation>
+        <translation>Voyage</translation>
     </message>
     <message>
         <source>Home</source>
-        <translation>Zuhause</translation>
+        <translation>Maison</translation>
     </message>
     <message>
         <source>Gaming</source>
-        <translation>Gaming</translation>
+        <translation>Jeux vidéo</translation>
     </message>
     <message>
         <source>Music</source>
-        <translation>Musik</translation>
+        <translation>Musique</translation>
     </message>
     <message>
         <source>Books &amp; Movies</source>
-        <translation>Bücher &amp; Filme</translation>
+        <translation>Livres &amp; Films</translation>
     </message>
     <message>
         <source>Sports</source>
@@ -97,143 +97,143 @@
     </message>
     <message>
         <source>Relationships</source>
-        <translation>Beziehungen</translation>
+        <translation>Relations</translation>
     </message>
     <message>
         <source>Productivity</source>
-        <translation>Produktivität</translation>
+        <translation>Productivité</translation>
     </message>
     <message>
         <source>Ideas</source>
-        <translation>Ideen</translation>
+        <translation>Idées</translation>
     </message>
     <message>
         <source>Practical</source>
-        <translation>Praktisches</translation>
+        <translation>Pratique</translation>
     </message>
     <message>
         <source>Other</source>
-        <translation>Sonstiges</translation>
+        <translation>Autre</translation>
     </message>
 </context>
 <context>
     <name>ChatPage</name>
     <message>
-        <source>New conversation</source>
-        <translation>Neue Unterhaltung</translation>
+        <source>Settings &amp; About</source>
+        <translation>Paramètres &amp; À propos</translation>
     </message>
     <message>
-        <source>Welcome to SailCat</source>
-        <translation>Welcome to SailCat</translation>
+        <source>New conversation</source>
+        <translation>Nouvelle conversation</translation>
+    </message>
+    <message>
+        <source>Welcome to Skrynja</source>
+        <translation>Bienvenue sur Skrynja</translation>
     </message>
     <message>
         <source>Pick a provider and enter its API key to get started</source>
-        <translation>Wähle einen Anbieter und gib seinen API-Schlüssel ein, um zu starten</translation>
+        <translation>Choisissez un fournisseur et entrez sa clé API pour commencer</translation>
     </message>
     <message>
         <source>Start a conversation</source>
-        <translation>Start a conversation</translation>
+        <translation>Démarrer une conversation</translation>
     </message>
     <message>
         <source>Type a message below</source>
-        <translation>Type a message below</translation>
+        <translation>Tapez un message ci-dessous</translation>
     </message>
     <message>
         <source>Type a message...</source>
-        <translation>Type a message...</translation>
+        <translation>Tapez un message...</translation>
+    </message>
+    <message>
+        <source>Get Started</source>
+        <translation>Commencer</translation>
+    </message>
+    <message>
+        <source>Which AI answers you?</source>
+        <translation>Quelle IA vous répond ?</translation>
+    </message>
+    <message>
+        <source>The one you pick. Skrynja talks to Mistral AI, Scaleway, OVHcloud, Groq or any OpenAI-compatible endpoint, with your own account. Several of them have a free tier, and the European ones keep your conversations on this side of the Atlantic.</source>
+        <translation>Celle que vous choisissez. Skrynja parle à Mistral AI, Scaleway, OVHcloud, Groq ou à n&apos;importe quel endpoint compatible OpenAI, avec votre propre compte. Plusieurs proposent une offre gratuite, et les européens gardent vos conversations de ce côté-ci de l&apos;Atlantique.</translation>
+    </message>
+    <message>
+        <source>Privacy &amp; Storage</source>
+        <translation>Confidentialité &amp; Stockage</translation>
+    </message>
+    <message>
+        <source>Getting Started</source>
+        <translation>Démarrage</translation>
     </message>
     <message>
         <source>1. Pick a provider in Settings
 2. Paste the API key it gives you
 3. Start chatting!</source>
-        <translation>1. Wähle einen Anbieter in den Einstellungen
-2. Füge den API-Schlüssel ein, den du bekommst
-3. Losplaudern!</translation>
+        <translation>1. Choisissez un fournisseur dans les Paramètres
+2. Collez la clé API qu&apos;il vous donne
+3. Discutez !</translation>
     </message>
     <message>
         <source>Conversation exported</source>
-        <translation>Unterhaltung exportiert</translation>
+        <translation>Conversation exportée</translation>
     </message>
     <message>
         <source>Export conversation</source>
-        <translation>Unterhaltung exportieren</translation>
+        <translation>Exporter la conversation</translation>
     </message>
     <message>
         <source>Export failed</source>
-        <translation>Export fehlgeschlagen</translation>
-    </message>
-    <message>
-        <source>Get Started</source>
-        <translation>Loslegen</translation>
-    </message>
-    <message>
-        <source>Getting Started</source>
-        <translation>Erste Schritte</translation>
-    </message>
-    <message>
-        <source>The one you pick. SailCat talks to Mistral AI, Scaleway, OVHcloud, Groq or any OpenAI-compatible endpoint, with your own account. Several of them have a free tier, and the European ones keep your conversations on this side of the Atlantic.</source>
-        <translation>Die, die du wählst. SailCat spricht mit Mistral AI, Scaleway, OVHcloud, Groq oder jedem OpenAI-kompatiblen Endpunkt, mit deinem eigenen Konto. Mehrere davon haben ein kostenloses Kontingent, und die europäischen behalten deine Unterhaltungen auf dieser Seite des Atlantiks.</translation>
+        <translation>Échec de l&apos;export</translation>
     </message>
     <message>
         <source>This conversation now uses %1</source>
-        <translation>Diese Unterhaltung nutzt jetzt %1</translation>
+        <translation>Cette conversation utilise maintenant %1</translation>
     </message>
     <message>
         <source>Pinned messages</source>
-        <translation>Angeheftete Nachrichten</translation>
-    </message>
-    <message>
-        <source>Privacy &amp; Storage</source>
-        <translation>Datenschutz &amp; Speicher</translation>
-    </message>
-    <message>
-        <source>Settings &amp; About</source>
-        <translation>Einstellungen &amp; Info</translation>
+        <translation>Messages épinglés</translation>
     </message>
     <message>
         <source>Tokens: %1 total - last: %2 in / %3 out</source>
-        <translation>Tokens: %1 gesamt - zuletzt: %2 ein / %3 aus</translation>
-    </message>
-    <message>
-        <source>Which AI answers you?</source>
-        <translation>Welche KI antwortet dir?</translation>
+        <translation>Tokens : %1 au total - dernier : %2 entrée / %3 sortie</translation>
     </message>
     <message>
         <source>• Your conversations are stored locally on your device
 • No sync with any web interface
 • Each provider keeps its own key, stored scrambled
 • Your data stays on your phone</source>
-        <translation>• Deine Unterhaltungen werden lokal auf deinem Gerät gespeichert
-• Keine Synchronisierung mit einer Weboberfläche
-• Jeder Anbieter hat seinen eigenen Schlüssel, verschleiert gespeichert
-• Deine Daten bleiben auf deinem Telefon</translation>
+        <translation>• Vos conversations sont stockées localement sur votre appareil
+• Aucune synchronisation avec une interface web
+• Chaque fournisseur garde sa propre clé, stockée brouillée
+• Vos données restent sur votre téléphone</translation>
     </message>
     <message>
         <source>Prompt library</source>
-        <translation>Prompt-Bibliothek</translation>
+        <translation>Bibliothèque de prompts</translation>
     </message>
     <message>
         <source>Conversation settings</source>
-        <translation>Unterhaltungseinstellungen</translation>
+        <translation>Réglages de la conversation</translation>
     </message>
     <message numerus="yes">
         <source>Context limited: %n older message(s) not sent</source>
         <translation>
-            <numerusform>Kontext begrenzt: %n ältere Nachricht nicht gesendet</numerusform>
-            <numerusform>Kontext begrenzt: %n ältere Nachrichten nicht gesendet</numerusform>
+            <numerusform>Contexte limité : %n message ancien non envoyé</numerusform>
+            <numerusform>Contexte limité : %n messages anciens non envoyés</numerusform>
         </translation>
     </message>
     <message>
         <source>Tokens: %1 total</source>
-        <translation>Tokens: %1 insgesamt</translation>
+        <translation>Tokens : %1 au total</translation>
     </message>
     <message>
         <source>Provider busy - retrying in %1 s (%2/%3)</source>
-        <translation>Anbieter ausgelastet - neuer Versuch in %1 s (%2/%3)</translation>
+        <translation>Fournisseur saturé - nouvel essai dans %1 s (%2/%3)</translation>
     </message>
     <message>
         <source>Provider busy - retrying (%1/%2)</source>
-        <translation>Anbieter ausgelastet - neuer Versuch (%1/%2)</translation>
+        <translation>Fournisseur saturé - nouvel essai (%1/%2)</translation>
     </message>
 </context>
 <context>
@@ -241,75 +241,75 @@
     <message numerus="yes">
         <source>%n day(s)</source>
         <translation>
-            <numerusform>%n Tag</numerusform>
-            <numerusform>%n Tage</numerusform>
+            <numerusform>%n jour</numerusform>
+            <numerusform>%n jours</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n hour(s)</source>
         <translation>
-            <numerusform>%n Stunde</numerusform>
-            <numerusform>%n Stunden</numerusform>
+            <numerusform>%n heure</numerusform>
+            <numerusform>%n heures</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n minute(s)</source>
         <translation>
-            <numerusform>%n Minute</numerusform>
-            <numerusform>%n Minuten</numerusform>
+            <numerusform>%n minute</numerusform>
+            <numerusform>%n minutes</numerusform>
         </translation>
     </message>
     <message>
         <source>Assistant</source>
-        <translation>Assistent</translation>
+        <translation>Assistant</translation>
     </message>
     <message>
         <source>Conversation</source>
-        <translation>Unterhaltung</translation>
+        <translation>Conversation</translation>
     </message>
     <message>
         <source>Conversation rhythm</source>
-        <translation>Gesprächsrhythmus</translation>
+        <translation>Rythme de la conversation</translation>
     </message>
     <message>
         <source>Less than a minute</source>
-        <translation>Weniger als eine Minute</translation>
+        <translation>Moins d&apos;une minute</translation>
     </message>
     <message>
         <source>Load this conversation</source>
-        <translation>Diese Unterhaltung laden</translation>
+        <translation>Charger cette conversation</translation>
     </message>
     <message>
         <source>Messages</source>
-        <translation>Nachrichten</translation>
+        <translation>Messages</translation>
     </message>
     <message>
         <source>No messages</source>
-        <translation>Keine Nachrichten</translation>
+        <translation>Aucun message</translation>
     </message>
     <message>
         <source>Single exchange</source>
-        <translation>Einzelner Austausch</translation>
+        <translation>Échange unique</translation>
     </message>
     <message>
         <source>This conversation is empty</source>
-        <translation>Diese Unterhaltung ist leer</translation>
+        <translation>Cette conversation est vide</translation>
     </message>
     <message>
         <source>You</source>
-        <translation>Sie</translation>
+        <translation>Vous</translation>
     </message>
     <message>
         <source>messages</source>
-        <translation>Nachrichten</translation>
+        <translation>messages</translation>
     </message>
     <message>
         <source>tokens</source>
-        <translation>Tokens</translation>
+        <translation>tokens</translation>
     </message>
     <message>
         <source>written by AI</source>
-        <translation>von KI geschrieben</translation>
+        <translation>écrit par l&apos;IA</translation>
     </message>
 </context>
 <context>
@@ -317,216 +317,216 @@
     <message numerus="yes">
         <source>%n conversation(s)</source>
         <translation>
-            <numerusform>%n Unterhaltung</numerusform>
-            <numerusform>%n Unterhaltungen</numerusform>
+            <numerusform>%n conversation</numerusform>
+            <numerusform>%n conversations</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n match(es)</source>
         <translation>
-            <numerusform>%n Treffer</numerusform>
-            <numerusform>%n Treffer</numerusform>
+            <numerusform>%n correspondance</numerusform>
+            <numerusform>%n correspondances</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n message(s)</source>
         <translation>
-            <numerusform>%n Nachricht</numerusform>
-            <numerusform>%n Nachrichten</numerusform>
+            <numerusform>%n message</numerusform>
+            <numerusform>%n messages</numerusform>
         </translation>
     </message>
     <message>
         <source>Activity - last 14 days</source>
-        <translation>Aktivität - letzte 14 Tage</translation>
+        <translation>Activité - 14 derniers jours</translation>
     </message>
     <message>
         <source>Conversation History</source>
-        <translation>Unterhaltungsverlauf</translation>
+        <translation>Historique des conversations</translation>
     </message>
     <message>
         <source>Copy as text</source>
-        <translation>Als Text kopieren</translation>
+        <translation>Copier en texte</translation>
     </message>
     <message>
         <source>Delete</source>
-        <translation>Löschen</translation>
+        <translation>Supprimer</translation>
     </message>
     <message>
         <source>Deleting</source>
-        <translation>Wird gelöscht</translation>
+        <translation>Suppression</translation>
     </message>
     <message>
         <source>Empty conversation</source>
-        <translation>Leere Unterhaltung</translation>
+        <translation>Conversation vide</translation>
     </message>
     <message>
         <source>New conversation</source>
-        <translation>Neue Unterhaltung</translation>
+        <translation>Nouvelle conversation</translation>
     </message>
     <message>
         <source>No conversations</source>
-        <translation>Keine Unterhaltungen</translation>
+        <translation>Aucune conversation</translation>
     </message>
     <message>
         <source>No results</source>
-        <translation>Keine Ergebnisse</translation>
+        <translation>Aucun résultat</translation>
     </message>
     <message>
         <source>Purge all conversations</source>
-        <translation>Alle Unterhaltungen löschen</translation>
+        <translation>Purger toutes les conversations</translation>
     </message>
     <message>
         <source>Purging all conversations</source>
-        <translation>Alle Unterhaltungen werden gelöscht</translation>
+        <translation>Purge de toutes les conversations</translation>
     </message>
     <message>
         <source>Search in conversations...</source>
-        <translation>In Unterhaltungen suchen...</translation>
+        <translation>Rechercher dans les conversations...</translation>
     </message>
     <message>
         <source>Start chatting to create conversations</source>
-        <translation>Beginnen Sie zu chatten, um Unterhaltungen zu erstellen</translation>
+        <translation>Commencez à discuter pour créer des conversations</translation>
     </message>
     <message>
         <source>Try different search terms</source>
-        <translation>Versuchen Sie andere Suchbegriffe</translation>
+        <translation>Essayez d&apos;autres termes de recherche</translation>
     </message>
     <message>
         <source>View details</source>
-        <translation>Details anzeigen</translation>
+        <translation>Voir les détails</translation>
     </message>
     <message>
         <source>Conversation settings</source>
-        <translation>Unterhaltungseinstellungen</translation>
+        <translation>Réglages de la conversation</translation>
     </message>
     <message>
         <source>Auto-label conversations</source>
-        <translation>Unterhaltungen automatisch beschriften</translation>
+        <translation>Étiqueter automatiquement</translation>
     </message>
     <message numerus="yes">
         <source>%n conversation(s) relabelled</source>
         <translation>
-            <numerusform>%n Unterhaltung neu beschriftet</numerusform>
-            <numerusform>%n Unterhaltungen neu beschriftet</numerusform>
+            <numerusform>%n conversation réétiquetée</numerusform>
+            <numerusform>%n conversations réétiquetées</numerusform>
         </translation>
     </message>
     <message>
         <source>Nothing to relabel</source>
-        <translation>Nichts neu zu beschriften</translation>
+        <translation>Rien à réétiqueter</translation>
     </message>
     <message>
         <source>Settings &amp; About</source>
-        <translation>Einstellungen &amp; Info</translation>
+        <translation>Paramètres &amp; À propos</translation>
     </message>
     <message>
         <source>Yesterday</source>
-        <translation>Gestern</translation>
+        <translation>Hier</translation>
     </message>
 </context>
 <context>
     <name>ConversationManager</name>
     <message>
         <source>New conversation</source>
-        <translation>Neue Unterhaltung</translation>
+        <translation>Nouvelle conversation</translation>
     </message>
     <message>
         <source>Match in title</source>
-        <translation>Treffer im Titel</translation>
+        <translation>Correspondance dans le titre</translation>
     </message>
     <message>
         <source>Untitled</source>
-        <translation>Ohne Titel</translation>
+        <translation>Sans titre</translation>
     </message>
 </context>
 <context>
     <name>ConversationSettingsPage</name>
     <message>
         <source>Conversation settings</source>
-        <translation>Unterhaltungseinstellungen</translation>
+        <translation>Réglages de la conversation</translation>
     </message>
     <message>
         <source>Title</source>
-        <translation>Titel</translation>
+        <translation>Titre</translation>
     </message>
     <message>
         <source>Conversation title</source>
-        <translation>Titel der Unterhaltung</translation>
+        <translation>Titre de la conversation</translation>
     </message>
     <message>
         <source>Category</source>
-        <translation>Kategorie</translation>
+        <translation>Catégorie</translation>
     </message>
     <message>
         <source>Topic</source>
-        <translation>Thema</translation>
+        <translation>Sujet</translation>
     </message>
     <message>
         <source>Used by the statistics page</source>
-        <translation>Wird von der Statistikseite verwendet</translation>
+        <translation>Utilisé par la page de statistiques</translation>
     </message>
     <message>
         <source>Provider and model</source>
-        <translation>Anbieter und Modell</translation>
+        <translation>Fournisseur et modèle</translation>
     </message>
     <message>
         <source>Model for this conversation</source>
-        <translation>Modell für diese Unterhaltung</translation>
+        <translation>Modèle pour cette conversation</translation>
     </message>
     <message>
         <source>Overrides the default model of that provider</source>
-        <translation>Überschreibt das Standardmodell dieses Anbieters</translation>
+        <translation>Remplace le modèle par défaut de ce fournisseur</translation>
     </message>
     <message>
         <source>Use default (%1)</source>
-        <translation>Standard verwenden (%1)</translation>
+        <translation>Utiliser par défaut (%1)</translation>
     </message>
     <message>
         <source>System prompt</source>
-        <translation>System-Prompt</translation>
+        <translation>Prompt système</translation>
     </message>
     <message>
         <source>Custom system prompt</source>
-        <translation>Benutzerdefinierter System-Prompt</translation>
+        <translation>Prompt système personnalisé</translation>
     </message>
     <message>
         <source>Replaces the global system prompt for this conversation only</source>
-        <translation>Ersetzt den globalen System-Prompt nur für diese Unterhaltung</translation>
+        <translation>Remplace le prompt système global, pour cette conversation uniquement</translation>
     </message>
     <message>
         <source>Instruction</source>
-        <translation>Anweisung</translation>
+        <translation>Instruction</translation>
     </message>
     <message>
         <source>Enter a system prompt...</source>
-        <translation>System-Prompt eingeben...</translation>
+        <translation>Saisissez un prompt système...</translation>
     </message>
     <message>
         <source>Asking the model...</source>
-        <translation>Modell wird gefragt...</translation>
+        <translation>Interrogation du modèle...</translation>
     </message>
     <message>
         <source>Suggest a title</source>
-        <translation>Titel vorschlagen</translation>
+        <translation>Proposer un titre</translation>
     </message>
     <message>
         <source>Reads the conversation and proposes a title and a category.</source>
-        <translation>Liest die Unterhaltung und schlägt Titel und Kategorie vor.</translation>
+        <translation>Lit la conversation et propose un titre et une catégorie.</translation>
     </message>
     <message>
         <source>Answers come from</source>
-        <translation>Antworten kommen von</translation>
+        <translation>Les réponses viennent de</translation>
     </message>
     <message>
         <source>This conversation only. New conversations use the provider set in Settings.</source>
-        <translation>Nur diese Unterhaltung. Neue nutzen den in den Einstellungen gewählten Anbieter.</translation>
+        <translation>Cette conversation seulement. Les nouvelles utilisent le fournisseur défini dans les Paramètres.</translation>
     </message>
     <message>
         <source>The rest of this conversation goes to %1, using its own API key. The answers already received do not change.</source>
-        <translation>Der Rest dieser Unterhaltung geht an %1, mit dessen eigenem API-Schlüssel. Bereits erhaltene Antworten ändern sich nicht.</translation>
+        <translation>La suite de cette conversation part chez %1, avec sa propre clé API. Les réponses déjà reçues ne changent pas.</translation>
     </message>
     <message>
         <source>No API key for this provider yet - add it in Settings before sending.</source>
-        <translation>Noch kein API-Schlüssel für diesen Anbieter - füge ihn in den Einstellungen hinzu, bevor du sendest.</translation>
+        <translation>Pas encore de clé API pour ce fournisseur - ajoutez-la dans les Paramètres avant d&apos;envoyer.</translation>
     </message>
 </context>
 <context>
@@ -534,167 +534,175 @@
     <message numerus="yes">
         <source>%n message(s)</source>
         <translation>
-            <numerusform>%n Nachricht</numerusform>
-            <numerusform>%n Nachrichten</numerusform>
+            <numerusform>%n message</numerusform>
+            <numerusform>%n messages</numerusform>
         </translation>
     </message>
     <message>
         <source>No conversation</source>
-        <translation>Keine Unterhaltung</translation>
+        <translation>Aucune conversation</translation>
     </message>
     <message numerus="yes">
         <source>%n conversation(s)</source>
         <translation>
-            <numerusform>%n Unterhaltung</numerusform>
-            <numerusform>%n Unterhaltungen</numerusform>
+            <numerusform>%n conversation</numerusform>
+            <numerusform>%n conversations</numerusform>
         </translation>
     </message>
     <message>
         <source>Tokens this month: %1</source>
-        <translation>Tokens diesen Monat: %1</translation>
+        <translation>Tokens ce mois-ci : %1</translation>
     </message>
     <message>
         <source>Tokens: %1</source>
-        <translation>Tokens: %1</translation>
+        <translation>Tokens : %1</translation>
     </message>
 </context>
 <context>
     <name>MessageBubble</name>
     <message>
-        <source>You</source>
-        <translation>Sie</translation>
-    </message>
-    <message>
-        <source>Assistant</source>
-        <translation>Assistent</translation>
-    </message>
-    <message>
         <source>Copy</source>
-        <translation>Kopieren</translation>
-    </message>
-    <message>
-        <source>Unpin</source>
-        <translation>Lösen</translation>
-    </message>
-    <message>
-        <source>Pin</source>
-        <translation>Anheften</translation>
+        <translation>Copier</translation>
     </message>
     <message>
         <source>Copy code</source>
-        <translation>Code kopieren</translation>
+        <translation>Copier le code</translation>
     </message>
     <message>
         <source>Edit</source>
-        <translation>Bearbeiten</translation>
+        <translation>Modifier</translation>
+    </message>
+    <message>
+        <source>Pin</source>
+        <translation>Épingler</translation>
     </message>
     <message>
         <source>Regenerate</source>
-        <translation>Neu generieren</translation>
+        <translation>Régénérer</translation>
+    </message>
+    <message>
+        <source>Unpin</source>
+        <translation>Désépingler</translation>
+    </message>
+    <message>
+        <source>You</source>
+        <translation>Vous</translation>
+    </message>
+    <message>
+        <source>Assistant</source>
+        <translation>Assistant</translation>
     </message>
 </context>
 <context>
     <name>MistralAPI</name>
     <message>
         <source>Missing API key. Please configure your API key in settings.</source>
-        <translation>Missing API key. Please configure your API key in settings.</translation>
+        <translation>Clé API manquante. Veuillez configurer votre clé API dans les paramètres.</translation>
     </message>
     <message>
         <source>API Error: %1</source>
-        <translation>API Error: %1</translation>
+        <translation>Erreur API: %1</translation>
     </message>
     <message>
         <source>Failed to prepare messages for API</source>
-        <translation>Nachrichten konnten nicht für die API vorbereitet werden</translation>
+        <translation>Échec de la préparation des messages pour l&apos;API</translation>
     </message>
     <message>
         <source>Request timed out. Please check your connection.</source>
-        <translation>Zeitüberschreitung der Anfrage. Bitte prüfen Sie Ihre Verbindung.</translation>
+        <translation>Délai de la requête dépassé. Vérifiez votre connexion.</translation>
     </message>
     <message>
         <source>No endpoint configured. Please pick a provider in settings.</source>
-        <translation>Kein Endpunkt konfiguriert. Bitte wähle einen Anbieter in den Einstellungen.</translation>
+        <translation>Aucun endpoint configuré. Choisissez un fournisseur dans les paramètres.</translation>
     </message>
     <message>
         <source>Rate limit reached. Free tiers allow about one request per second - wait a few seconds before sending again.</source>
-        <translation>Ratenlimit erreicht. Kostenlose Tarife erlauben etwa eine Anfrage pro Sekunde - warte ein paar Sekunden, bevor du erneut sendest.</translation>
+        <translation>Limite de débit atteinte. Les offres gratuites autorisent environ une requête par seconde - attendez quelques secondes avant de renvoyer.</translation>
     </message>
 </context>
 <context>
     <name>ModelSelector</name>
     <message>
         <source>Select Model</source>
-        <translation>Modell wählen</translation>
+        <translation>Choisir le modèle</translation>
     </message>
     <message>
         <source>Vision capable</source>
-        <translation>Bildverarbeitung möglich</translation>
+        <translation>Compatible vision</translation>
     </message>
 </context>
 <context>
     <name>PinnedMessagesPage</name>
     <message>
         <source>Long-press a message and select Pin</source>
-        <translation>Nachricht lange drücken und Anheften wählen</translation>
+        <translation>Appui long sur un message puis Épingler</translation>
     </message>
     <message>
         <source>No pinned messages</source>
-        <translation>Keine angehefteten Nachrichten</translation>
+        <translation>Aucun message épinglé</translation>
     </message>
     <message>
         <source>Pinned messages</source>
-        <translation>Angeheftete Nachrichten</translation>
+        <translation>Messages épinglés</translation>
     </message>
 </context>
 <context>
     <name>PromptLibraryPage</name>
     <message>
         <source>Prompt library</source>
-        <translation>Prompt-Bibliothek</translation>
+        <translation>Bibliothèque de prompts</translation>
     </message>
     <message>
         <source>Tap a prompt to add it to the message you are writing.</source>
-        <translation>Auf einen Prompt tippen, um ihn der aktuellen Nachricht hinzuzufügen.</translation>
+        <translation>Touchez un prompt pour l&apos;ajouter au message en cours de rédaction.</translation>
     </message>
     <message>
         <source>New prompt</source>
-        <translation>Neuer Prompt</translation>
+        <translation>Nouveau prompt</translation>
     </message>
     <message>
         <source>No saved prompts</source>
-        <translation>Keine gespeicherten Prompts</translation>
+        <translation>Aucun prompt enregistré</translation>
     </message>
     <message>
         <source>Use the pulley menu to save one</source>
-        <translation>Über das Pulley-Menü einen speichern</translation>
+        <translation>Utilisez le menu déroulant pour en enregistrer un</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>Modifier</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>Copier</translation>
     </message>
     <message>
         <source>Delete</source>
-        <translation>Löschen</translation>
+        <translation>Supprimer</translation>
     </message>
     <message>
         <source>Deleting</source>
-        <translation>Wird gelöscht</translation>
+        <translation>Suppression</translation>
     </message>
     <message>
         <source>Edit prompt</source>
-        <translation>Prompt bearbeiten</translation>
+        <translation>Modifier le prompt</translation>
     </message>
     <message>
         <source>Save</source>
-        <translation>Save</translation>
+        <translation>Enregistrer</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation>Cancel</translation>
+        <translation>Annuler</translation>
     </message>
     <message>
         <source>Name</source>
-        <translation>Name</translation>
+        <translation>Nom</translation>
     </message>
     <message>
         <source>Optional name</source>
-        <translation>Optionaler Name</translation>
+        <translation>Nom facultatif</translation>
     </message>
     <message>
         <source>Prompt</source>
@@ -702,189 +710,181 @@
     </message>
     <message>
         <source>Enter the prompt text...</source>
-        <translation>Prompt-Text eingeben...</translation>
-    </message>
-    <message>
-        <source>Edit</source>
-        <translation>Bearbeiten</translation>
-    </message>
-    <message>
-        <source>Copy</source>
-        <translation>Kopieren</translation>
+        <translation>Saisissez le texte du prompt...</translation>
     </message>
 </context>
 <context>
     <name>QObject</name>
     <message>
         <source>France (EU)</source>
-        <translation>Frankreich (EU)</translation>
+        <translation>France (UE)</translation>
     </message>
     <message>
         <source>United States</source>
-        <translation>Vereinigte Staaten</translation>
+        <translation>États-Unis</translation>
     </message>
     <message>
         <source>Wherever you point it</source>
-        <translation>Wohin du zeigst</translation>
+        <translation>Là où vous le pointez</translation>
     </message>
     <message>
         <source>Custom endpoint</source>
-        <translation>Eigener Endpunkt</translation>
+        <translation>Endpoint personnalisé</translation>
     </message>
 </context>
 <context>
     <name>SettingsPage</name>
     <message>
+        <source>Settings &amp; About</source>
+        <translation>Paramètres &amp; À propos</translation>
+    </message>
+    <message>
         <source>Save</source>
-        <translation>Save</translation>
+        <translation>Enregistrer</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation>Cancel</translation>
+        <translation>Annuler</translation>
     </message>
     <message>
         <source>API Configuration</source>
-        <translation>API Configuration</translation>
+        <translation>Configuration de l&apos;API</translation>
     </message>
     <message>
         <source>To get an API key, visit %1</source>
-        <translation>Für einen API-Schlüssel besuche %1</translation>
+        <translation>Pour obtenir une clé API, rendez-vous sur %1</translation>
     </message>
     <message>
         <source>%1 API key</source>
-        <translation>%1 API-Schlüssel</translation>
+        <translation>Clé API %1</translation>
     </message>
     <message>
         <source>Enter your API key</source>
-        <translation>Enter your API key</translation>
+        <translation>Entrez votre clé API</translation>
     </message>
     <message>
         <source>Clear API key</source>
-        <translation>Clear API key</translation>
+        <translation>Effacer la clé API</translation>
     </message>
     <message>
         <source>Clearing API key</source>
-        <translation>Clearing API key</translation>
-    </message>
-    <message>
-        <source>Model</source>
-        <translation>Model</translation>
-    </message>
-    <message>
-        <source>Select the model to use</source>
-        <translation>Select the model to use</translation>
-    </message>
-    <message>
-        <source>About</source>
-        <translation>Info</translation>
-    </message>
-    <message>
-        <source>Application Language</source>
-        <translation>Sprache der Anwendung</translation>
-    </message>
-    <message>
-        <source>Code assistant</source>
-        <translation>Code-Assistent</translation>
-    </message>
-    <message>
-        <source>Concise</source>
-        <translation>Prägnant</translation>
-    </message>
-    <message>
-        <source>Custom</source>
-        <translation>Benutzerdefiniert</translation>
-    </message>
-    <message>
-        <source>Custom system prompt</source>
-        <translation>Benutzerdefinierter System-Prompt</translation>
-    </message>
-    <message>
-        <source>Custom temperature</source>
-        <translation>Benutzerdefinierte Temperatur</translation>
-    </message>
-    <message>
-        <source>Enter a custom system prompt...</source>
-        <translation>Eigenen System-Prompt eingeben...</translation>
-    </message>
-    <message>
-        <source>Generation</source>
-        <translation>Generierung</translation>
-    </message>
-    <message>
-        <source>Instruction sent before every conversation</source>
-        <translation>Anweisung, die vor jeder Unterhaltung gesendet wird</translation>
+        <translation>Effacement de la clé API</translation>
     </message>
     <message>
         <source>Language</source>
-        <translation>Sprache</translation>
+        <translation>Langue</translation>
     </message>
     <message>
-        <source>Limit response length</source>
-        <translation>Antwortlänge begrenzen</translation>
+        <source>Application Language</source>
+        <translation>Langue de l&apos;application</translation>
     </message>
     <message>
-        <source>Lower is more focused, higher is more creative</source>
-        <translation>Niedriger ist präziser, höher ist kreativer</translation>
+        <source>Select the language for the interface</source>
+        <translation>Sélectionnez la langue de l&apos;interface</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation>Modèle</translation>
+    </message>
+    <message>
+        <source>Select the model to use</source>
+        <translation>Sélectionnez le modèle à utiliser</translation>
+    </message>
+    <message>
+        <source>Powered by %1 • MIT License</source>
+        <translation>Propulsé par %1 • Licence MIT</translation>
     </message>
     <message>
         <source>Made with &lt;3 for Sailfish OS</source>
-        <translation>Mit &lt;3 für Sailfish OS gemacht</translation>
+        <translation>Fait avec &lt;3 pour Sailfish OS</translation>
+    </message>
+    <message>
+        <source>About</source>
+        <translation>À propos</translation>
+    </message>
+    <message>
+        <source>Code assistant</source>
+        <translation>Assistant code</translation>
+    </message>
+    <message>
+        <source>Concise</source>
+        <translation>Concis</translation>
+    </message>
+    <message>
+        <source>Custom</source>
+        <translation>Personnalisé</translation>
+    </message>
+    <message>
+        <source>Custom system prompt</source>
+        <translation>Prompt système personnalisé</translation>
+    </message>
+    <message>
+        <source>Custom temperature</source>
+        <translation>Température personnalisée</translation>
+    </message>
+    <message>
+        <source>Enter a custom system prompt...</source>
+        <translation>Saisissez un prompt système personnalisé...</translation>
+    </message>
+    <message>
+        <source>Generation</source>
+        <translation>Génération</translation>
+    </message>
+    <message>
+        <source>Instruction sent before every conversation</source>
+        <translation>Instruction envoyée avant chaque conversation</translation>
+    </message>
+    <message>
+        <source>Limit response length</source>
+        <translation>Limiter la longueur des réponses</translation>
+    </message>
+    <message>
+        <source>Lower is more focused, higher is more creative</source>
+        <translation>Plus bas est plus précis, plus haut est plus créatif</translation>
     </message>
     <message>
         <source>Max tokens</source>
-        <translation>Max. Tokens</translation>
+        <translation>Tokens max</translation>
     </message>
     <message>
         <source>Maximum number of tokens per response</source>
-        <translation>Maximale Anzahl Tokens pro Antwort</translation>
+        <translation>Nombre maximal de tokens par réponse</translation>
     </message>
     <message>
         <source>None</source>
-        <translation>Keine</translation>
+        <translation>Aucun</translation>
     </message>
     <message>
         <source>Persona</source>
         <translation>Persona</translation>
     </message>
     <message>
-        <source>Powered by %1 • MIT License</source>
-        <translation>Bereitgestellt von %1 • MIT-Lizenz</translation>
-    </message>
-    <message>
-        <source>SailCat is an elegant chat client for Mistral AI and other OpenAI-compatible providers, designed for Sailfish OS.</source>
-        <translation>SailCat ist ein eleganter Chat-Client für Mistral AI und andere OpenAI-kompatible Anbieter, entwickelt für Sailfish OS.</translation>
-    </message>
-    <message>
-        <source>Select the language for the interface</source>
-        <translation>Wählen Sie die Sprache der Oberfläche</translation>
-    </message>
-    <message>
-        <source>Settings &amp; About</source>
-        <translation>Einstellungen &amp; Info</translation>
+        <source>Skrynja is an elegant chat client for Mistral AI and other OpenAI-compatible providers, designed for Sailfish OS.</source>
+        <translation>Skrynja est un client de chat élégant pour Mistral AI et les autres fournisseurs compatibles OpenAI, conçu pour Sailfish OS.</translation>
     </message>
     <message>
         <source>Source code on GitHub</source>
-        <translation>Quellcode auf GitHub</translation>
+        <translation>Code source sur GitHub</translation>
     </message>
     <message>
         <source>Statistics</source>
-        <translation>Statistiken</translation>
+        <translation>Statistiques</translation>
     </message>
     <message>
         <source>System prompt</source>
-        <translation>System-Prompt</translation>
+        <translation>Prompt système</translation>
     </message>
     <message>
         <source>Temperature</source>
-        <translation>Temperatur</translation>
+        <translation>Température</translation>
     </message>
     <message>
         <source>This model can analyze images</source>
-        <translation>Dieses Modell kann Bilder analysieren</translation>
+        <translation>Ce modèle peut analyser des images</translation>
     </message>
     <message>
         <source>Translator</source>
-        <translation>Übersetzer</translation>
+        <translation>Traducteur</translation>
     </message>
     <message>
         <source>Version %1</source>
@@ -892,63 +892,63 @@
     </message>
     <message>
         <source>View statistics</source>
-        <translation>Statistiken anzeigen</translation>
+        <translation>Voir les statistiques</translation>
     </message>
     <message>
         <source>• Conversations stored locally
 • No sync with any web interface
 • Uses your own account with the provider</source>
-        <translation>• Unterhaltungen lokal gespeichert
-• Keine Synchronisierung mit einer Weboberfläche
-• Nutzt dein eigenes Konto beim Anbieter</translation>
+        <translation>• Conversations stockées localement
+• Aucune synchronisation avec une interface web
+• Utilise votre propre compte chez le fournisseur</translation>
     </message>
     <message>
         <source>Prompt library</source>
-        <translation>Prompt-Bibliothek</translation>
+        <translation>Bibliothèque de prompts</translation>
     </message>
     <message>
         <source>Show API key</source>
-        <translation>API-Schlüssel anzeigen</translation>
+        <translation>Afficher la clé API</translation>
     </message>
     <message>
         <source>The key is stored scrambled in an owner-only file on this device and is only ever sent to %1. Each provider keeps its own key.</source>
-        <translation>Der Schlüssel wird verschleiert in einer nur für dich lesbaren Datei auf diesem Gerät gespeichert und ausschließlich an %1 gesendet. Jeder Anbieter hat seinen eigenen Schlüssel.</translation>
+        <translation>La clé est stockée brouillée dans un fichier accessible à vous seul sur cet appareil et n&apos;est envoyée qu&apos;à %1. Chaque fournisseur garde sa propre clé.</translation>
     </message>
     <message>
         <source>Appearance</source>
-        <translation>Erscheinungsbild</translation>
+        <translation>Apparence</translation>
     </message>
     <message>
         <source>Conversation style</source>
-        <translation>Unterhaltungsstil</translation>
+        <translation>Style de conversation</translation>
     </message>
     <message>
         <source>How messages are laid out in the chat</source>
-        <translation>Wie Nachrichten im Chat angeordnet werden</translation>
+        <translation>Disposition des messages dans la conversation</translation>
     </message>
     <message>
         <source>Show timestamps</source>
-        <translation>Zeitstempel anzeigen</translation>
+        <translation>Afficher les horodatages</translation>
     </message>
     <message>
         <source>Display the time under each message</source>
-        <translation>Zeigt die Uhrzeit unter jeder Nachricht</translation>
+        <translation>Affiche l&apos;heure sous chaque message</translation>
     </message>
     <message>
         <source>Enter sends the message</source>
-        <translation>Enter sendet die Nachricht</translation>
+        <translation>Entrée envoie le message</translation>
     </message>
     <message>
         <source>Turn this off to type a new line with Enter and send with the message button</source>
-        <translation>Deaktivieren, um mit Enter eine neue Zeile einzufügen und mit der Nachrichten-Schaltfläche zu senden</translation>
+        <translation>Désactivez pour insérer un saut de ligne avec Entrée et envoyer avec le bouton message</translation>
     </message>
     <message>
         <source>Limit conversation context</source>
-        <translation>Kontext begrenzen</translation>
+        <translation>Limiter le contexte</translation>
     </message>
     <message>
         <source>Send only the most recent messages. Keeps long conversations cheap and avoids hitting the model context limit.</source>
-        <translation>Sendet nur die neuesten Nachrichten. Hält lange Unterhaltungen günstig und vermeidet das Kontextlimit des Modells.</translation>
+        <translation>N&apos;envoie que les messages les plus récents. Garde les longues conversations peu coûteuses et évite d&apos;atteindre la limite de contexte du modèle.</translation>
     </message>
     <message numerus="yes">
         <source>%n message(s)</source>
@@ -959,75 +959,75 @@
     </message>
     <message>
         <source>Messages kept</source>
-        <translation>Behaltene Nachrichten</translation>
+        <translation>Messages conservés</translation>
     </message>
     <message>
         <source>Bubbles</source>
-        <translation>Sprechblasen</translation>
+        <translation>Bulles</translation>
     </message>
     <message>
         <source>Compact</source>
-        <translation>Kompakt</translation>
+        <translation>Compact</translation>
     </message>
     <message>
         <source>Cards</source>
-        <translation>Karten</translation>
+        <translation>Cartes</translation>
     </message>
     <message>
         <source>Flat</source>
-        <translation>Flach</translation>
+        <translation>Plat</translation>
     </message>
     <message>
         <source>Rounded bubbles aligned left and right, like a messaging app.</source>
-        <translation>Runde Sprechblasen links und rechts, wie in einer Messaging-App.</translation>
+        <translation>Bulles arrondies alignées à gauche et à droite, comme une messagerie.</translation>
     </message>
     <message>
         <source>Dense rows with a short speaker prefix. Fits the most text on screen.</source>
-        <translation>Dichte Zeilen mit kurzem Sprecherkürzel. Zeigt am meisten Text auf dem Bildschirm.</translation>
+        <translation>Lignes denses avec un préfixe court indiquant l&apos;auteur. Affiche le plus de texte possible.</translation>
     </message>
     <message>
         <source>Each message in its own panel with a header.</source>
-        <translation>Jede Nachricht in einem eigenen Feld mit Kopfzeile.</translation>
+        <translation>Chaque message dans son propre panneau avec un en-tête.</translation>
     </message>
     <message>
         <source>Full width rows with a tinted background on your messages.</source>
-        <translation>Zeilen über die volle Breite, Ihre Nachrichten farbig hinterlegt.</translation>
+        <translation>Lignes pleine largeur avec un fond teinté sur vos messages.</translation>
     </message>
     <message>
         <source>Provider</source>
-        <translation>Anbieter</translation>
+        <translation>Fournisseur</translation>
     </message>
     <message>
         <source>Used by new conversations. An existing one keeps the provider it started with.</source>
-        <translation>Wird von neuen Unterhaltungen genutzt. Eine bestehende behält den Anbieter, mit dem sie begonnen hat.</translation>
+        <translation>Utilisé par les nouvelles conversations. Une conversation existante garde le fournisseur avec lequel elle a démarré.</translation>
     </message>
     <message>
         <source>%1 - free tier</source>
-        <translation>%1 - kostenloses Kontingent</translation>
+        <translation>%1 - offre gratuite</translation>
     </message>
     <message>
         <source>Hosted in %1</source>
-        <translation>Gehostet in %1</translation>
+        <translation>Hébergé en %1</translation>
     </message>
     <message>
         <source>Endpoint base URL</source>
-        <translation>Basis-URL des Endpunkts</translation>
+        <translation>URL de base de l&apos;endpoint</translation>
     </message>
     <message>
         <source>Anything OpenAI-compatible, up to a llama.cpp or Ollama server on your own network.</source>
-        <translation>Alles OpenAI-Kompatible, bis hin zu einem llama.cpp- oder Ollama-Server in deinem eigenen Netzwerk.</translation>
+        <translation>N&apos;importe quoi de compatible OpenAI, jusqu&apos;à un serveur llama.cpp ou Ollama sur votre propre réseau.</translation>
     </message>
     <message>
         <source>%1 API key (optional)</source>
-        <translation>%1 API-Schlüssel (optional)</translation>
+        <translation>Clé API %1 (optionnelle)</translation>
     </message>
     <message>
         <source>Leave empty to stay anonymous</source>
-        <translation>Leer lassen, um anonym zu bleiben</translation>
+        <translation>Laissez vide pour rester anonyme</translation>
     </message>
     <message>
         <source>Model identifier</source>
-        <translation>Modellkennung</translation>
+        <translation>Identifiant du modèle</translation>
     </message>
     <message>
         <source>https://host/v1</source>
@@ -1035,31 +1035,31 @@
     </message>
     <message>
         <source>Automatic titles</source>
-        <translation>Automatische Titel</translation>
+        <translation>Titres automatiques</translation>
     </message>
     <message>
         <source>Ask the model</source>
-        <translation>Modell fragen</translation>
+        <translation>Demander au modèle</translation>
     </message>
     <message>
         <source>Off</source>
-        <translation>Aus</translation>
+        <translation>Désactivé</translation>
     </message>
     <message>
         <source>On device</source>
-        <translation>Auf dem Gerät</translation>
+        <translation>Sur l&apos;appareil</translation>
     </message>
     <message>
         <source>Best titles, but one extra request per conversation. Free tiers count those.</source>
-        <translation>Die besten Titel, aber eine zusätzliche Anfrage pro Unterhaltung. Kostenlose Tarife zählen sie mit.</translation>
+        <translation>Les meilleurs titres, mais une requête supplémentaire par conversation. Les offres gratuites les comptent.</translation>
     </message>
     <message>
         <source>Conversations keep their first question as a title and stay uncategorized.</source>
-        <translation>Unterhaltungen behalten ihre erste Frage als Titel und bleiben ohne Kategorie.</translation>
+        <translation>Les conversations gardent leur première question comme titre et restent sans catégorie.</translation>
     </message>
     <message>
         <source>Titles and categories worked out on the phone. Costs nothing, no request sent.</source>
-        <translation>Titel und Kategorien werden auf dem Telefon ermittelt. Kostet nichts, keine Anfrage.</translation>
+        <translation>Titres et catégories calculés sur le téléphone. Gratuit, aucune requête envoyée.</translation>
     </message>
 </context>
 <context>
@@ -1067,181 +1067,181 @@
     <message numerus="yes">
         <source>%n character(s)</source>
         <translation>
-            <numerusform>%n Zeichen</numerusform>
-            <numerusform>%n Zeichen</numerusform>
+            <numerusform>%n caractère</numerusform>
+            <numerusform>%n caractères</numerusform>
         </translation>
     </message>
     <message>
         <source>AI: %1 chars</source>
-        <translation>KI: %1 Zeichen</translation>
+        <translation>IA : %1 caractères</translation>
     </message>
     <message>
         <source>Activity by hour</source>
-        <translation>Aktivität nach Uhrzeit</translation>
+        <translation>Activité par heure</translation>
     </message>
     <message>
         <source>Completion tokens</source>
-        <translation>Completion-Tokens</translation>
+        <translation>Tokens de complétion</translation>
     </message>
     <message>
         <source>Conversations</source>
-        <translation>Unterhaltungen</translation>
+        <translation>Conversations</translation>
     </message>
     <message>
         <source>First message</source>
-        <translation>Erste Nachricht</translation>
+        <translation>Premier message</translation>
     </message>
     <message>
         <source>Last 14 days</source>
-        <translation>Letzte 14 Tage</translation>
+        <translation>14 derniers jours</translation>
     </message>
     <message>
         <source>Longest conversation</source>
-        <translation>Längste Unterhaltung</translation>
+        <translation>Plus longue conversation</translation>
     </message>
     <message>
         <source>Longest message</source>
-        <translation>Längste Nachricht</translation>
+        <translation>Plus long message</translation>
     </message>
     <message>
         <source>Messages</source>
-        <translation>Nachrichten</translation>
+        <translation>Messages</translation>
     </message>
     <message>
         <source>Never</source>
-        <translation>Nie</translation>
+        <translation>Jamais</translation>
     </message>
     <message>
         <source>No recent activity</source>
-        <translation>Keine aktuelle Aktivität</translation>
+        <translation>Aucune activité récente</translation>
     </message>
     <message>
         <source>None</source>
-        <translation>Keine</translation>
+        <translation>Aucun</translation>
     </message>
     <message>
         <source>Peak: %1 messages/day</source>
-        <translation>Spitze: %1 Nachrichten/Tag</translation>
+        <translation>Pic : %1 messages/jour</translation>
     </message>
     <message>
         <source>Peak: %1 tokens/day</source>
-        <translation>Spitze: %1 Tokens/Tag</translation>
+        <translation>Pic : %1 tokens/jour</translation>
     </message>
     <message>
         <source>Prompt tokens</source>
-        <translation>Prompt-Tokens</translation>
+        <translation>Tokens de prompt</translation>
     </message>
     <message>
         <source>Question categories</source>
-        <translation>Fragenkategorien</translation>
+        <translation>Catégories de questions</translation>
     </message>
     <message>
         <source>Records</source>
-        <translation>Rekorde</translation>
+        <translation>Records</translation>
     </message>
     <message>
         <source>Statistics</source>
-        <translation>Statistiken</translation>
+        <translation>Statistiques</translation>
     </message>
     <message>
         <source>Storage</source>
-        <translation>Speicher</translation>
+        <translation>Stockage</translation>
     </message>
     <message>
         <source>Today</source>
-        <translation>Heute</translation>
+        <translation>Aujourd&apos;hui</translation>
     </message>
     <message>
         <source>Tokens - last 14 days</source>
-        <translation>Tokens - letzte 14 Tage</translation>
+        <translation>Tokens - 14 derniers jours</translation>
     </message>
     <message>
         <source>Tokens this month</source>
-        <translation>Tokens diesen Monat</translation>
+        <translation>Tokens ce mois-ci</translation>
     </message>
     <message>
         <source>Tokens used</source>
-        <translation>Verbrauchte Tokens</translation>
+        <translation>Tokens utilisés</translation>
     </message>
     <message>
         <source>Who writes more?</source>
-        <translation>Wer schreibt mehr?</translation>
+        <translation>Qui écrit le plus ?</translation>
     </message>
     <message>
         <source>You: %1 chars</source>
-        <translation>Sie: %1 Zeichen</translation>
+        <translation>Vous : %1 caractères</translation>
     </message>
     <message>
         <source>%1 abandoned</source>
-        <translation>%1 aufgegeben</translation>
+        <translation>%1 abandonnées</translation>
     </message>
     <message>
         <source>%1 chars</source>
-        <translation>%1 Zeichen</translation>
+        <translation>%1 caractères</translation>
     </message>
     <message>
         <source>%1 model switches</source>
-        <translation>%1 Modellwechsel</translation>
+        <translation>%1 changements de modèle</translation>
     </message>
     <message>
         <source>Average hour: %1h</source>
-        <translation>Durchschnittszeit: %1 Uhr</translation>
+        <translation>Heure moyenne : %1h</translation>
     </message>
     <message>
         <source>Avg: %1min</source>
-        <translation>Ø %1min</translation>
+        <translation>Moy. : %1min</translation>
     </message>
     <message>
         <source>Avg: %1s</source>
-        <translation>Ø %1s</translation>
+        <translation>Moy. : %1s</translation>
     </message>
     <message>
         <source>Badges</source>
-        <translation>Abzeichen</translation>
+        <translation>Badges</translation>
     </message>
     <message>
         <source>Chaotic</source>
-        <translation>Chaotisch</translation>
+        <translation>Chaotique</translation>
     </message>
     <message>
         <source>Concise</source>
-        <translation>Prägnant</translation>
+        <translation>Concis</translation>
     </message>
     <message>
         <source>Conversation Ghost</source>
-        <translation>Gesprächsgeist</translation>
+        <translation>Fantôme des conversations</translation>
     </message>
     <message>
         <source>Early Bird</source>
-        <translation>Frühaufsteher</translation>
+        <translation>Lève-tôt</translation>
     </message>
     <message>
         <source>Explorer</source>
-        <translation>Entdecker</translation>
+        <translation>Explorateur</translation>
     </message>
     <message>
         <source>Finisher</source>
-        <translation>Vollender</translation>
+        <translation>Finisseur</translation>
     </message>
     <message>
         <source>Ghost</source>
-        <translation>Geist</translation>
+        <translation>Fantôme</translation>
     </message>
     <message>
         <source>Longest Message</source>
-        <translation>Längste Nachricht</translation>
+        <translation>Message le plus long</translation>
     </message>
     <message>
         <source>Loyal</source>
-        <translation>Treu</translation>
+        <translation>Fidèle</translation>
     </message>
     <message>
         <source>Model Hopper</source>
-        <translation>Modell-Hopper</translation>
+        <translation>Model Hopper</translation>
     </message>
     <message>
         <source>Night Owl</source>
-        <translation>Nachteule</translation>
+        <translation>Oiseau de nuit</translation>
     </message>
     <message>
         <source>Normal</source>
@@ -1249,71 +1249,71 @@
     </message>
     <message>
         <source>Novelist</source>
-        <translation>Romanautor</translation>
+        <translation>Romancier</translation>
     </message>
     <message>
         <source>Snail</source>
-        <translation>Schnecke</translation>
+        <translation>Escargot</translation>
     </message>
     <message>
         <source>Speed Typist</source>
-        <translation>Schnellschreiber</translation>
+        <translation>Dactylo express</translation>
     </message>
     <message>
         <source>Speedy</source>
-        <translation>Blitzschnell</translation>
+        <translation>Éclair</translation>
     </message>
     <message>
         <source>Top words in AI replies</source>
-        <translation>Häufigste Wörter der KI</translation>
+        <translation>Mots les plus fréquents de l&apos;IA</translation>
     </message>
     <message>
         <source>Wanderer</source>
-        <translation>Wanderer</translation>
+        <translation>Vagabond</translation>
     </message>
     <message>
         <source>n/a</source>
-        <translation>k. A.</translation>
+        <translation>n/d</translation>
     </message>
     <message>
         <source>Estimated cost</source>
-        <translation>Geschätzte Kosten</translation>
+        <translation>Coût estimé</translation>
     </message>
     <message>
         <source>Total</source>
-        <translation>Gesamt</translation>
+        <translation>Total</translation>
     </message>
     <message>
         <source>Estimate based on public list prices, in US dollars. Only usage recorded by this app is counted - check your provider console for the real invoice.</source>
-        <translation>Schätzung auf Basis öffentlicher Listenpreise, in US-Dollar. Nur die von dieser App erfasste Nutzung zählt - die echte Rechnung steht in der Konsole deines Anbieters.</translation>
+        <translation>Estimation basée sur les tarifs publics, en dollars US. Seule l&apos;utilisation enregistrée par cette app est comptée - consultez la console de votre fournisseur pour la facture réelle.</translation>
     </message>
     <message>
         <source>free</source>
-        <translation>kostenlos</translation>
+        <translation>gratuit</translation>
     </message>
     <message>
         <source>Providers and models</source>
-        <translation>Anbieter und Modelle</translation>
+        <translation>Fournisseurs et modèles</translation>
     </message>
     <message>
         <source>Most used provider</source>
-        <translation>Meistgenutzter Anbieter</translation>
+        <translation>Fournisseur le plus utilisé</translation>
     </message>
     <message>
         <source>Most used model</source>
-        <translation>Meistgenutztes Modell</translation>
+        <translation>Modèle le plus utilisé</translation>
     </message>
     <message>
         <source>Answers per provider</source>
-        <translation>Antworten pro Anbieter</translation>
+        <translation>Réponses par fournisseur</translation>
     </message>
     <message>
         <source>Answers per model</source>
-        <translation>Antworten pro Modell</translation>
+        <translation>Réponses par modèle</translation>
     </message>
     <message>
         <source>Counted from the answers themselves. Answers received before this app recorded models appear under their provider only.</source>
-        <translation>Aus den Antworten selbst gezählt. Antworten von vor der Modellerfassung erscheinen nur unter ihrem Anbieter.</translation>
+        <translation>Compté à partir des réponses elles-mêmes. Les réponses reçues avant que l&apos;app n&apos;enregistre les modèles apparaissent sous leur fournisseur seulement.</translation>
     </message>
 </context>
 </TS>

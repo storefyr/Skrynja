@@ -58,7 +58,7 @@ CoverBackground {
             }
 
             Label {
-                text: "SailCat"
+                text: "Skrynja"
                 font.pixelSize: Theme.fontSizeMedium
                 color: Theme.primaryColor
                 anchors.verticalCenter: parent.verticalCenter

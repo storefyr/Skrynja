@@ -1,4 +1,10 @@
-# 06 — Edit User Message & Resend
+# 06 — Edit User Message & Resend — REMOVED IN SKRYNJA
+
+> **Removed in the fork.** Editing requires entry-level restart
+> (`POST /v1/conversations/{id}/restart#stream`), which is deferred. See
+> `docs/ROADMAP.md` ("Removed in the fork").
+
+# 06 — Edit User Message & Resend (historical SailCat spec)
 
 **Status:** todo
 **Depends on:** 05 (same MessageBubble signal pattern)

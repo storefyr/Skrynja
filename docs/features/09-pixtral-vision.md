@@ -2,7 +2,7 @@
 
 **Status:** done (v2.0.0)
 **Depends on:** 04 (uses `settingsManager.isVisionModel()`; without 04, hardcode `modelName.indexOf("pixtral") !== -1`)
-**Touches:** `src/conversationmodel.{h,cpp}`, `src/conversationmanager.cpp`, `src/mistralapi.cpp`, `qml/pages/ChatPage.qml`, `qml/components/MessageBubble.qml`, `harbour-sailcat.pro`
+**Touches:** `src/conversationmodel.{h,cpp}`, `src/conversationmanager.cpp`, `src/mistralapi.cpp`, `qml/pages/ChatPage.qml`, `qml/components/MessageBubble.qml`, `harbour-skrynja.pro`
 
 This is the largest feature. Implement in the order below; each step compiles independently.
 
@@ -36,7 +36,7 @@ Non-vision messages keep plain string content. Limits: max ~10MB per image; down
 
 ## Step 2 — Base64 encoding helper (C++)
 
-QML cannot read files; do it in C++. Add to `ConversationManager` (or a small new `ImageHelper` class registered as context property — if new class, update `harbour-sailcat.pro` and `src/harbour-sailcat.cpp`):
+QML cannot read files; do it in C++. Add to `ConversationManager` (or a small new `ImageHelper` class registered as context property — if new class, update `harbour-skrynja.pro` and `src/harbour-skrynja.cpp`):
 
 ```cpp
 Q_INVOKABLE QString imageToDataUrl(const QString &filePath) const;

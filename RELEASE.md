@@ -1,6 +1,6 @@
-# Release Guide for SailCat
+# Release Guide for Skrynja
 
-Guide pour créer une nouvelle release de SailCat.
+Guide pour créer une nouvelle release de Skrynja.
 
 ## Prérequis
 
@@ -34,12 +34,12 @@ Mettre à jour `CHANGELOG.md` avec les changements de la version :
 
 Mettre à jour la version dans les fichiers suivants :
 
-**harbour-sailcat.yaml** (ligne 4):
+**harbour-skrynja.yaml** (ligne 4):
 ```yaml
 Version: X.Y.Z
 ```
 
-**rpm/harbour-sailcat.spec** (ligne 4):
+**rpm/harbour-skrynja.spec** (ligne 4):
 ```spec
 Version:    X.Y.Z
 ```
@@ -55,7 +55,7 @@ Label {
 ### 3. Commit les changements
 
 ```bash
-git add CHANGELOG.md harbour-sailcat.yaml rpm/harbour-sailcat.spec qml/pages/AboutPage.qml
+git add CHANGELOG.md harbour-skrynja.yaml rpm/harbour-skrynja.spec qml/pages/AboutPage.qml
 git commit -m "chore: Bump version to X.Y.Z"
 git push origin main
 ```
@@ -92,7 +92,7 @@ Une fois le tag poussé, le workflow **build-docker.yml** se déclenche automati
 
 ### 6. Vérifier la Release
 
-1. Aller sur [GitHub Releases](https://github.com/nicosouv/harbour-sailcat/releases)
+1. Aller sur [GitHub Releases](https://github.com/nicosouv/harbour-skrynja/releases)
 2. Vérifier que la release apparaît avec `vX.Y.Z`
 3. Vérifier que les 3 RPM sont attachés
 4. Tester le téléchargement d'un RPM
@@ -108,21 +108,21 @@ Optionnel mais recommandé :
 
 Template d'annonce :
 ```
-🎉 SailCat vX.Y.Z est disponible !
+🎉 Skrynja vX.Y.Z est disponible !
 
-🐱⛵ SailCat est un client natif Sailfish OS pour Le Chat de Mistral AI.
+🐱⛵ Skrynja est un client natif Sailfish OS pour Le Chat de Mistral AI.
 
 ✨ Nouveautés :
 - [Liste des features]
 
-📥 Télécharger : https://github.com/nicosouv/harbour-sailcat/releases/tag/vX.Y.Z
+📥 Télécharger : https://github.com/nicosouv/harbour-skrynja/releases/tag/vX.Y.Z
 
 #SailfishOS #MistralAI #OpenSource
 ```
 
 ## Versioning Sémantique
 
-SailCat suit le [Semantic Versioning 2.0.0](https://semver.org/):
+Skrynja suit le [Semantic Versioning 2.0.0](https://semver.org/):
 
 - **MAJOR** (X.0.0) : Changements incompatibles avec l'API
 - **MINOR** (0.Y.0) : Nouvelles fonctionnalités rétro-compatibles
@@ -234,7 +234,7 @@ git push origin v1.0.0
 **Cause:** Dépendances runtime manquantes dans le .spec
 
 **Solution:**
-1. Ajouter la dépendance dans `rpm/harbour-sailcat.spec`
+1. Ajouter la dépendance dans `rpm/harbour-skrynja.spec`
 2. Bump la version patch
 3. Re-release
 
@@ -250,8 +250,8 @@ Idées pour améliorer le process :
 
 ## Resources
 
-- [GitHub Releases](https://github.com/nicosouv/harbour-sailcat/releases)
-- [GitHub Actions Workflows](https://github.com/nicosouv/harbour-sailcat/actions)
+- [GitHub Releases](https://github.com/nicosouv/harbour-skrynja/releases)
+- [GitHub Actions Workflows](https://github.com/nicosouv/harbour-skrynja/actions)
 - [Semantic Versioning](https://semver.org/)
 - [Keep a Changelog](https://keepachangelog.com/)
 

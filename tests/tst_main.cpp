@@ -1061,7 +1061,7 @@ private slots:
         SettingsManager reopened;
         QCOMPARE(reopened.apiKey(), QString("sk-test-secret-value"));
 
-        QSettings raw("harbour-sailcat", "SailCat");
+        QSettings raw("harbour-skrynja", "Skrynja");
         QVERIFY(!raw.contains("apiKey"));
         QVERIFY(!raw.value("providers/mistral/apiKeyEnc").toString()
                 .contains("sk-test-secret-value"));
@@ -1078,7 +1078,7 @@ private slots:
         }
         // Simulate a pre-2.1 install: no provider entry, key in clear text
         {
-            QSettings raw("harbour-sailcat", "SailCat");
+            QSettings raw("harbour-skrynja", "Skrynja");
             raw.remove("provider");
             raw.remove("providers");
             raw.setValue("apiKey", "sk-legacy-key");
@@ -1092,7 +1092,7 @@ private slots:
         QCOMPARE(migrated.providerId(), QString("mistral"));
         QCOMPARE(migrated.modelName(), QString("mistral-large-latest"));
 
-        QSettings raw("harbour-sailcat", "SailCat");
+        QSettings raw("harbour-skrynja", "Skrynja");
         QVERIFY(!raw.contains("apiKey"));
         QVERIFY(!raw.contains("apiKeyEnc"));
         QVERIFY(!raw.value("providers/mistral/apiKeyEnc").toString().isEmpty());
@@ -1339,8 +1339,8 @@ int main(int argc, char *argv[])
     qputenv("XDG_DATA_HOME", dataDir.path().toUtf8());
 
     QCoreApplication app(argc, argv);
-    app.setOrganizationName("harbour-sailcat");
-    app.setApplicationName("SailCat");
+    app.setOrganizationName("harbour-skrynja");
+    app.setApplicationName("Skrynja");
 
     int status = 0;
     {

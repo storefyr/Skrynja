@@ -127,8 +127,8 @@
         <translation>Ny samtale</translation>
     </message>
     <message>
-        <source>Welcome to SailCat</source>
-        <translation>Velkommen til SailCat</translation>
+        <source>Welcome to Skrynja</source>
+        <translation>Velkommen til Skrynja</translation>
     </message>
     <message>
         <source>Pick a provider and enter its API key to get started</source>
@@ -155,8 +155,8 @@
         <translation>Hvilken KI svarer deg?</translation>
     </message>
     <message>
-        <source>The one you pick. SailCat talks to Mistral AI, Scaleway, OVHcloud, Groq or any OpenAI-compatible endpoint, with your own account. Several of them have a free tier, and the European ones keep your conversations on this side of the Atlantic.</source>
-        <translation>Den du velger. SailCat snakker med Mistral AI, Scaleway, OVHcloud, Groq eller et hvilket som helst OpenAI-kompatibelt endepunkt, med din egen konto. Flere har et gratisnivå, og de europeiske holder samtalene dine på denne siden av Atlanteren.</translation>
+        <source>The one you pick. Skrynja talks to Mistral AI, Scaleway, OVHcloud, Groq or any OpenAI-compatible endpoint, with your own account. Several of them have a free tier, and the European ones keep your conversations on this side of the Atlantic.</source>
+        <translation>Den du velger. Skrynja snakker med Mistral AI, Scaleway, OVHcloud, Groq eller et hvilket som helst OpenAI-kompatibelt endepunkt, med din egen konto. Flere har et gratisnivå, og de europeiske holder samtalene dine på denne siden av Atlanteren.</translation>
     </message>
     <message>
         <source>Privacy &amp; Storage</source>
@@ -859,8 +859,8 @@
         <translation>Persona</translation>
     </message>
     <message>
-        <source>SailCat is an elegant chat client for Mistral AI and other OpenAI-compatible providers, designed for Sailfish OS.</source>
-        <translation>SailCat er en elegant chat-klient for Mistral AI og andre OpenAI-kompatible leverandører, laget for Sailfish OS.</translation>
+        <source>Skrynja is an elegant chat client for Mistral AI and other OpenAI-compatible providers, designed for Sailfish OS.</source>
+        <translation>Skrynja er en elegant chat-klient for Mistral AI og andre OpenAI-kompatible leverandører, laget for Sailfish OS.</translation>
     </message>
     <message>
         <source>Source code on GitHub</source>

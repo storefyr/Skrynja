@@ -1,5 +1,5 @@
 TEMPLATE = app
-TARGET = tst_sailcat
+TARGET = tst_skrynja
 
 QT += core network gui testlib
 CONFIG += c++11 console

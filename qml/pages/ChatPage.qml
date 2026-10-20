@@ -101,7 +101,7 @@ Page {
         onMovementEnded: chatPage.autoScroll = messageListView.atYEnd
 
         header: PageHeader {
-            title: "SailCat"
+            title: "Skrynja"
             // Who is going to answer, spelled out: the provider is a property
             // of the conversation, not of the app. A trailing asterisk marks a
             // model pinned to this conversation.
@@ -147,7 +147,7 @@ Page {
 
         ViewPlaceholder {
             enabled: conversationModel.count === 0
-            text: firstUse ? qsTr("Welcome to SailCat") : qsTr("Start a conversation")
+            text: firstUse ? qsTr("Welcome to Skrynja") : qsTr("Start a conversation")
             hintText: firstUse ? qsTr("Pick a provider and enter its API key to get started") : qsTr("Type a message below")
         }
 
@@ -515,7 +515,7 @@ Page {
                 spacing: Theme.paddingLarge
 
                 DialogHeader {
-                    title: qsTr("Welcome to SailCat")
+                    title: qsTr("Welcome to Skrynja")
                     acceptText: qsTr("Get Started")
                 }
 
@@ -529,7 +529,7 @@ Page {
 
                 Label {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    text: "SailCat"
+                    text: "Skrynja"
                     font.pixelSize: Theme.fontSizeHuge
                     color: Theme.highlightColor
                 }
@@ -541,7 +541,7 @@ Page {
                 Label {
                     x: Theme.horizontalPageMargin
                     width: parent.width - 2 * Theme.horizontalPageMargin
-                    text: qsTr("The one you pick. SailCat talks to Mistral AI, Scaleway, OVHcloud, Groq or any OpenAI-compatible endpoint, with your own account. Several of them have a free tier, and the European ones keep your conversations on this side of the Atlantic.")
+                    text: qsTr("Mistral AI. Skrynja uses Mistral's Conversations API, which is what makes web search possible. Several models are available, including free-tier ones.")
                     wrapMode: Text.WordWrap
                     font.pixelSize: Theme.fontSizeSmall
                     color: Theme.primaryColor
@@ -554,7 +554,7 @@ Page {
                 Label {
                     x: Theme.horizontalPageMargin
                     width: parent.width - 2 * Theme.horizontalPageMargin
-                    text: qsTr("• Your conversations are stored locally on your device\n• No sync with any web interface\n• Each provider keeps its own key, stored scrambled\n• Your data stays on your phone")
+                    text: qsTr("• A copy of your conversations is stored locally on your device\n• The conversation history also lives on Mistral's servers (required by the Conversations API)\n• Your API key is stored scrambled\n• No sync with any web interface")
                     wrapMode: Text.WordWrap
                     font.pixelSize: Theme.fontSizeSmall
                     color: Theme.primaryColor
@@ -567,7 +567,7 @@ Page {
                 Label {
                     x: Theme.horizontalPageMargin
                     width: parent.width - 2 * Theme.horizontalPageMargin
-                    text: qsTr("1. Pick a provider in Settings\n2. Paste the API key it gives you\n3. Start chatting!")
+                    text: qsTr("1. Paste your Mistral API key in Settings\n2. Pick a model\n3. Start chatting!")
                     wrapMode: Text.WordWrap
                     font.pixelSize: Theme.fontSizeSmall
                     color: Theme.primaryColor
@@ -583,7 +583,7 @@ Page {
 
     Notification {
         id: exportNotification
-        appName: "SailCat"
+        appName: "Skrynja"
     }
 
     Component {

@@ -2,7 +2,7 @@
 
 **Status:** done (v1.9.19)
 **Depends on:** 10 (inline streaming indicator)
-**Touches:** `qml/components/TypingIndicator.qml` (new), `qml/components/MessageBubble.qml`, `qml/pages/ChatPage.qml`, `harbour-sailcat.pro`
+**Touches:** `qml/components/TypingIndicator.qml` (new), `qml/components/MessageBubble.qml`, `qml/pages/ChatPage.qml`, `harbour-skrynja.pro`
 
 Pure-QML animations, no extra dependencies, Harbour-compliant. All effects are gated on `mistralApi.isBusy` so nothing animates at rest (battery-friendly on Sailfish hardware).
 

@@ -1,4 +1,10 @@
-# 05 — Regenerate Last Response
+# 05 — Regenerate Last Response — REMOVED IN SKRYNJA
+
+> **Removed in the fork.** Regenerate requires entry-level restart
+> (`POST /v1/conversations/{id}/restart#stream`), which is deferred. See
+> `docs/ROADMAP.md` ("Removed in the fork").
+
+# 05 — Regenerate Last Response (historical SailCat spec)
 
 **Status:** todo
 **Depends on:** 02 (reuse the system-prompt prepend helper if implemented)

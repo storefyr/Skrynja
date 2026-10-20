@@ -1,4 +1,4 @@
-TARGET = harbour-sailcat
+TARGET = harbour-skrynja
 
 CONFIG += sailfishapp
 
@@ -6,11 +6,11 @@ QT += network
 
 # Version is passed by the spec file (%qmake5 VERSION=%{version})
 isEmpty(VERSION) {
-    VERSION = 2.3.3
+    VERSION = 0.1.0
 }
 DEFINES += APP_VERSION=\\\"$$VERSION\\\"
 
-SOURCES += src/harbour-sailcat.cpp \
+SOURCES += src/harbour-skrynja.cpp \
     src/mistralapi.cpp \
     src/conversationmodel.cpp \
     src/conversationmanager.cpp \
@@ -27,7 +27,7 @@ HEADERS += src/mistralapi.h \
     src/categories.h \
     src/providers.h
 
-DISTFILES += qml/harbour-sailcat.qml \
+DISTFILES += qml/harbour-skrynja.qml \
     qml/cover/CoverPage.qml \
     qml/pages/ChatPage.qml \
     qml/pages/ConversationHistoryPage.qml \
@@ -46,18 +46,18 @@ DISTFILES += qml/harbour-sailcat.qml \
     qml/components/ProviderBadge.qml \
     qml/components/Categories.js \
     qml/components/ProvidersUi.js \
-    rpm/harbour-sailcat.spec \
-    harbour-sailcat.desktop
+    rpm/harbour-skrynja.spec \
+    harbour-skrynja.desktop
 
 SAILFISHAPP_ICONS = 86x86 108x108 128x128 172x172
 
 CONFIG += sailfishapp_i18n
 
-TRANSLATIONS += translations/harbour-sailcat-en.ts \
-                translations/harbour-sailcat-fr.ts \
-                translations/harbour-sailcat-de.ts \
-                translations/harbour-sailcat-es.ts \
-                translations/harbour-sailcat-fi.ts \
-                translations/harbour-sailcat-it.ts \
-                translations/harbour-sailcat-nb_NO.ts \
-                translations/harbour-sailcat-sv.ts
+TRANSLATIONS += translations/harbour-skrynja-en.ts \
+                translations/harbour-skrynja-fr.ts \
+                translations/harbour-skrynja-de.ts \
+                translations/harbour-skrynja-es.ts \
+                translations/harbour-skrynja-fi.ts \
+                translations/harbour-skrynja-it.ts \
+                translations/harbour-skrynja-nb_NO.ts \
+                translations/harbour-skrynja-sv.ts

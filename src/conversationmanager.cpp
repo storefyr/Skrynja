@@ -60,7 +60,7 @@ QVariantList rankCounts(const QVariantMap &counts, const QString &keyName)
 ConversationManager::ConversationManager(QObject *parent)
     : QObject(parent)
     , m_currentConversation(new ConversationModel(this))
-    , m_settings("harbour-sailcat", "conversations")
+    , m_settings("harbour-skrynja", "conversations")
     , m_streamTimer(new QTimer(this))
     , m_streamDirty(false)
     , m_totalPromptTokens(0)
@@ -264,7 +264,7 @@ QString ConversationManager::conversationsDir() const
 {
     QString base = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     if (base.isEmpty()) {
-        base = QDir::homePath() + "/.local/share/harbour-sailcat";
+        base = QDir::homePath() + "/.local/share/harbour-skrynja";
     }
     return base + "/conversations";
 }
@@ -1051,7 +1051,7 @@ QString ConversationManager::conversationToMarkdown(const QString &conversationI
 
     QString markdown;
     markdown += "# " + (conv->title.isEmpty() ? tr("Untitled") : conv->title) + "\n\n";
-    markdown += QString("_Exported from SailCat - %1_\n\n")
+    markdown += QString("_Exported from Skrynja - %1_\n\n")
             .arg(QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm"));
 
     for (const Message &msg : conv->messages) {
@@ -1115,7 +1115,7 @@ QString ConversationManager::exportConversation(const QString &conversationId) c
     }
 
     QString dir = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
-    QString path = QString("%1/sailcat-%2-%3.md")
+    QString path = QString("%1/skrynja-%2-%3.md")
             .arg(dir)
             .arg(slug)
             .arg(QDateTime::currentDateTime().toString("yyyyMMdd-HHmmss"));
@@ -1162,7 +1162,7 @@ QString ConversationManager::retainImage(const QString &filePath) const
 
     QString base = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     if (base.isEmpty()) {
-        base = QDir::homePath() + "/.local/share/harbour-sailcat";
+        base = QDir::homePath() + "/.local/share/harbour-skrynja";
     }
     const QString dir = base + "/images";
     QDir().mkpath(dir);

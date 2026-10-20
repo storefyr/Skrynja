@@ -1,4 +1,4 @@
-# Icônes SailCat
+# Icônes Skrynja
 
 Ce dossier contient les icônes de l'application aux différentes résolutions requises par Sailfish OS.
 

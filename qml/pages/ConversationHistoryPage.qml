@@ -338,7 +338,7 @@ Page {
 
     Notification {
         id: exportNotification
-        appName: "SailCat"
+        appName: "Skrynja"
     }
 
     Connections {

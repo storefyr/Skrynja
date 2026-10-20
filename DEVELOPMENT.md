@@ -1,6 +1,6 @@
-# SailCat Development Guide
+# Skrynja Development Guide
 
-Guide complet pour développer et builder SailCat localement.
+Guide complet pour développer et builder Skrynja localement.
 
 ## Prérequis
 
@@ -34,14 +34,14 @@ Poussez sur GitHub et laissez les Actions builder pour vous !
 ### 1. Cloner le repo
 
 ```bash
-git clone https://github.com/nicosouv/harbour-sailcat.git
-cd harbour-sailcat
+git clone https://github.com/nicosouv/harbour-skrynja.git
+cd harbour-skrynja
 ```
 
 ### 2. Structure du projet
 
 ```
-harbour-sailcat/
+harbour-skrynja/
 ├── src/                    # C++ backend
 │   ├── mistralapi.*        # API Mistral (HTTP + SSE)
 │   ├── conversationmodel.* # Modèle de données
@@ -54,10 +54,10 @@ harbour-sailcat/
 │   └── cover/              # Active cover
 │       └── CoverPage.qml
 ├── rpm/                    # Packaging
-│   └── harbour-sailcat.spec
-├── harbour-sailcat.pro     # QMake project
-├── harbour-sailcat.yaml    # Build config
-└── harbour-sailcat.desktop # Desktop entry
+│   └── harbour-skrynja.spec
+├── harbour-skrynja.pro     # QMake project
+├── harbour-skrynja.yaml    # Build config
+└── harbour-skrynja.desktop # Desktop entry
 ```
 
 ## Building
@@ -71,7 +71,7 @@ harbour-sailcat/
 ~/SailfishOS/bin/qtcreator
 
 # File > Open File or Project
-# Sélectionner harbour-sailcat.pro
+# Sélectionner harbour-skrynja.pro
 ```
 
 #### 2. Configurer les kits
@@ -141,7 +141,7 @@ git push origin v1.0.0
 # 4. Publier automatiquement
 ```
 
-Les RPM seront disponibles dans [Releases](https://github.com/nicosouv/harbour-sailcat/releases) quelques minutes après.
+Les RPM seront disponibles dans [Releases](https://github.com/nicosouv/harbour-skrynja/releases) quelques minutes après.
 
 **Note:** Le tag DOIT être au format `vX.Y.Z` (avec `v` en préfixe) pour déclencher le build.
 
@@ -172,7 +172,7 @@ Voir [RELEASE.md](RELEASE.md) pour le guide complet de release.
 ```bash
 # Sur l'appareil/émulateur
 devel-su
-journalctl -f | grep sailcat
+journalctl -f | grep skrynja
 ```
 
 #### Qt Creator Debugger
@@ -194,7 +194,7 @@ QML peut être modifié sans recompiler le C++ :
 
 ```bash
 # Transférer seulement les QML
-scp qml/pages/ChatPage.qml nemo@<device-ip>:/usr/share/harbour-sailcat/qml/pages/
+scp qml/pages/ChatPage.qml nemo@<device-ip>:/usr/share/harbour-skrynja/qml/pages/
 
 # Redémarrer l'app
 ```
@@ -222,16 +222,17 @@ scp qml/pages/ChatPage.qml nemo@<device-ip>:/usr/share/harbour-sailcat/qml/pages
 
 ### Tests API
 
-Tester les requêtes avec curl :
+Tester les requêtes avec curl (noter le `%23` à la place de `#`, sinon le fragment n'est pas envoyé) :
 
 ```bash
-curl -X POST https://api.mistral.ai/v1/chat/completions \
+curl -X POST 'https://api.mistral.ai/v1/conversations%23stream' \
   -H "Authorization: Bearer YOUR_KEY" \
   -H "Content-Type: application/json" \
+  -H "Accept: text/event-stream" \
   -d '{
     "model": "mistral-small-latest",
-    "messages": [{"role": "user", "content": "Test"}],
-    "stream": true
+    "tools": [{"type": "web_search"}],
+    "inputs": "Test"
   }'
 ```
 
@@ -296,7 +297,7 @@ sfdk config target=SailfishOS-5.0.0.43-armv7hl
 
 ```bash
 # Vérifier le .spec et .yaml
-cat rpm/harbour-sailcat.spec
+cat rpm/harbour-skrynja.spec
 mb2 -t SailfishOS-5.0.0.43-armv7hl build --verbose
 ```
 
@@ -312,7 +313,7 @@ sfdk emulator start
 
 ```bash
 # Checker la syntaxe
-qmlscene qml/harbour-sailcat.qml
+qmlscene qml/harbour-skrynja.qml
 
 # Voir les logs
 journalctl -f | grep qml
@@ -355,7 +356,7 @@ sfdk build --no-fix-version
 
 ```bash
 # Sur l'appareil
-gdbserver :2345 /usr/bin/harbour-sailcat
+gdbserver :2345 /usr/bin/harbour-skrynja
 
 # Sur le PC
 sfdk gdb
@@ -367,7 +368,7 @@ target remote <device-ip>:2345
 ```bash
 # Avec perf (sur l'appareil)
 devel-su
-perf record -g harbour-sailcat
+perf record -g harbour-skrynja
 perf report
 ```
 

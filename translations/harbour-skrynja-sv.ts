@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS>
-<TS version="2.1" language="it">
+<TS version="2.1" language="sv">
 <context>
     <name>Categories</name>
     <message>
         <source>Code</source>
-        <translation>Codice</translation>
+        <translation>Kod</translation>
     </message>
     <message>
         <source>Debugging</source>
-        <translation>Debug</translation>
+        <translation>Felsökning</translation>
     </message>
     <message>
         <source>DevOps</source>
@@ -17,7 +17,7 @@
     </message>
     <message>
         <source>Data</source>
-        <translation>Dati</translation>
+        <translation>Data</translation>
     </message>
     <message>
         <source>Design</source>
@@ -25,71 +25,71 @@
     </message>
     <message>
         <source>Writing</source>
-        <translation>Scrittura</translation>
+        <translation>Författarskap</translation>
     </message>
     <message>
         <source>Translation</source>
-        <translation>Traduzione</translation>
+        <translation>Översättning</translation>
     </message>
     <message>
         <source>Learning</source>
-        <translation>Apprendimento</translation>
+        <translation>Inlärning</translation>
     </message>
     <message>
         <source>Research</source>
-        <translation>Ricerca</translation>
+        <translation>Undersökning</translation>
     </message>
     <message>
         <source>Maths</source>
-        <translation>Matematica</translation>
+        <translation>Mattematik</translation>
     </message>
     <message>
         <source>Science</source>
-        <translation>Scienza</translation>
+        <translation>Forskning</translation>
     </message>
     <message>
         <source>Business</source>
-        <translation>Business</translation>
+        <translation>Affärer</translation>
     </message>
     <message>
         <source>Finance</source>
-        <translation>Finanza</translation>
+        <translation>Finans</translation>
     </message>
     <message>
         <source>Career</source>
-        <translation>Carriera</translation>
+        <translation>Karriär</translation>
     </message>
     <message>
         <source>Legal</source>
-        <translation>Legale</translation>
+        <translation>Juridik</translation>
     </message>
     <message>
         <source>Health</source>
-        <translation>Salute</translation>
+        <translation>Hälsa</translation>
     </message>
     <message>
         <source>Cooking</source>
-        <translation>Cucina</translation>
+        <translation>Matlagning</translation>
     </message>
     <message>
         <source>Travel</source>
-        <translation>Viaggi</translation>
+        <translation>Resor</translation>
     </message>
     <message>
         <source>Home</source>
-        <translation>Casa</translation>
+        <translation>Hem</translation>
     </message>
     <message>
         <source>Gaming</source>
-        <translation>Videogiochi</translation>
+        <translation>Spel</translation>
     </message>
     <message>
         <source>Music</source>
-        <translation>Musica</translation>
+        <translation>Musik</translation>
     </message>
     <message>
         <source>Books &amp; Movies</source>
-        <translation>Libri e film</translation>
+        <translation>Böcker &amp; film</translation>
     </message>
     <message>
         <source>Sports</source>
@@ -97,143 +97,143 @@
     </message>
     <message>
         <source>Relationships</source>
-        <translation>Relazioni</translation>
+        <translation>Relationer</translation>
     </message>
     <message>
         <source>Productivity</source>
-        <translation>Produttività</translation>
+        <translation>Produktivitet</translation>
     </message>
     <message>
         <source>Ideas</source>
-        <translation>Idee</translation>
+        <translation>Idéer</translation>
     </message>
     <message>
         <source>Practical</source>
-        <translation>Pratico</translation>
+        <translation>Praktiskt</translation>
     </message>
     <message>
         <source>Other</source>
-        <translation>Altro</translation>
+        <translation>Annat</translation>
     </message>
 </context>
 <context>
     <name>ChatPage</name>
     <message>
-        <source>New conversation</source>
-        <translation>Nuova conversazione</translation>
+        <source>Settings &amp; About</source>
+        <translation>Inställningar &amp; Om</translation>
     </message>
     <message>
-        <source>Welcome to SailCat</source>
-        <translation>Welcome to SailCat</translation>
+        <source>New conversation</source>
+        <translation>Ny konversation</translation>
+    </message>
+    <message>
+        <source>Welcome to Skrynja</source>
+        <translation>Välkommen till Skrynja</translation>
     </message>
     <message>
         <source>Pick a provider and enter its API key to get started</source>
-        <translation>Scegli un provider e inserisci la sua chiave API per iniziare</translation>
+        <translation>Välj en leverantör och ange dess API-nyckel för att komma igång</translation>
     </message>
     <message>
         <source>Start a conversation</source>
-        <translation>Start a conversation</translation>
+        <translation>Starta en konversation</translation>
     </message>
     <message>
         <source>Type a message below</source>
-        <translation>Type a message below</translation>
+        <translation>Skriv ditt meddelande nedan</translation>
     </message>
     <message>
         <source>Type a message...</source>
-        <translation>Type a message...</translation>
+        <translation>Skriv ett meddelande...</translation>
+    </message>
+    <message>
+        <source>Get Started</source>
+        <translation>Sätt igång</translation>
+    </message>
+    <message>
+        <source>Which AI answers you?</source>
+        <translation>Vilken AI svarar dig?</translation>
+    </message>
+    <message>
+        <source>The one you pick. Skrynja talks to Mistral AI, Scaleway, OVHcloud, Groq or any OpenAI-compatible endpoint, with your own account. Several of them have a free tier, and the European ones keep your conversations on this side of the Atlantic.</source>
+        <translation>Den du väljer. Skrynja pratar med Mistral AI, Scaleway, OVHcloud, Groq eller vilken OpenAI-kompatibel slutpunkt som helst, med ditt eget konto. Flera av dem har en gratisnivå, och de europeiska håller dina konversationer på den här sidan Atlanten.</translation>
+    </message>
+    <message>
+        <source>Privacy &amp; Storage</source>
+        <translation>Integritet &amp; lagring</translation>
+    </message>
+    <message>
+        <source>Getting Started</source>
+        <translation>Hur du börjar</translation>
     </message>
     <message>
         <source>1. Pick a provider in Settings
 2. Paste the API key it gives you
 3. Start chatting!</source>
-        <translation>1. Scegli un provider nelle Impostazioni
-2. Incolla la chiave API che ti fornisce
-3. Inizia a chattare!</translation>
+        <translation>1. Välj en leverantör i Inställningar
+2. Klistra in API-nyckeln du får
+3. Börja chatta!</translation>
     </message>
     <message>
         <source>Conversation exported</source>
-        <translation>Conversazione esportata</translation>
+        <translation>Konversation exporterad</translation>
     </message>
     <message>
         <source>Export conversation</source>
-        <translation>Esporta conversazione</translation>
+        <translation>Exportera konversation</translation>
     </message>
     <message>
         <source>Export failed</source>
-        <translation>Esportazione non riuscita</translation>
-    </message>
-    <message>
-        <source>Get Started</source>
-        <translation>Inizia</translation>
-    </message>
-    <message>
-        <source>Getting Started</source>
-        <translation>Per iniziare</translation>
-    </message>
-    <message>
-        <source>The one you pick. SailCat talks to Mistral AI, Scaleway, OVHcloud, Groq or any OpenAI-compatible endpoint, with your own account. Several of them have a free tier, and the European ones keep your conversations on this side of the Atlantic.</source>
-        <translation>Quella che scegli tu. SailCat parla con Mistral AI, Scaleway, OVHcloud, Groq o qualsiasi endpoint compatibile con OpenAI, con il tuo account. Diversi hanno un piano gratuito, e quelli europei tengono le tue conversazioni da questa parte dell&apos;Atlantico.</translation>
+        <translation>Export misslyckades</translation>
     </message>
     <message>
         <source>This conversation now uses %1</source>
-        <translation>Questa conversazione ora usa %1</translation>
+        <translation>Den här konversationen använder nu %1</translation>
     </message>
     <message>
         <source>Pinned messages</source>
-        <translation>Messaggi fissati</translation>
-    </message>
-    <message>
-        <source>Privacy &amp; Storage</source>
-        <translation>Privacy e archiviazione</translation>
-    </message>
-    <message>
-        <source>Settings &amp; About</source>
-        <translation>Impostazioni e Info</translation>
+        <translation>Fästa meddelanden</translation>
     </message>
     <message>
         <source>Tokens: %1 total - last: %2 in / %3 out</source>
-        <translation>Token: %1 totali - ultimo: %2 in / %3 out</translation>
-    </message>
-    <message>
-        <source>Which AI answers you?</source>
-        <translation>Quale IA ti risponde?</translation>
+        <translation>Tecken: %1 totalt - senast: %2 in / %3 ut</translation>
     </message>
     <message>
         <source>• Your conversations are stored locally on your device
 • No sync with any web interface
 • Each provider keeps its own key, stored scrambled
 • Your data stays on your phone</source>
-        <translation>• Le tue conversazioni sono salvate localmente sul dispositivo
-• Nessuna sincronizzazione con interfacce web
-• Ogni provider ha la sua chiave, salvata offuscata
-• I tuoi dati restano sul telefono</translation>
+        <translation>• Dina konversationer lagras lokalt på din enhet
+• Ingen synkronisering med något webbgränssnitt
+• Varje leverantör har sin egen nyckel, lagrad förvrängd
+• Dina data stannar i din telefon</translation>
     </message>
     <message>
         <source>Prompt library</source>
-        <translation>Libreria di prompt</translation>
+        <translation>Promptbibliotek</translation>
     </message>
     <message>
         <source>Conversation settings</source>
-        <translation>Impostazioni conversazione</translation>
+        <translation>Konversationsinställningar</translation>
     </message>
     <message numerus="yes">
         <source>Context limited: %n older message(s) not sent</source>
         <translation>
-            <numerusform>Contesto limitato: %n messaggio precedente non inviato</numerusform>
-            <numerusform>Contesto limitato: %n messaggi precedenti non inviati</numerusform>
+            <numerusform>Begränsad kontext: %n äldre meddelande ej skickat</numerusform>
+            <numerusform>Begränsad kontext: %n äldre meddelanden ej skickade</numerusform>
         </translation>
     </message>
     <message>
         <source>Tokens: %1 total</source>
-        <translation>Token: %1 in totale</translation>
+        <translation>Tecken: %1 totalt</translation>
     </message>
     <message>
         <source>Provider busy - retrying in %1 s (%2/%3)</source>
-        <translation>Provider occupato - nuovo tentativo tra %1 s (%2/%3)</translation>
+        <translation>Leverantören är upptagen – försöker igen om %1 s (%2/%3)</translation>
     </message>
     <message>
         <source>Provider busy - retrying (%1/%2)</source>
-        <translation>Provider occupato - nuovo tentativo (%1/%2)</translation>
+        <translation>Leverantören är upptagen – försöker igen (%1/%2)</translation>
     </message>
 </context>
 <context>
@@ -241,75 +241,75 @@
     <message numerus="yes">
         <source>%n day(s)</source>
         <translation>
-            <numerusform>%n giorno</numerusform>
-            <numerusform>%n giorni</numerusform>
+            <numerusform>%n dag</numerusform>
+            <numerusform>%n dagar</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n hour(s)</source>
         <translation>
-            <numerusform>%n ora</numerusform>
-            <numerusform>%n ore</numerusform>
+            <numerusform>%n timma</numerusform>
+            <numerusform>%n timmar</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n minute(s)</source>
         <translation>
-            <numerusform>%n minuto</numerusform>
-            <numerusform>%n minuti</numerusform>
+            <numerusform>%n minut</numerusform>
+            <numerusform>%n minuter</numerusform>
         </translation>
     </message>
     <message>
         <source>Assistant</source>
-        <translation>Assistente</translation>
+        <translation>Assistent</translation>
     </message>
     <message>
         <source>Conversation</source>
-        <translation>Conversazione</translation>
+        <translation>Konversation</translation>
     </message>
     <message>
         <source>Conversation rhythm</source>
-        <translation>Ritmo della conversazione</translation>
+        <translation>Konversationsrytm</translation>
     </message>
     <message>
         <source>Less than a minute</source>
-        <translation>Meno di un minuto</translation>
+        <translation>Mindre än en minut</translation>
     </message>
     <message>
         <source>Load this conversation</source>
-        <translation>Carica questa conversazione</translation>
+        <translation>Läs in denna konversation</translation>
     </message>
     <message>
         <source>Messages</source>
-        <translation>Messaggi</translation>
+        <translation>Meddelanden</translation>
     </message>
     <message>
         <source>No messages</source>
-        <translation>Nessun messaggio</translation>
+        <translation>Inga meddelanden</translation>
     </message>
     <message>
         <source>Single exchange</source>
-        <translation>Scambio singolo</translation>
+        <translation>Enkelväxling</translation>
     </message>
     <message>
         <source>This conversation is empty</source>
-        <translation>Questa conversazione è vuota</translation>
+        <translation>Denna konversation är tom</translation>
     </message>
     <message>
         <source>You</source>
-        <translation>Tu</translation>
+        <translation>Du</translation>
     </message>
     <message>
         <source>messages</source>
-        <translation>messaggi</translation>
+        <translation>meddelanden</translation>
     </message>
     <message>
         <source>tokens</source>
-        <translation>token</translation>
+        <translation>tecken</translation>
     </message>
     <message>
         <source>written by AI</source>
-        <translation>scritto dall&apos;IA</translation>
+        <translation>skrivet av AI</translation>
     </message>
 </context>
 <context>
@@ -317,216 +317,216 @@
     <message numerus="yes">
         <source>%n conversation(s)</source>
         <translation>
-            <numerusform>%n conversazione</numerusform>
-            <numerusform>%n conversazioni</numerusform>
+            <numerusform>%n konversation</numerusform>
+            <numerusform>%n konversationer</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n match(es)</source>
         <translation>
-            <numerusform>%n corrispondenza</numerusform>
-            <numerusform>%n corrispondenze</numerusform>
+            <numerusform>%n träff</numerusform>
+            <numerusform>%n träffar</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n message(s)</source>
         <translation>
-            <numerusform>%n messaggio</numerusform>
-            <numerusform>%n messaggi</numerusform>
+            <numerusform>%n meddelande</numerusform>
+            <numerusform>%n meddelanden</numerusform>
         </translation>
     </message>
     <message>
         <source>Activity - last 14 days</source>
-        <translation>Attività - ultimi 14 giorni</translation>
+        <translation>Aktivitet - Senaste 14 dagarna</translation>
     </message>
     <message>
         <source>Conversation History</source>
-        <translation>Cronologia delle conversazioni</translation>
+        <translation>Konversationshistorik</translation>
     </message>
     <message>
         <source>Copy as text</source>
-        <translation>Copia come testo</translation>
+        <translation>Kopiera som text</translation>
     </message>
     <message>
         <source>Delete</source>
-        <translation>Elimina</translation>
+        <translation>Ta bort</translation>
     </message>
     <message>
         <source>Deleting</source>
-        <translation>Eliminazione</translation>
+        <translation>Tar bort</translation>
     </message>
     <message>
         <source>Empty conversation</source>
-        <translation>Conversazione vuota</translation>
+        <translation>Tom konversation</translation>
     </message>
     <message>
         <source>New conversation</source>
-        <translation>Nuova conversazione</translation>
+        <translation>Ny konversation</translation>
     </message>
     <message>
         <source>No conversations</source>
-        <translation>Nessuna conversazione</translation>
+        <translation>Inga konversationer</translation>
     </message>
     <message>
         <source>No results</source>
-        <translation>Nessun risultato</translation>
+        <translation>Inga träffar</translation>
     </message>
     <message>
         <source>Purge all conversations</source>
-        <translation>Elimina tutte le conversazioni</translation>
+        <translation>Ta bort alla konversationer</translation>
     </message>
     <message>
         <source>Purging all conversations</source>
-        <translation>Eliminazione di tutte le conversazioni</translation>
+        <translation>Tar bort alla konversationer</translation>
     </message>
     <message>
         <source>Search in conversations...</source>
-        <translation>Cerca nelle conversazioni...</translation>
+        <translation>Sök i konversationer...</translation>
     </message>
     <message>
         <source>Start chatting to create conversations</source>
-        <translation>Inizia a chattare per creare conversazioni</translation>
+        <translation>Börja chatta för att skapa konversationer</translation>
     </message>
     <message>
         <source>Try different search terms</source>
-        <translation>Prova altri termini di ricerca</translation>
+        <translation>Prova en annan sökterm</translation>
     </message>
     <message>
         <source>View details</source>
-        <translation>Vedi dettagli</translation>
+        <translation>Visa detaljerat</translation>
     </message>
     <message>
         <source>Conversation settings</source>
-        <translation>Impostazioni conversazione</translation>
+        <translation>Konversationsinställningar</translation>
     </message>
     <message>
         <source>Auto-label conversations</source>
-        <translation>Etichetta le conversazioni automaticamente</translation>
+        <translation>Etikettera konversationer automatiskt</translation>
     </message>
     <message numerus="yes">
         <source>%n conversation(s) relabelled</source>
         <translation>
-            <numerusform>%n conversazione rietichettata</numerusform>
-            <numerusform>%n conversazioni rietichettate</numerusform>
+            <numerusform>%n konversation ometiketterad</numerusform>
+            <numerusform>%n konversationer ometiketterade</numerusform>
         </translation>
     </message>
     <message>
         <source>Nothing to relabel</source>
-        <translation>Niente da rietichettare</translation>
+        <translation>Inget att ometikettera</translation>
     </message>
     <message>
         <source>Settings &amp; About</source>
-        <translation>Impostazioni e Info</translation>
+        <translation>Inställningar &amp; Om</translation>
     </message>
     <message>
         <source>Yesterday</source>
-        <translation>Ieri</translation>
+        <translation>Igår</translation>
     </message>
 </context>
 <context>
     <name>ConversationManager</name>
     <message>
         <source>New conversation</source>
-        <translation>Nuova conversazione</translation>
+        <translation>Ny konversation</translation>
     </message>
     <message>
         <source>Match in title</source>
-        <translation>Corrispondenza nel titolo</translation>
+        <translation>Matchning i titeln</translation>
     </message>
     <message>
         <source>Untitled</source>
-        <translation>Senza titolo</translation>
+        <translation>Namnlös</translation>
     </message>
 </context>
 <context>
     <name>ConversationSettingsPage</name>
     <message>
         <source>Conversation settings</source>
-        <translation>Impostazioni conversazione</translation>
+        <translation>Konversationsinställningar</translation>
     </message>
     <message>
         <source>Title</source>
-        <translation>Titolo</translation>
+        <translation>Rubrik</translation>
     </message>
     <message>
         <source>Conversation title</source>
-        <translation>Titolo conversazione</translation>
+        <translation>Konversationstitel</translation>
     </message>
     <message>
         <source>Category</source>
-        <translation>Categoria</translation>
+        <translation>Kategori</translation>
     </message>
     <message>
         <source>Topic</source>
-        <translation>Argomento</translation>
+        <translation>Ämne</translation>
     </message>
     <message>
         <source>Used by the statistics page</source>
-        <translation>Usato dalla pagina delle statistiche</translation>
+        <translation>Används av statistiksidan</translation>
     </message>
     <message>
         <source>Provider and model</source>
-        <translation>Provider e modello</translation>
+        <translation>Leverantör och modell</translation>
     </message>
     <message>
         <source>Model for this conversation</source>
-        <translation>Modello per questa conversazione</translation>
+        <translation>Modell för denna konversation</translation>
     </message>
     <message>
         <source>Overrides the default model of that provider</source>
-        <translation>Sostituisce il modello predefinito di quel provider</translation>
+        <translation>Åsidosätter leverantörens standardmodell</translation>
     </message>
     <message>
         <source>Use default (%1)</source>
-        <translation>Usa predefinito (%1)</translation>
+        <translation>Använd standard (%1)</translation>
     </message>
     <message>
         <source>System prompt</source>
-        <translation>Prompt di sistema</translation>
+        <translation>Systemprompt</translation>
     </message>
     <message>
         <source>Custom system prompt</source>
-        <translation>Prompt di sistema personalizzato</translation>
+        <translation>Egen systemprompt</translation>
     </message>
     <message>
         <source>Replaces the global system prompt for this conversation only</source>
-        <translation>Sostituisce il prompt di sistema globale solo per questa conversazione</translation>
+        <translation>Ersätter den globala systemprompten bara för den här konversationen</translation>
     </message>
     <message>
         <source>Instruction</source>
-        <translation>Istruzione</translation>
+        <translation>Instruktion</translation>
     </message>
     <message>
         <source>Enter a system prompt...</source>
-        <translation>Inserisci un prompt di sistema...</translation>
+        <translation>Ange en systemprompt...</translation>
     </message>
     <message>
         <source>Asking the model...</source>
-        <translation>Interrogazione del modello...</translation>
+        <translation>Frågar modellen...</translation>
     </message>
     <message>
         <source>Suggest a title</source>
-        <translation>Suggerisci un titolo</translation>
+        <translation>Föreslå en rubrik</translation>
     </message>
     <message>
         <source>Reads the conversation and proposes a title and a category.</source>
-        <translation>Legge la conversazione e propone un titolo e una categoria.</translation>
+        <translation>Läser konversationen och föreslår en rubrik och en kategori.</translation>
     </message>
     <message>
         <source>Answers come from</source>
-        <translation>Le risposte arrivano da</translation>
+        <translation>Svaren kommer från</translation>
     </message>
     <message>
         <source>This conversation only. New conversations use the provider set in Settings.</source>
-        <translation>Solo questa conversazione. Le nuove usano il provider impostato nelle Impostazioni.</translation>
+        <translation>Endast den här konversationen. Nya konversationer använder leverantören som valts i Inställningar.</translation>
     </message>
     <message>
         <source>The rest of this conversation goes to %1, using its own API key. The answers already received do not change.</source>
-        <translation>Il resto di questa conversazione andrà a %1, con la sua chiave API. Le risposte già ricevute non cambiano.</translation>
+        <translation>Resten av den här konversationen går till %1, med dess egen API-nyckel. Svaren du redan fått ändras inte.</translation>
     </message>
     <message>
         <source>No API key for this provider yet - add it in Settings before sending.</source>
-        <translation>Nessuna chiave API per questo provider - aggiungila nelle Impostazioni prima di inviare.</translation>
+        <translation>Ingen API-nyckel för den här leverantören ännu – lägg till den i Inställningar innan du skickar.</translation>
     </message>
 </context>
 <context>
@@ -534,167 +534,175 @@
     <message numerus="yes">
         <source>%n message(s)</source>
         <translation>
-            <numerusform>%n messaggio</numerusform>
-            <numerusform>%n messaggi</numerusform>
+            <numerusform>%n meddelande</numerusform>
+            <numerusform>%n meddelanden</numerusform>
         </translation>
     </message>
     <message>
         <source>No conversation</source>
-        <translation>Nessuna conversazione</translation>
+        <translation>Inga konversationer</translation>
     </message>
     <message numerus="yes">
         <source>%n conversation(s)</source>
         <translation>
-            <numerusform>%n conversazione</numerusform>
-            <numerusform>%n conversazioni</numerusform>
+            <numerusform>%n konversation</numerusform>
+            <numerusform>%n konversationer</numerusform>
         </translation>
     </message>
     <message>
         <source>Tokens this month: %1</source>
-        <translation>Token questo mese: %1</translation>
+        <translation>Tecken denna månad: %1</translation>
     </message>
     <message>
         <source>Tokens: %1</source>
-        <translation>Token: %1</translation>
+        <translation>Tecken: %1</translation>
     </message>
 </context>
 <context>
     <name>MessageBubble</name>
     <message>
-        <source>You</source>
-        <translation>Tu</translation>
-    </message>
-    <message>
-        <source>Assistant</source>
-        <translation>Assistente</translation>
-    </message>
-    <message>
         <source>Copy</source>
-        <translation>Copia</translation>
-    </message>
-    <message>
-        <source>Unpin</source>
-        <translation>Rimuovi</translation>
-    </message>
-    <message>
-        <source>Pin</source>
-        <translation>Fissa</translation>
+        <translation>Kopiera</translation>
     </message>
     <message>
         <source>Copy code</source>
-        <translation>Copia il codice</translation>
+        <translation>Kopiera kod</translation>
     </message>
     <message>
         <source>Edit</source>
-        <translation>Modifica</translation>
+        <translation>Redigera</translation>
+    </message>
+    <message>
+        <source>Pin</source>
+        <translation>Fäst</translation>
     </message>
     <message>
         <source>Regenerate</source>
-        <translation>Rigenera</translation>
+        <translation>Återskapa</translation>
+    </message>
+    <message>
+        <source>Unpin</source>
+        <translation>Lösgör</translation>
+    </message>
+    <message>
+        <source>You</source>
+        <translation>Du</translation>
+    </message>
+    <message>
+        <source>Assistant</source>
+        <translation>Assistent</translation>
     </message>
 </context>
 <context>
     <name>MistralAPI</name>
     <message>
         <source>Missing API key. Please configure your API key in settings.</source>
-        <translation>Missing API key. Please configure your API key in settings.</translation>
+        <translation>API-nyckel salnas. Konfigurera API-nyckeln i Inställningar.</translation>
     </message>
     <message>
         <source>API Error: %1</source>
-        <translation>API Error: %1</translation>
+        <translation>API-fel: %1</translation>
     </message>
     <message>
         <source>Failed to prepare messages for API</source>
-        <translation>Preparazione dei messaggi per l&apos;API non riuscita</translation>
+        <translation>Kunde inte förbereda meddelanden för API:t</translation>
     </message>
     <message>
         <source>Request timed out. Please check your connection.</source>
-        <translation>Richiesta scaduta. Controlla la connessione.</translation>
+        <translation>Tidsgränsen överskreds. Kolla din anslutning.</translation>
     </message>
     <message>
         <source>No endpoint configured. Please pick a provider in settings.</source>
-        <translation>Nessun endpoint configurato. Scegli un provider nelle impostazioni.</translation>
+        <translation>Ingen slutpunkt konfigurerad. Välj en leverantör i inställningarna.</translation>
     </message>
     <message>
         <source>Rate limit reached. Free tiers allow about one request per second - wait a few seconds before sending again.</source>
-        <translation>Limite di richieste raggiunto. I piani gratuiti consentono circa una richiesta al secondo: attendi qualche secondo prima di inviare di nuovo.</translation>
+        <translation>Hastighetsgränsen är nådd. Gratisnivåer tillåter ungefär en förfrågan per sekund – vänta några sekunder innan du skickar igen.</translation>
     </message>
 </context>
 <context>
     <name>ModelSelector</name>
     <message>
         <source>Select Model</source>
-        <translation>Seleziona modello</translation>
+        <translation>Välj modell</translation>
     </message>
     <message>
         <source>Vision capable</source>
-        <translation>Supporta la visione</translation>
+        <translation>Synkunnig</translation>
     </message>
 </context>
 <context>
     <name>PinnedMessagesPage</name>
     <message>
         <source>Long-press a message and select Pin</source>
-        <translation>Tieni premuto un messaggio e scegli Fissa</translation>
+        <translation>Långtryck ett meddelande och välj Fäst</translation>
     </message>
     <message>
         <source>No pinned messages</source>
-        <translation>Nessun messaggio fissato</translation>
+        <translation>Inga fästa meddelanden</translation>
     </message>
     <message>
         <source>Pinned messages</source>
-        <translation>Messaggi fissati</translation>
+        <translation>Fästa meddelanden</translation>
     </message>
 </context>
 <context>
     <name>PromptLibraryPage</name>
     <message>
         <source>Prompt library</source>
-        <translation>Libreria di prompt</translation>
+        <translation>Promptbibliotek</translation>
     </message>
     <message>
         <source>Tap a prompt to add it to the message you are writing.</source>
-        <translation>Tocca un prompt per aggiungerlo al messaggio che stai scrivendo.</translation>
+        <translation>Tryck på en prompt för att lägga till det i meddelandet du skriver.</translation>
     </message>
     <message>
         <source>New prompt</source>
-        <translation>Nuovo prompt</translation>
+        <translation>Ny prompt</translation>
     </message>
     <message>
         <source>No saved prompts</source>
-        <translation>Nessun prompt salvato</translation>
+        <translation>Inga sparade prompter</translation>
     </message>
     <message>
         <source>Use the pulley menu to save one</source>
-        <translation>Usa il menu a tendina per salvarne uno</translation>
+        <translation>Använd toppmenyn för att spara en</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>Redigera</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>Kopiera</translation>
     </message>
     <message>
         <source>Delete</source>
-        <translation>Elimina</translation>
+        <translation>Ta bort</translation>
     </message>
     <message>
         <source>Deleting</source>
-        <translation>Eliminazione</translation>
+        <translation>Tar bort</translation>
     </message>
     <message>
         <source>Edit prompt</source>
-        <translation>Modifica prompt</translation>
+        <translation>Redigera prompt</translation>
     </message>
     <message>
         <source>Save</source>
-        <translation>Save</translation>
+        <translation>Spara</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation>Cancel</translation>
+        <translation>Avbryt</translation>
     </message>
     <message>
         <source>Name</source>
-        <translation>Nome</translation>
+        <translation>Namn</translation>
     </message>
     <message>
         <source>Optional name</source>
-        <translation>Nome facoltativo</translation>
+        <translation>Valfritt namn</translation>
     </message>
     <message>
         <source>Prompt</source>
@@ -702,332 +710,324 @@
     </message>
     <message>
         <source>Enter the prompt text...</source>
-        <translation>Inserisci il testo del prompt...</translation>
-    </message>
-    <message>
-        <source>Edit</source>
-        <translation>Modifica</translation>
-    </message>
-    <message>
-        <source>Copy</source>
-        <translation>Copia</translation>
+        <translation>Ange prompttext...</translation>
     </message>
 </context>
 <context>
     <name>QObject</name>
     <message>
         <source>France (EU)</source>
-        <translation>Francia (UE)</translation>
+        <translation>Frankrike (EU)</translation>
     </message>
     <message>
         <source>United States</source>
-        <translation>Stati Uniti</translation>
+        <translation>USA</translation>
     </message>
     <message>
         <source>Wherever you point it</source>
-        <translation>Dove lo punti</translation>
+        <translation>Dit du pekar den</translation>
     </message>
     <message>
         <source>Custom endpoint</source>
-        <translation>Endpoint personalizzato</translation>
+        <translation>Egen slutpunkt</translation>
     </message>
 </context>
 <context>
     <name>SettingsPage</name>
     <message>
+        <source>Settings &amp; About</source>
+        <translation>Inställningar &amp; Om</translation>
+    </message>
+    <message>
         <source>Save</source>
-        <translation>Save</translation>
+        <translation>Spara</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation>Cancel</translation>
+        <translation>Avbryt</translation>
     </message>
     <message>
         <source>API Configuration</source>
-        <translation>API Configuration</translation>
+        <translation>API-konfiguration</translation>
     </message>
     <message>
         <source>To get an API key, visit %1</source>
-        <translation>Per ottenere una chiave API, visita %1</translation>
+        <translation>För att få en API-nyckel, besök %1</translation>
     </message>
     <message>
         <source>%1 API key</source>
-        <translation>Chiave API %1</translation>
+        <translation>API-nyckel för %1</translation>
     </message>
     <message>
         <source>Enter your API key</source>
-        <translation>Enter your API key</translation>
+        <translation>Ange din API-nyckel</translation>
     </message>
     <message>
         <source>Clear API key</source>
-        <translation>Clear API key</translation>
+        <translation>Ta bort API-nyckel</translation>
     </message>
     <message>
         <source>Clearing API key</source>
-        <translation>Clearing API key</translation>
-    </message>
-    <message>
-        <source>Model</source>
-        <translation>Model</translation>
-    </message>
-    <message>
-        <source>Select the model to use</source>
-        <translation>Select the model to use</translation>
-    </message>
-    <message>
-        <source>About</source>
-        <translation>Info</translation>
-    </message>
-    <message>
-        <source>Application Language</source>
-        <translation>Lingua dell&apos;applicazione</translation>
-    </message>
-    <message>
-        <source>Code assistant</source>
-        <translation>Assistente di codice</translation>
-    </message>
-    <message>
-        <source>Concise</source>
-        <translation>Conciso</translation>
-    </message>
-    <message>
-        <source>Custom</source>
-        <translation>Personalizzato</translation>
-    </message>
-    <message>
-        <source>Custom system prompt</source>
-        <translation>Prompt di sistema personalizzato</translation>
-    </message>
-    <message>
-        <source>Custom temperature</source>
-        <translation>Temperatura personalizzata</translation>
-    </message>
-    <message>
-        <source>Enter a custom system prompt...</source>
-        <translation>Inserisci un prompt di sistema personalizzato...</translation>
-    </message>
-    <message>
-        <source>Generation</source>
-        <translation>Generazione</translation>
-    </message>
-    <message>
-        <source>Instruction sent before every conversation</source>
-        <translation>Istruzione inviata prima di ogni conversazione</translation>
+        <translation>Tar bort API-nyckel</translation>
     </message>
     <message>
         <source>Language</source>
-        <translation>Lingua</translation>
+        <translation>Språk</translation>
     </message>
     <message>
-        <source>Limit response length</source>
-        <translation>Limita la lunghezza delle risposte</translation>
-    </message>
-    <message>
-        <source>Lower is more focused, higher is more creative</source>
-        <translation>Più basso è più preciso, più alto è più creativo</translation>
-    </message>
-    <message>
-        <source>Made with &lt;3 for Sailfish OS</source>
-        <translation>Fatto con &lt;3 per Sailfish OS</translation>
-    </message>
-    <message>
-        <source>Max tokens</source>
-        <translation>Token max</translation>
-    </message>
-    <message>
-        <source>Maximum number of tokens per response</source>
-        <translation>Numero massimo di token per risposta</translation>
-    </message>
-    <message>
-        <source>None</source>
-        <translation>Nessuno</translation>
-    </message>
-    <message>
-        <source>Persona</source>
-        <translation>Persona</translation>
-    </message>
-    <message>
-        <source>Powered by %1 • MIT License</source>
-        <translation>Basato su %1 • Licenza MIT</translation>
-    </message>
-    <message>
-        <source>SailCat is an elegant chat client for Mistral AI and other OpenAI-compatible providers, designed for Sailfish OS.</source>
-        <translation>SailCat è un elegante client di chat per Mistral AI e altri provider compatibili con OpenAI, progettato per Sailfish OS.</translation>
+        <source>Application Language</source>
+        <translation>Appspråk</translation>
     </message>
     <message>
         <source>Select the language for the interface</source>
-        <translation>Seleziona la lingua dell&apos;interfaccia</translation>
+        <translation>Välj språk för appens användargränssnitt</translation>
     </message>
     <message>
-        <source>Settings &amp; About</source>
-        <translation>Impostazioni e Info</translation>
+        <source>Model</source>
+        <translation>Modell</translation>
+    </message>
+    <message>
+        <source>Select the model to use</source>
+        <translation>Välj modell att använda</translation>
+    </message>
+    <message>
+        <source>Powered by %1 • MIT License</source>
+        <translation>Drivs av %1 • MIT-licens</translation>
+    </message>
+    <message>
+        <source>Made with &lt;3 for Sailfish OS</source>
+        <translation>Gjord med &lt;3 för Sailfish OS</translation>
+    </message>
+    <message>
+        <source>About</source>
+        <translation>Om</translation>
+    </message>
+    <message>
+        <source>Code assistant</source>
+        <translation>Kodassistent</translation>
+    </message>
+    <message>
+        <source>Concise</source>
+        <translation>Kortfattad</translation>
+    </message>
+    <message>
+        <source>Custom</source>
+        <translation>Anpassad</translation>
+    </message>
+    <message>
+        <source>Custom system prompt</source>
+        <translation>Egen systemprompt</translation>
+    </message>
+    <message>
+        <source>Custom temperature</source>
+        <translation>Anpassad temperatur</translation>
+    </message>
+    <message>
+        <source>Enter a custom system prompt...</source>
+        <translation>Ange en egen systemprompt...</translation>
+    </message>
+    <message>
+        <source>Generation</source>
+        <translation>Produktion</translation>
+    </message>
+    <message>
+        <source>Instruction sent before every conversation</source>
+        <translation>Instruktion som skickas före varje konversation</translation>
+    </message>
+    <message>
+        <source>Limit response length</source>
+        <translation>Begränsa svarslängd</translation>
+    </message>
+    <message>
+        <source>Lower is more focused, higher is more creative</source>
+        <translation>Lägre är mer fokuserat, högre är mer kreativt</translation>
+    </message>
+    <message>
+        <source>Max tokens</source>
+        <translation>Max antal tecken</translation>
+    </message>
+    <message>
+        <source>Maximum number of tokens per response</source>
+        <translation>Max antal tecken per svar</translation>
+    </message>
+    <message>
+        <source>None</source>
+        <translation>Inget</translation>
+    </message>
+    <message>
+        <source>Persona</source>
+        <translation>Personlighet</translation>
+    </message>
+    <message>
+        <source>Skrynja is an elegant chat client for Mistral AI and other OpenAI-compatible providers, designed for Sailfish OS.</source>
+        <translation>Skrynja är en elegant chattklient för Mistral AI och andra OpenAI-kompatibla leverantörer, utformad för Sailfish OS.</translation>
     </message>
     <message>
         <source>Source code on GitHub</source>
-        <translation>Codice sorgente su GitHub</translation>
+        <translation>Källkod på GitHub</translation>
     </message>
     <message>
         <source>Statistics</source>
-        <translation>Statistiche</translation>
+        <translation>Statistik</translation>
     </message>
     <message>
         <source>System prompt</source>
-        <translation>Prompt di sistema</translation>
+        <translation>Systemprompt</translation>
     </message>
     <message>
         <source>Temperature</source>
-        <translation>Temperatura</translation>
+        <translation>Temperatur</translation>
     </message>
     <message>
         <source>This model can analyze images</source>
-        <translation>Questo modello può analizzare immagini</translation>
+        <translation>Denna modell kan analysera bilder</translation>
     </message>
     <message>
         <source>Translator</source>
-        <translation>Traduttore</translation>
+        <translation>Översättare</translation>
     </message>
     <message>
         <source>Version %1</source>
-        <translation>Versione %1</translation>
+        <translation>Version %1</translation>
     </message>
     <message>
         <source>View statistics</source>
-        <translation>Vedi statistiche</translation>
+        <translation>Visa statistik</translation>
     </message>
     <message>
         <source>• Conversations stored locally
 • No sync with any web interface
 • Uses your own account with the provider</source>
-        <translation>• Conversazioni salvate localmente
-• Nessuna sincronizzazione con interfacce web
-• Usa il tuo account presso il provider</translation>
+        <translation>• Konversationer lagras lokalt
+• Ingen synkronisering med något webbgränssnitt
+• Använder ditt eget konto hos leverantören</translation>
     </message>
     <message>
         <source>Prompt library</source>
-        <translation>Libreria di prompt</translation>
+        <translation>Promptbibliotek</translation>
     </message>
     <message>
         <source>Show API key</source>
-        <translation>Mostra la chiave API</translation>
+        <translation>Visa API-nyckel</translation>
     </message>
     <message>
         <source>The key is stored scrambled in an owner-only file on this device and is only ever sent to %1. Each provider keeps its own key.</source>
-        <translation>La chiave è salvata offuscata in un file leggibile solo da te su questo dispositivo e viene inviata soltanto a %1. Ogni provider ha la sua chiave.</translation>
+        <translation>Nyckeln lagras förvrängd i en fil som bara ägaren kan läsa på den här enheten och skickas aldrig till någon annan än %1. Varje leverantör har sin egen nyckel.</translation>
     </message>
     <message>
         <source>Appearance</source>
-        <translation>Aspetto</translation>
+        <translation>Utseende</translation>
     </message>
     <message>
         <source>Conversation style</source>
-        <translation>Stile conversazione</translation>
+        <translation>Konversationsstil</translation>
     </message>
     <message>
         <source>How messages are laid out in the chat</source>
-        <translation>Come sono disposti i messaggi nella chat</translation>
+        <translation>Hur meddelanden visas i chatten</translation>
     </message>
     <message>
         <source>Show timestamps</source>
-        <translation>Mostra gli orari</translation>
+        <translation>Visa tidsstämplar</translation>
     </message>
     <message>
         <source>Display the time under each message</source>
-        <translation>Mostra l&apos;ora sotto ogni messaggio</translation>
+        <translation>Visa tiden under varje meddelande</translation>
     </message>
     <message>
         <source>Enter sends the message</source>
-        <translation>Invio manda il messaggio</translation>
+        <translation>Enter skickar meddelandet</translation>
     </message>
     <message>
         <source>Turn this off to type a new line with Enter and send with the message button</source>
-        <translation>Disattiva per andare a capo con Invio e inviare con il pulsante messaggio</translation>
+        <translation>Stäng av för att göra radbrytning med Enter och skicka med meddelandeknappen</translation>
     </message>
     <message>
         <source>Limit conversation context</source>
-        <translation>Limita il contesto</translation>
+        <translation>Begränsa samtalskontext</translation>
     </message>
     <message>
         <source>Send only the most recent messages. Keeps long conversations cheap and avoids hitting the model context limit.</source>
-        <translation>Invia solo i messaggi più recenti. Mantiene economiche le conversazioni lunghe ed evita di raggiungere il limite di contesto del modello.</translation>
+        <translation>Skicka bara de senaste meddelandena. Håller långa konversationer billiga och undviker att nå modellens gräns för kontext.</translation>
     </message>
     <message numerus="yes">
         <source>%n message(s)</source>
         <translation>
-            <numerusform>%n message</numerusform>
-            <numerusform>%n messages</numerusform>
+            <numerusform>%n meddelande</numerusform>
+            <numerusform>%n meddelanden</numerusform>
         </translation>
     </message>
     <message>
         <source>Messages kept</source>
-        <translation>Messaggi conservati</translation>
+        <translation>Sparade meddelanden</translation>
     </message>
     <message>
         <source>Bubbles</source>
-        <translation>Fumetti</translation>
+        <translation>Bubblor</translation>
     </message>
     <message>
         <source>Compact</source>
-        <translation>Compatto</translation>
+        <translation>Kompakt</translation>
     </message>
     <message>
         <source>Cards</source>
-        <translation>Schede</translation>
+        <translation>Brickor</translation>
     </message>
     <message>
         <source>Flat</source>
-        <translation>Piatto</translation>
+        <translation>Platt</translation>
     </message>
     <message>
         <source>Rounded bubbles aligned left and right, like a messaging app.</source>
-        <translation>Fumetti arrotondati allineati a sinistra e a destra, come un&apos;app di messaggistica.</translation>
+        <translation>Rundade bubblor jämnt placerade till vänster och höger, som i en meddelandeapp.</translation>
     </message>
     <message>
         <source>Dense rows with a short speaker prefix. Fits the most text on screen.</source>
-        <translation>Righe dense con un breve prefisso dell&apos;autore. Mostra più testo possibile.</translation>
+        <translation>Täta rader med kort talarprefix. Får plats med mest text på skärmen.</translation>
     </message>
     <message>
         <source>Each message in its own panel with a header.</source>
-        <translation>Ogni messaggio nel proprio pannello con intestazione.</translation>
+        <translation>Varje meddelande i sin egen panel med en rubrik.</translation>
     </message>
     <message>
         <source>Full width rows with a tinted background on your messages.</source>
-        <translation>Righe a tutta larghezza con sfondo colorato sui tuoi messaggi.</translation>
+        <translation>Rader i full bredd med en tonad bakgrund på dina meddelanden.</translation>
     </message>
     <message>
         <source>Provider</source>
-        <translation>Provider</translation>
+        <translation>Leverantör</translation>
     </message>
     <message>
         <source>Used by new conversations. An existing one keeps the provider it started with.</source>
-        <translation>Usato dalle nuove conversazioni. Una conversazione esistente mantiene il provider con cui è iniziata.</translation>
+        <translation>Används av nya konversationer. En befintlig behåller leverantören den startade med.</translation>
     </message>
     <message>
         <source>%1 - free tier</source>
-        <translation>%1 - piano gratuito</translation>
+        <translation>%1 – gratisnivå</translation>
     </message>
     <message>
         <source>Hosted in %1</source>
-        <translation>Ospitato in %1</translation>
+        <translation>Driftas i %1</translation>
     </message>
     <message>
         <source>Endpoint base URL</source>
-        <translation>URL di base dell&apos;endpoint</translation>
+        <translation>Slutpunktens bas-URL</translation>
     </message>
     <message>
         <source>Anything OpenAI-compatible, up to a llama.cpp or Ollama server on your own network.</source>
-        <translation>Qualsiasi cosa compatibile con OpenAI, anche un server llama.cpp o Ollama sulla tua rete.</translation>
+        <translation>Allt som är OpenAI-kompatibelt, ända till en llama.cpp- eller Ollama-server i ditt eget nätverk.</translation>
     </message>
     <message>
         <source>%1 API key (optional)</source>
-        <translation>Chiave API %1 (facoltativa)</translation>
+        <translation>API-nyckel för %1 (valfritt)</translation>
     </message>
     <message>
         <source>Leave empty to stay anonymous</source>
-        <translation>Lascia vuoto per restare anonimo</translation>
+        <translation>Lämna tomt för att förbli anonym</translation>
     </message>
     <message>
         <source>Model identifier</source>
-        <translation>Identificatore del modello</translation>
+        <translation>Modellidentifierare</translation>
     </message>
     <message>
         <source>https://host/v1</source>
@@ -1035,31 +1035,31 @@
     </message>
     <message>
         <source>Automatic titles</source>
-        <translation>Titoli automatici</translation>
+        <translation>Automatiska titlar</translation>
     </message>
     <message>
         <source>Ask the model</source>
-        <translation>Chiedi al modello</translation>
+        <translation>Fråga modellen</translation>
     </message>
     <message>
         <source>Off</source>
-        <translation>Disattivato</translation>
+        <translation>Av</translation>
     </message>
     <message>
         <source>On device</source>
-        <translation>Sul dispositivo</translation>
+        <translation>På enheten</translation>
     </message>
     <message>
         <source>Best titles, but one extra request per conversation. Free tiers count those.</source>
-        <translation>I titoli migliori, ma una richiesta in più per conversazione. I piani gratuiti le contano.</translation>
+        <translation>Bästa titlarna, men en extra förfrågan per konversation. Gratisnivåer räknar dem.</translation>
     </message>
     <message>
         <source>Conversations keep their first question as a title and stay uncategorized.</source>
-        <translation>Le conversazioni mantengono la prima domanda come titolo e restano senza categoria.</translation>
+        <translation>Konversationer behåller sin första fråga som titel och förblir okategoriserade.</translation>
     </message>
     <message>
         <source>Titles and categories worked out on the phone. Costs nothing, no request sent.</source>
-        <translation>Titoli e categorie calcolati sul telefono. Non costa nulla, nessuna richiesta inviata.</translation>
+        <translation>Titlar och kategorier tas fram i telefonen. Kostar ingenting, ingen förfrågan skickas.</translation>
     </message>
 </context>
 <context>
@@ -1067,225 +1067,225 @@
     <message numerus="yes">
         <source>%n character(s)</source>
         <translation>
-            <numerusform>%n carattere</numerusform>
-            <numerusform>%n caratteri</numerusform>
+            <numerusform>%n tecken</numerusform>
+            <numerusform>%n tecken</numerusform>
         </translation>
     </message>
     <message>
         <source>AI: %1 chars</source>
-        <translation>IA: %1 caratteri</translation>
+        <translation>AI: %1 tecken</translation>
     </message>
     <message>
         <source>Activity by hour</source>
-        <translation>Attività per ora</translation>
+        <translation>Aktivitet per timme</translation>
     </message>
     <message>
         <source>Completion tokens</source>
-        <translation>Token di completamento</translation>
+        <translation>Slutföringstoken</translation>
     </message>
     <message>
         <source>Conversations</source>
-        <translation>Conversazioni</translation>
+        <translation>Konversationer</translation>
     </message>
     <message>
         <source>First message</source>
-        <translation>Primo messaggio</translation>
+        <translation>Första meddelande</translation>
     </message>
     <message>
         <source>Last 14 days</source>
-        <translation>Ultimi 14 giorni</translation>
+        <translation>Senaste 14 dagar</translation>
     </message>
     <message>
         <source>Longest conversation</source>
-        <translation>Conversazione più lunga</translation>
+        <translation>Längsta konversation</translation>
     </message>
     <message>
         <source>Longest message</source>
-        <translation>Messaggio più lungo</translation>
+        <translation>Längsta meddelande</translation>
     </message>
     <message>
         <source>Messages</source>
-        <translation>Messaggi</translation>
+        <translation>Meddelanden</translation>
     </message>
     <message>
         <source>Never</source>
-        <translation>Mai</translation>
+        <translation>Aldrig</translation>
     </message>
     <message>
         <source>No recent activity</source>
-        <translation>Nessuna attività recente</translation>
+        <translation>Ingen nylig aktivitet</translation>
     </message>
     <message>
         <source>None</source>
-        <translation>Nessuno</translation>
+        <translation>Inget</translation>
     </message>
     <message>
         <source>Peak: %1 messages/day</source>
-        <translation>Picco: %1 messaggi/giorno</translation>
+        <translation>Topp: %1 meddelande/dag</translation>
     </message>
     <message>
         <source>Peak: %1 tokens/day</source>
-        <translation>Picco: %1 token/giorno</translation>
+        <translation>Topp: %1 tecken/dag</translation>
     </message>
     <message>
         <source>Prompt tokens</source>
-        <translation>Token di prompt</translation>
+        <translation>Prompttecken</translation>
     </message>
     <message>
         <source>Question categories</source>
-        <translation>Categorie di domande</translation>
+        <translation>Frågekategorier</translation>
     </message>
     <message>
         <source>Records</source>
-        <translation>Record</translation>
+        <translation>Register</translation>
     </message>
     <message>
         <source>Statistics</source>
-        <translation>Statistiche</translation>
+        <translation>Statistik</translation>
     </message>
     <message>
         <source>Storage</source>
-        <translation>Spazio</translation>
+        <translation>Lagring</translation>
     </message>
     <message>
         <source>Today</source>
-        <translation>Oggi</translation>
+        <translation>Idag</translation>
     </message>
     <message>
         <source>Tokens - last 14 days</source>
-        <translation>Token - ultimi 14 giorni</translation>
+        <translation>Tecken - Senaste 14 dagar</translation>
     </message>
     <message>
         <source>Tokens this month</source>
-        <translation>Token questo mese</translation>
+        <translation>Tecken denna månad</translation>
     </message>
     <message>
         <source>Tokens used</source>
-        <translation>Token utilizzati</translation>
+        <translation>Använda tecken</translation>
     </message>
     <message>
         <source>Who writes more?</source>
-        <translation>Chi scrive di più?</translation>
+        <translation>Vem skriver mest?</translation>
     </message>
     <message>
         <source>You: %1 chars</source>
-        <translation>Tu: %1 caratteri</translation>
+        <translation>Du: %1 tecken</translation>
     </message>
     <message>
         <source>%1 abandoned</source>
-        <translation>%1 abbandonate</translation>
+        <translation>%1 övergivet</translation>
     </message>
     <message>
         <source>%1 chars</source>
-        <translation>%1 caratteri</translation>
+        <translation>%1 tecken</translation>
     </message>
     <message>
         <source>%1 model switches</source>
-        <translation>%1 cambi di modello</translation>
+        <translation>%1 modellbyten</translation>
     </message>
     <message>
         <source>Average hour: %1h</source>
-        <translation>Ora media: %1</translation>
+        <translation>Genomsnitt: %1t</translation>
     </message>
     <message>
         <source>Avg: %1min</source>
-        <translation>Media: %1min</translation>
+        <translation>Genomsnitt: %1min</translation>
     </message>
     <message>
         <source>Avg: %1s</source>
-        <translation>Media: %1s</translation>
+        <translation>Genomsnitt: %1s</translation>
     </message>
     <message>
         <source>Badges</source>
-        <translation>Badge</translation>
+        <translation>Brickor</translation>
     </message>
     <message>
         <source>Chaotic</source>
-        <translation>Caotico</translation>
+        <translation>Kaotisk</translation>
     </message>
     <message>
         <source>Concise</source>
-        <translation>Conciso</translation>
+        <translation>Kortfattad</translation>
     </message>
     <message>
         <source>Conversation Ghost</source>
-        <translation>Fantasma delle conversazioni</translation>
+        <translation>Konversationsspöke</translation>
     </message>
     <message>
         <source>Early Bird</source>
-        <translation>Mattiniero</translation>
+        <translation>Morgonpigg</translation>
     </message>
     <message>
         <source>Explorer</source>
-        <translation>Esploratore</translation>
+        <translation>Utforskare</translation>
     </message>
     <message>
         <source>Finisher</source>
-        <translation>Finalizzatore</translation>
+        <translation>Avslutare</translation>
     </message>
     <message>
         <source>Ghost</source>
-        <translation>Fantasma</translation>
+        <translation>Spöke</translation>
     </message>
     <message>
         <source>Longest Message</source>
-        <translation>Messaggio più lungo</translation>
+        <translation>Längsta meddelande</translation>
     </message>
     <message>
         <source>Loyal</source>
-        <translation>Fedele</translation>
+        <translation>Lojal</translation>
     </message>
     <message>
         <source>Model Hopper</source>
-        <translation>Salta-modelli</translation>
+        <translation>Modellhoppare</translation>
     </message>
     <message>
         <source>Night Owl</source>
-        <translation>Gufo notturno</translation>
+        <translation>Nattuggla</translation>
     </message>
     <message>
         <source>Normal</source>
-        <translation>Normale</translation>
+        <translation>Normal</translation>
     </message>
     <message>
         <source>Novelist</source>
-        <translation>Romanziere</translation>
+        <translation>Romanförfattare</translation>
     </message>
     <message>
         <source>Snail</source>
-        <translation>Lumaca</translation>
+        <translation>Snigel</translation>
     </message>
     <message>
         <source>Speed Typist</source>
-        <translation>Dattilografo veloce</translation>
+        <translation>Snabbskrivare</translation>
     </message>
     <message>
         <source>Speedy</source>
-        <translation>Fulmineo</translation>
+        <translation>Snabb</translation>
     </message>
     <message>
         <source>Top words in AI replies</source>
-        <translation>Parole più frequenti dell&apos;IA</translation>
+        <translation>Högst antal ord i AI-svar</translation>
     </message>
     <message>
         <source>Wanderer</source>
-        <translation>Vagabondo</translation>
+        <translation>Vandrare</translation>
     </message>
     <message>
         <source>n/a</source>
-        <translation>n/d</translation>
+        <translation>Ej tillämpligt</translation>
     </message>
     <message>
         <source>Estimated cost</source>
-        <translation>Costo stimato</translation>
+        <translation>Beräknad kostnad</translation>
     </message>
     <message>
         <source>Total</source>
-        <translation>Totale</translation>
+        <translation>Totalt</translation>
     </message>
     <message>
         <source>Estimate based on public list prices, in US dollars. Only usage recorded by this app is counted - check your provider console for the real invoice.</source>
-        <translation>Stima basata sui prezzi di listino pubblici, in dollari USA. Viene conteggiato solo l&apos;uso registrato da questa app - controlla la console del tuo provider per la fattura reale.</translation>
+        <translation>Uppskattning baserad på offentliga listpriser, i US-dollar. Endast användning som registrerats av den här appen räknas – kontrollera leverantörens konsol för den verkliga fakturan.</translation>
     </message>
     <message>
         <source>free</source>
@@ -1293,27 +1293,27 @@
     </message>
     <message>
         <source>Providers and models</source>
-        <translation>Provider e modelli</translation>
+        <translation>Leverantörer och modeller</translation>
     </message>
     <message>
         <source>Most used provider</source>
-        <translation>Provider più usato</translation>
+        <translation>Mest använda leverantör</translation>
     </message>
     <message>
         <source>Most used model</source>
-        <translation>Modello più usato</translation>
+        <translation>Mest använda modell</translation>
     </message>
     <message>
         <source>Answers per provider</source>
-        <translation>Risposte per provider</translation>
+        <translation>Svar per leverantör</translation>
     </message>
     <message>
         <source>Answers per model</source>
-        <translation>Risposte per modello</translation>
+        <translation>Svar per modell</translation>
     </message>
     <message>
         <source>Counted from the answers themselves. Answers received before this app recorded models appear under their provider only.</source>
-        <translation>Conteggiato dalle risposte stesse. Quelle ricevute prima che l&apos;app registrasse i modelli compaiono solo sotto il loro provider.</translation>
+        <translation>Räknat från svaren själva. Svar som togs emot innan appen började registrera modeller visas bara under sin leverantör.</translation>
     </message>
 </context>
 </TS>

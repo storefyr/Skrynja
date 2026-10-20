@@ -1,10 +1,10 @@
-Name:       harbour-sailcat
-Summary:    Client de chat IA pour Sailfish OS
-Version:    2.3.3
+Name:       harbour-skrynja
+Summary:    Client de chat IA pour Sailfish OS avec recherche web
+Version:    0.1.0
 Release:    1
 Group:      Applications/Internet
 License:    MIT
-URL:        https://github.com/nicosouv/harbour-sailcat
+URL:        https://github.com/nicosouv/harbour-skrynja
 Source0:    %{name}-%{version}.tar.bz2
 Requires:   sailfishsilica-qt5 >= 0.10.9
 BuildRequires:  pkgconfig(sailfishapp) >= 1.0.2
@@ -15,14 +15,14 @@ BuildRequires:  pkgconfig(Qt5Network)
 BuildRequires:  desktop-file-utils
 
 %description
-SailCat est un client élégant pour Mistral AI et tout fournisseur compatible
-OpenAI, intégré parfaitement dans l'interface utilisateur de Sailfish OS.
-Profitez de conversations intelligentes directement depuis votre appareil.
+Skrynja est un client élégant pour Mistral AI, basé sur l'API Conversations,
+intégré parfaitement dans l'interface utilisateur de Sailfish OS. Profitez de
+conversations intelligentes avec recherche web directement depuis votre appareil.
 
 Fonctionnalités:
-- Mistral AI, Scaleway, OVHcloud, Groq ou votre propre endpoint
-- Plusieurs de ces fournisseurs offrent un free tier
-- Clé API distincte par fournisseur, stockée brouillée
+- Mistral AI via l'API Conversations (/v1/conversations)
+- Recherche web (web_search) dans les conversations
+- Clé API stockée brouillée
 - Streaming en temps réel des réponses
 - Interface native Sailfish avec composants Silica
 - Historique des conversations

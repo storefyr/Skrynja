@@ -2,7 +2,7 @@
 
 **Status:** done (v1.9.22)
 **Depends on:** 03 (token tracking), 15 (stats UI)
-**Touches:** `src/mistralapi.{h,cpp}`, `src/conversationmanager.{h,cpp}`, `qml/components/CategoryChip.qml` (new), `qml/pages/ChatPage.qml`, `qml/pages/ConversationDetailPage.qml`, `qml/pages/ConversationHistoryPage.qml`, `qml/pages/StatsPage.qml`, `harbour-sailcat.pro`
+**Touches:** `src/mistralapi.{h,cpp}`, `src/conversationmanager.{h,cpp}`, `qml/components/CategoryChip.qml` (new), `qml/pages/ChatPage.qml`, `qml/pages/ConversationDetailPage.qml`, `qml/pages/ConversationHistoryPage.qml`, `qml/pages/StatsPage.qml`, `harbour-skrynja.pro`
 
 ## Rationale
 

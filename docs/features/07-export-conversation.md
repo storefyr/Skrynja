@@ -22,7 +22,7 @@ Q_INVOKABLE QString conversationToMarkdown(const QString &conversationId) const;
 ```markdown
 # <title>
 
-_Exported from SailCat — 2026-07-03 14:30_
+_Exported from Skrynja — 2026-07-03 14:30_
 
 ## User
 
@@ -35,7 +35,7 @@ _Exported from SailCat — 2026-07-03 14:30_
 
 `exportConversation`:
 - Target dir: `QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)` (exists in Qt 5.6).
-- Filename: `sailcat-<sanitized-title>-<yyyyMMdd-HHmmss>.md`. Sanitize: keep `[a-zA-Z0-9-_]`, replace everything else with `-`, collapse repeats, lowercase, truncate to 40 chars.
+- Filename: `skrynja-<sanitized-title>-<yyyyMMdd-HHmmss>.md`. Sanitize: keep `[a-zA-Z0-9-_]`, replace everything else with `-`, collapse repeats, lowercase, truncate to 40 chars.
 - Write with `QFile` + `QTextStream`, `stream.setCodec("UTF-8")` (required on Qt 5.6 — default codec is locale-dependent).
 - Return the absolute path, or empty string on any failure (log with `qWarning()`).
 

@@ -31,7 +31,7 @@ jobs:
           make -j2
 
       - name: Run tests
-        run: cd tests && ./tst_sailcat
+        run: cd tests && ./tst_skrynja
 
   build-check:
     name: "Build Check - ${{ matrix.arch }}"

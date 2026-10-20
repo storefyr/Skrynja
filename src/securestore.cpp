@@ -131,7 +131,7 @@ QString saltFilePath()
 {
     QString dir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     if (dir.isEmpty()) {
-        dir = QDir::homePath() + "/.local/share/harbour-sailcat";
+        dir = QDir::homePath() + "/.local/share/harbour-skrynja";
     }
     return dir + "/.keysalt";
 }
