@@ -18,7 +18,8 @@ Page {
     property string attachedImagePath: ""
     property bool titleRequested: false
     property string lastUsedModel: ""
-    property int trimmedMessages: 0
+    // Server-side tool currently running (e.g. web_search), empty when idle.
+    property string toolName: ""
 
     // Set while a rate-limited request waits its turn again. The answer is
     // still coming, so this is a notice, not an error.
@@ -50,8 +51,7 @@ Page {
     // A model override recorded under another provider would be rejected here,
     // so it is checked against this provider's catalogue.
     readonly property string activeModel:
-        (settingsManager.modelName,
-         settingsManager.resolveModelFor(conversationProvider, requestedModel))
+        settingsManager.resolveModelFor(conversationProvider, requestedModel)
 
     onStatusChanged: {
         if (status === PageStatus.Active) {
@@ -67,7 +67,6 @@ Page {
                 pendingScrollIndex = -1
             }
             chatPage.refreshOverrides()
-            chatPage.refreshTrimIndicator()
             // Looking at it counts as reading it
             conversationManager.markConversationRead(
                         conversationManager.currentConversationId())
@@ -162,8 +161,6 @@ Page {
             messageModel: model.messageModel
             messageProvider: model.provider
 
-            onRegenerateRequested: chatPage.regenerateLastResponse()
-            onEditRequested: chatPage.editMessage(index, model.content)
             onPinToggled: {
                 conversationModel.togglePinned(index)
                 conversationManager.saveCurrentConversation()
@@ -215,22 +212,6 @@ Page {
                 }
                 icon.source: "image://theme/icon-m-clear"
                 onClicked: chatPage.attachedImagePath = ""
-            }
-        }
-
-        // Trimmed context notice
-        Item {
-            width: parent.width
-            height: visible ? trimLabel.height + Theme.paddingSmall : 0
-            visible: chatPage.trimmedMessages > 0
-
-            Label {
-                id: trimLabel
-                anchors.centerIn: parent
-                text: qsTr("Context limited: %n older message(s) not sent", "",
-                           chatPage.trimmedMessages)
-                font.pixelSize: Theme.fontSizeTiny
-                color: Theme.secondaryColor
             }
         }
 
@@ -360,9 +341,18 @@ Page {
                 x: scanLine.x - (width - scanLine.width) / 2
             }
 
+            Label {
+                visible: chatPage.toolName !== ""
+                anchors.centerIn: parent
+                text: chatPage.toolName === "web_search"
+                      ? qsTr("Searching the web…")
+                      : qsTr("Working (%1)…").arg(chatPage.toolName)
+                font.pixelSize: Theme.fontSizeTiny
+                color: Theme.secondaryColor
+            }
             Rectangle {
                 id: scanLine
-                visible: mistralApi.isBusy
+                visible: mistralApi.isBusy && chatPage.toolName === ""
                 width: separatorArea.width / 5
                 height: 2
                 radius: 1
@@ -610,6 +600,14 @@ Page {
             messageListView.positionViewAtEnd()
         }
 
+        // A server-side tool (web_search) started: say so instead of a
+        // generic "typing" while the model is busy elsewhere.
+        onToolActivity: {
+            chatPage.toolName = name
+        }
+        onResponseCompleted: {
+            chatPage.toolName = ""
+        }
         // The provider said "not now": the request goes out again on its own.
         onRateLimited: {
             chatPage.retrySeconds = seconds
@@ -636,7 +634,6 @@ Page {
             firstUse = !providerReady
         }
 
-        onContextMessageLimitChanged: chatPage.refreshTrimIndicator()
     }
 
     Connections {
@@ -674,7 +671,6 @@ Page {
             if (chatPage.autoScroll) {
                 messageListView.positionViewAtEnd()
             }
-            chatPage.refreshTrimIndicator()
 
             // The answer landed under the user's eyes: no unread badge
             if (chatPage.status === PageStatus.Active) {
@@ -702,7 +698,6 @@ Page {
                             conversationManager.currentConversationId())
             chatPage.conversationTokens = stats.totalTokens || 0
             chatPage.refreshOverrides()
-            chatPage.refreshTrimIndicator()
             chatPage.fetchModelsIfNeeded()
             if (chatPage.status === PageStatus.Active) {
                 conversationManager.markConversationRead(
@@ -726,7 +721,6 @@ Page {
                         conversationManager.currentConversationId())
         conversationTokens = stats.totalTokens || 0
         refreshOverrides()
-        refreshTrimIndicator()
         fetchModelsIfNeeded()
 
         // Show first launch dialog after a short delay to let PageStack settle
@@ -806,15 +800,10 @@ Page {
                                                  : settingsManager.systemPrompt
     }
 
-    function refreshTrimIndicator() {
-        trimmedMessages = conversationManager.trimmedMessageCount(
-                    settingsManager.contextMessageLimit)
-    }
-
     function dispatchRequest() {
-        var messages = conversationManager.buildApiMessages(
-                    settingsManager.contextMessageLimit, effectiveSystemPrompt())
-        if (messages.length === 0) {
+        var content = conversationManager.pendingUserContent()
+        if (content.trim().length === 0
+                && conversationManager.pendingUserImagePath() === "") {
             return
         }
 
@@ -823,13 +812,18 @@ Page {
         // Recorded before the call: the token statistics are attributed in C++
         conversationManager.setActiveModel(lastUsedModel)
 
-        mistralApi.sendMessage(settingsManager.apiKeyFor(conversationProvider),
-                               lastUsedModel, messages,
-                               settingsManager.temperature, settingsManager.maxTokens)
-
-        // Reset next message model after sending
-        settingsManager.resetNextMessageModel()
-        refreshTrimIndicator()
+        // The Conversations API is stateful: the first turn creates the remote
+        // conversation (model, system prompt and web search are locked there),
+        // later turns only append the new message.
+        mistralApi.sendMessage(settingsManager.apiKey,
+                               lastUsedModel,
+                               effectiveSystemPrompt(),
+                               content,
+                               conversationManager.pendingUserImagePath(),
+                               settingsManager.webSearch,
+                               conversationManager.remoteConversationId(),
+                               settingsManager.temperature,
+                               settingsManager.maxTokens)
     }
 
     function sendMessage() {
@@ -863,16 +857,6 @@ Page {
         dispatchRequest()
     }
 
-    function editMessage(index, content) {
-        if (mistralApi.isBusy) return
-
-        conversationModel.truncateFrom(index)
-        // Save immediately so a close before resending does not restore the removed tail
-        conversationManager.saveCurrentConversation()
-        messageInput.text = content
-        messageInput.focus = true
-        refreshTrimIndicator()
-    }
 
     function insertPrompt(text) {
         if (!text) return
@@ -917,12 +901,6 @@ Page {
         exportNotification.publish()
     }
 
-    function regenerateLastResponse() {
-        if (mistralApi.isBusy) return
-
-        conversationModel.removeLastAssistantMessage()
-        dispatchRequest()
-    }
 
     ModelSelector {
         id: modelSelector

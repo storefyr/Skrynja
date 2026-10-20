@@ -107,6 +107,21 @@ void ConversationManager::bindApi(MistralAPI *api)
             this, &ConversationManager::onUsageReceived);
     connect(api, &MistralAPI::sideRequestUsage,
             this, &ConversationManager::onSideRequestUsage);
+    connect(api, &MistralAPI::conversationCreated,
+            this, &ConversationManager::onConversationCreated);
+}
+
+// The remote conversation was created: persist its id on the conversation
+// that is being answered, so later turns append instead of creating again.
+void ConversationManager::onConversationCreated(const QString &remoteId)
+{
+    Conversation *conv = findConversation(m_streamingConversationId);
+    if (!conv || conv->remoteConversationId == remoteId) {
+        return;
+    }
+    conv->remoteConversationId = remoteId;
+    markDirty(conv->id);
+    saveDirtyConversations();
 }
 
 void ConversationManager::setActiveModel(const QString &model)
@@ -296,6 +311,11 @@ QJsonObject ConversationManager::conversationToJson(const Conversation &conv) co
     obj["provider"] = conv.provider;
     obj["model"] = conv.model;
     obj["systemPrompt"] = conv.systemPrompt;
+    // Empty for conversations that predate the Conversations API: the next
+    // turn creates the remote conversation.
+    if (!conv.remoteConversationId.isEmpty()) {
+        obj["remoteConversationId"] = conv.remoteConversationId;
+    }
     obj["unread"] = conv.unread;
     obj["createdAt"] = conv.createdAt;
     obj["updatedAt"] = conv.updatedAt;
@@ -330,6 +350,9 @@ Conversation ConversationManager::conversationFromJson(const QJsonObject &obj)
     }
     conv.model = obj["model"].toString();
     conv.systemPrompt = obj["systemPrompt"].toString();
+    // Absent in files written before the Conversations API: empty means the
+    // remote conversation does not exist yet (D8: start fresh, no replay).
+    conv.remoteConversationId = obj["remoteConversationId"].toString();
     conv.unread = obj["unread"].toBool();
     conv.createdAt = obj["createdAt"].toVariant().toLongLong();
     conv.updatedAt = obj["updatedAt"].toVariant().toLongLong();
@@ -702,100 +725,22 @@ QString ConversationManager::currentConversationId() const
     return m_currentConversationId;
 }
 
-// ---------------------------------------------------------------- API payload
+// ---------------------------------------------------------------- API turn
 
-QVariantList ConversationManager::buildApiMessages(int contextLimit,
-                                                   const QString &systemPrompt) const
+QString ConversationManager::remoteConversationId() const
 {
-    const QList<Message> &all = m_currentConversation->messages();
-
-    // The pending assistant bubble is a UI placeholder; an empty content field
-    // is rejected by the API, so it never belongs in the payload.
-    int end = all.count();
-    while (end > 0 && all.at(end - 1).role == "assistant"
-           && all.at(end - 1).content.isEmpty()) {
-        end--;
-    }
-
-    int start = 0;
-    if (contextLimit > 0 && end > contextLimit) {
-        start = end - contextLimit;
-        // A history that opens on an assistant turn confuses the model.
-        while (start < end && all.at(start).role != "user") {
-            start++;
-        }
-    }
-
-    QVariantList messages;
-
-    if (!systemPrompt.trimmed().isEmpty()) {
-        QVariantMap systemMsg;
-        systemMsg["role"] = "system";
-        systemMsg["content"] = systemPrompt.trimmed();
-        messages.append(systemMsg);
-    }
-
-    for (int i = start; i < end; ++i) {
-        const Message &msg = all.at(i);
-
-        QVariantMap msgMap;
-        msgMap["role"] = msg.role;
-
-        // An attached image stays in the payload for every later turn,
-        // otherwise a follow-up question about the picture has no picture.
-        if (!msg.imagePath.isEmpty()) {
-            const QString dataUrl = imageToDataUrl(msg.imagePath);
-            if (!dataUrl.isEmpty()) {
-                QVariantList parts;
-
-                if (!msg.content.isEmpty()) {
-                    QVariantMap textPart;
-                    textPart["type"] = "text";
-                    textPart["text"] = msg.content;
-                    parts.append(textPart);
-                }
-
-                QVariantMap imagePart;
-                imagePart["type"] = "image_url";
-                imagePart["image_url"] = dataUrl;
-                parts.append(imagePart);
-
-                msgMap["content"] = parts;
-                messages.append(msgMap);
-                continue;
-            }
-        }
-
-        msgMap["content"] = msg.content;
-        messages.append(msgMap);
-    }
-
-    return messages;
+    const Conversation *conv = findConversation(m_currentConversationId);
+    return conv ? conv->remoteConversationId : QString();
 }
 
-int ConversationManager::trimmedMessageCount(int contextLimit) const
+QString ConversationManager::pendingUserContent() const
 {
-    if (contextLimit <= 0) {
-        return 0;
-    }
+    return m_currentConversation->getLastUserMessage();
+}
 
-    const QList<Message> &all = m_currentConversation->messages();
-
-    int end = all.count();
-    while (end > 0 && all.at(end - 1).role == "assistant"
-           && all.at(end - 1).content.isEmpty()) {
-        end--;
-    }
-
-    if (end <= contextLimit) {
-        return 0;
-    }
-
-    int start = end - contextLimit;
-    while (start < end && all.at(start).role != "user") {
-        start++;
-    }
-    return start;
+QString ConversationManager::pendingUserImagePath() const
+{
+    return m_currentConversation->getLastUserImagePath();
 }
 
 // ---------------------------------------------------------------- overrides
@@ -1181,37 +1126,6 @@ QString ConversationManager::retainImage(const QString &filePath) const
     return target;
 }
 
-QString ConversationManager::imageToDataUrl(const QString &filePath) const
-{
-    QString localPath = filePath;
-    if (localPath.startsWith("file:")) {
-        localPath = QUrl(localPath).toLocalFile();
-    }
-
-    QImage img(localPath);
-    if (img.isNull()) {
-        qWarning() << "Cannot load image:" << localPath;
-        return QString();
-    }
-
-    // Downscale before encoding: keeps the request body small and the API happy
-    if (img.width() > MAX_IMAGE_DIMENSION || img.height() > MAX_IMAGE_DIMENSION) {
-        img = img.scaled(MAX_IMAGE_DIMENSION, MAX_IMAGE_DIMENSION,
-                         Qt::KeepAspectRatio, Qt::SmoothTransformation);
-    }
-
-    QByteArray bytes;
-    QBuffer buffer(&bytes);
-    buffer.open(QIODevice::WriteOnly);
-    img.save(&buffer, "JPEG", JPEG_QUALITY);
-    buffer.close();
-
-    if (bytes.isEmpty()) {
-        return QString();
-    }
-
-    return QString("data:image/jpeg;base64,") + QString::fromLatin1(bytes.toBase64());
-}
 
 // ---------------------------------------------------------------- statistics
 

@@ -32,8 +32,7 @@ Dialog {
                                       temperatureSlider.value : -1.0
         settingsManager.maxTokens = limitTokensSwitch.checked ?
                                     Math.round(maxTokensSlider.value) : 0
-        settingsManager.contextMessageLimit = limitContextSwitch.checked ?
-                                              Math.round(contextSlider.value) : 0
+        settingsManager.webSearch = webSearchSwitch.checked
 
         if (chatStyleComboBox.currentItem) {
             settingsManager.chatStyle = chatStyleComboBox.currentItem.styleValue
@@ -475,24 +474,11 @@ Dialog {
             }
 
             TextSwitch {
-                id: limitContextSwitch
-                text: qsTr("Limit conversation context")
-                description: qsTr("Send only the most recent messages. Keeps long conversations cheap and avoids hitting the model context limit.")
-                checked: settingsManager.contextMessageLimit > 0
+                id: webSearchSwitch
+                text: qsTr("Web search")
+                description: qsTr("Let the model search the web while answering. Applied when a conversation is created and cannot be changed afterwards.")
+                checked: settingsManager.webSearch
             }
-
-            Slider {
-                id: contextSlider
-                width: parent.width
-                visible: limitContextSwitch.checked
-                minimumValue: 4
-                maximumValue: 60
-                stepSize: 2
-                value: settingsManager.contextMessageLimit > 0 ? settingsManager.contextMessageLimit : 20
-                valueText: qsTr("%n message(s)", "", Math.round(value))
-                label: qsTr("Messages kept")
-            }
-
             ComboBox {
                 id: autoTitleComboBox
                 label: qsTr("Automatic titles")
@@ -541,7 +527,7 @@ Dialog {
             ComboBox {
                 id: systemPromptComboBox
                 label: qsTr("Persona")
-                description: qsTr("Instruction sent before every conversation")
+                description: qsTr("Instruction sent when a conversation is created")
                 width: parent.width
 
                 // Preset prompts are sent to the API: keep them in English, untranslated

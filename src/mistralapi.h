@@ -15,9 +15,12 @@
 
 #include "providers.h"
 
-// Talks the OpenAI chat-completions dialect, which every supported backend
-// speaks: only the endpoint and a few quirks come from the provider, through
-// setEndpoint(). The class keeps its name because the app started Mistral-only.
+// Talks to Mistral's Conversations API (/v1/conversations), the only Mistral
+// API that offers the web_search tool. The API is stateful: the first message
+// of a conversation creates it (POST /v1/conversations#stream) and carries
+// the model, the system prompt (instructions) and the tools; later messages
+// only append (POST /v1/conversations/{id}#stream). The class keeps its name
+// because the app started Mistral-only.
 class MistralAPI : public QObject
 {
     Q_OBJECT
@@ -30,21 +33,22 @@ public:
     bool isBusy() const;
     QString error() const;
 
-    // Points every request at a provider. Called once at startup and again on
-    // every provider change, from C++, so no caller can forget to.
-    void setEndpoint(const QString &providerId,
-                     const QString &baseUrl,
-                     Providers::ModelSource modelSource,
-                     bool streamUsageOption,
-                     bool keyRequired);
-
+    // Sends one user turn. An empty remoteConversationId creates the remote
+    // conversation; a set one appends to it. imagePath, when not empty, is
+    // inlined as a base64 image chunk. temperature < 0 and maxTokens <= 0 are
+    // omitted so the API applies its own defaults.
     Q_INVOKABLE void sendMessage(const QString &apiKey,
-                                   const QString &modelName,
-                                   const QVariant &messages,
-                                   double temperature = -1.0,
-                                   int maxTokens = 0);
+                                 const QString &modelName,
+                                 const QString &systemPrompt,
+                                 const QString &userContent,
+                                 const QString &imagePath,
+                                 bool webSearch,
+                                 const QString &remoteConversationId,
+                                 double temperature = -1.0,
+                                 int maxTokens = 0);
     // targetId is echoed back with the result so a caller can tell which
-    // conversation the title belongs to.
+    // conversation the title belongs to. Runs on the Conversations API with
+    // store=false: nothing is persisted server-side.
     Q_INVOKABLE void generateTitle(const QString &apiKey,
                                      const QString &modelName,
                                      const QString &conversationText,
@@ -62,7 +66,15 @@ signals:
     // part of the conversation the token banner reports on.
     void sideRequestUsage(int promptTokens, int completionTokens);
     void responseCompleted();
+    // Emitted when the remote answer ended without a done event (cancel,
+    // error): a partial answer may already be on screen.
+    void responseIncomplete();
     void messageSent();
+    // Carries the conversation_id returned when a remote conversation is
+    // created, so the caller can persist it and append later.
+    void conversationCreated(const QString &conversationId);
+    // A server-side tool (web_search) started: the UI can show activity.
+    void toolActivity(const QString &toolName);
     void titleGenerated(const QString &title, const QString &category,
                         const QString &targetId);
     void titleGenerationFailed(const QString &targetId);
@@ -80,11 +92,13 @@ private slots:
     void onError(QNetworkReply::NetworkError error);
     void onTitleGenerationFinished();
     void onModelsFetchFinished();
+    void onReconcileFinished();
     void onTimeout();
     void sendPendingChatRequest();
 
 private:
     friend class TestMistralAPI;
+    friend class TestConversationManager;
 
     QNetworkAccessManager *m_networkManager;
     QNetworkReply *m_currentReply;
@@ -97,28 +111,46 @@ private:
     bool m_timedOut;
     QString m_error;
     QByteArray m_streamBuffer;
-    QString m_providerId;
+    // Name of the SSE event currently being assembled ("event: <name>").
+    QString m_currentEvent;
     QString m_baseUrl;
-    Providers::ModelSource m_modelSource;
-    bool m_streamUsageOption;
     bool m_keyRequired;
     int m_minRequestIntervalMs;
     int m_retryCount;
     // Content already reached the screen: resending would duplicate it.
     bool m_streamStarted;
+    // Set when a conversation.response.done event arrived: the answer is
+    // complete, as opposed to cancelled or cut off.
+    bool m_streamDone;
     // The chat request as sent, kept in memory only, so a rate-limited call
     // can go out again without the UI having to know it ever failed.
     QString m_pendingApiKey;
     QByteArray m_pendingBody;
+    // Empty for a create, set for an append: append is not idempotent, so a
+    // retry after an ambiguous failure must first reconcile (GET messages).
+    QString m_pendingRemoteId;
+    // The user turn as sent, for the reconcile comparison.
+    QString m_pendingUserContent;
+    // Last conversation_id seen on the wire, used to build the reconcile URL.
+    QString m_remoteConversationId;
+    // A reconcile GET is in flight: the chat reply is parked meanwhile.
+    bool m_reconciling;
+    QNetworkReply *m_reconcileReply;
 
     void setIsBusy(bool busy);
     void setError(const QString &error);
-    // Endpoint URL, or an invalid one when no base URL is configured.
+    // Endpoint URL, or an invalid one when no base URL is configured. The
+    // path may contain %23: "#stream" is a URL fragment, and QNetworkAccessManager
+    // would strip a literal '#' before sending, so it must stay encoded.
     QUrl endpoint(const QString &path) const;
     // Content type, bearer token when there is one, TLS pinning.
     void prepareRequest(QNetworkRequest &request, const QString &apiKey) const;
     void processStreamData(const QByteArray &data);
-    void parseStreamLine(const QString &line);
+    // One SSE line: tracks the event name, or parses a data payload.
+    void handleSseLine(const QString &line);
+    // One typed event: conversation.created, message.output.delta,
+    // conversation.response.done, tool.execution.*, error.
+    void parseStreamLine(const QString &event, const QString &jsonData);
     // True while the same request is still worth sending again.
     bool shouldRetry(int httpStatus) const;
     // Milliseconds to wait before a request may leave, 0 when the gate is open.
@@ -127,6 +159,23 @@ private:
     // Sends the stored chat request, after extraDelayMs and the throttle.
     void queueChatRequest(int extraDelayMs);
     void forgetPendingRequest();
+    // Builds the create/append request body and the URL path for a turn.
+    QByteArray buildTurnBody(const QString &modelName,
+                             const QString &systemPrompt,
+                             const QString &userContent,
+                             const QString &imagePath,
+                             bool webSearch,
+                             bool isCreate,
+                             double temperature,
+                             int maxTokens) const;
+    QString turnPath(const QString &remoteConversationId) const;
+    // Starts the reconcile GET before an append is retried.
+    void startReconcile();
+    // True when the remote history already contains the pending user turn.
+    static bool remoteHasUserMessage(const QJsonObject &messagesResponse,
+                                     const QString &userContent);
+    // Extracts the assistant text from a non-streaming outputs array.
+    static QString outputsToText(const QJsonArray &outputs);
 };
 
 #endif // MISTRALAPI_H

@@ -16,9 +16,13 @@ struct Conversation {
     QString id;
     QString title;
     QString category;
-    QString provider;       // provider this conversation talks to, never empty
-    QString model;          // per-conversation model override, empty = global
+    QString provider;       // always "mistral" (kept for the stored format)
+    QString model;          // model this conversation was created with
     QString systemPrompt;   // per-conversation system prompt, empty = global
+    // Remote conversation id from Mistral's Conversations API. Empty until
+    // the first turn has been answered server-side; migration (D8) means old
+    // conversations start fresh remotely.
+    QString remoteConversationId;
     bool unread = false;    // an answer landed while the user was elsewhere
     qint64 createdAt;
     qint64 updatedAt;
@@ -82,7 +86,6 @@ public:
     // Condensed transcript handed to the model when asking for a title.
     Q_INVOKABLE QString conversationDigest(const QString &conversationId) const;
     Q_INVOKABLE QString exportConversation(const QString &conversationId) const;
-    Q_INVOKABLE QString imageToDataUrl(const QString &filePath) const;
 
     // Per-conversation overrides. An empty value means "use the global setting".
     Q_INVOKABLE QVariantMap getConversationOverrides(const QString &conversationId) const;
@@ -95,13 +98,15 @@ public:
                                              const QString &providerId);
     Q_INVOKABLE QString conversationProvider(const QString &conversationId) const;
 
-    // Full request payload for the current conversation: history trimmed to
-    // contextLimit messages, attached images expanded into multimodal parts,
-    // system prompt prepended. contextLimit <= 0 keeps everything.
-    Q_INVOKABLE QVariantList buildApiMessages(int contextLimit,
-                                              const QString &systemPrompt) const;
-    // How many messages buildApiMessages would leave out.
-    Q_INVOKABLE int trimmedMessageCount(int contextLimit) const;
+    // The remote conversation id of the current conversation, empty when the
+    // remote conversation has not been created yet. Pass it to
+    // MistralAPI::sendMessage: empty creates, set appends.
+    Q_INVOKABLE QString remoteConversationId() const;
+    // The text of the last user message in the current conversation, for the
+    // caller to send as the new turn.
+    Q_INVOKABLE QString pendingUserContent() const;
+    // The local path of the image attached to the last user message, if any.
+    Q_INVOKABLE QString pendingUserImagePath() const;
 
     // Re-run the local classifier over every conversation still labelled
     // "other" or unlabelled. Returns the number of conversations relabelled.
@@ -140,6 +145,7 @@ private slots:
     void onResponseCompleted();
     void onUsageReceived(int promptTokens, int completionTokens);
     void onSideRequestUsage(int promptTokens, int completionTokens);
+    void onConversationCreated(const QString &remoteId);
     void flushStream();
     void finishBackgroundResponse();
 

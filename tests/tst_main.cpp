@@ -7,6 +7,10 @@
 #include <QStandardPaths>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QJsonDocument>
+#include <QUrl>
+#include <QImage>
+#include <QImageWriter>
 
 #include "categories.h"
 #include "conversationmodel.h"
@@ -139,14 +143,91 @@ class TestMistralAPI : public QObject
     Q_OBJECT
 
 private slots:
+    // The Conversations API streams typed events: "event: <name>" names the
+    // next "data:" payload. A string content lands on screen as a delta.
     void streamingDelta()
     {
         MistralAPI api;
         QSignalSpy spy(&api, SIGNAL(streamingResponse(QString)));
 
-        api.processStreamData("data: {\"choices\":[{\"delta\":{\"content\":\"Hello\"}}]}\n");
+        api.processStreamData("event: message.output.delta\n"
+                              "data: {\"content\":\"Hello\"}\n");
         QCOMPARE(spy.count(), 1);
         QCOMPARE(spy.at(0).at(0).toString(), QString("Hello"));
+    }
+
+    // Reasoning models send content as a chunk list: only text chunks are
+    // shown, thinking chunks are dropped.
+    void reasoningChunksKeepOnlyText()
+    {
+        MistralAPI api;
+        QSignalSpy spy(&api, SIGNAL(streamingResponse(QString)));
+
+        api.processStreamData("event: message.output.delta\n"
+                              "data: {\"content\":[{\"type\":\"thinking\",\"thinking\":\"hmm\"},"
+                              "{\"type\":\"text\",\"text\":\"answer\"}]}\n");
+        QCOMPARE(spy.count(), 1);
+        QCOMPARE(spy.at(0).at(0).toString(), QString("answer"));
+    }
+
+    // The done event carries usage and marks the stream complete.
+    void doneEventReportsUsage()
+    {
+        MistralAPI api;
+        QSignalSpy contentSpy(&api, SIGNAL(streamingResponse(QString)));
+        QSignalSpy usageSpy(&api, SIGNAL(usageReceived(int,int)));
+
+        api.processStreamData("event: conversation.response.done\n"
+                              "data: {\"usage\":{\"prompt_tokens\":25,\"completion_tokens\":89}}\n");
+        QCOMPARE(contentSpy.count(), 0);
+        QCOMPARE(usageSpy.count(), 1);
+        QCOMPARE(usageSpy.at(0).at(0).toInt(), 25);
+        QCOMPARE(usageSpy.at(0).at(1).toInt(), 89);
+        QVERIFY(api.m_streamDone);
+    }
+
+    // There is no [DONE] marker on this API: a stray one is ignored.
+    void doneMarkerIgnored()
+    {
+        MistralAPI api;
+        QSignalSpy spy(&api, SIGNAL(streamingResponse(QString)));
+        api.processStreamData("data: [DONE]\n");
+        QCOMPARE(spy.count(), 0);
+        QVERIFY(!api.m_streamDone);
+    }
+
+    // Creating a conversation reports its id so the caller can persist it.
+    void conversationCreatedEmitsId()
+    {
+        MistralAPI api;
+        QSignalSpy spy(&api, SIGNAL(conversationCreated(QString)));
+
+        api.processStreamData("event: conversation.created\n"
+                              "data: {\"conversation_id\":\"abc-123\"}\n");
+        QCOMPARE(spy.count(), 1);
+        QCOMPARE(spy.at(0).at(0).toString(), QString("abc-123"));
+        QCOMPARE(api.m_remoteConversationId, QString("abc-123"));
+    }
+
+    // A server-side tool starting is surfaced so the UI can show activity.
+    void toolExecutionAnnouncesName()
+    {
+        MistralAPI api;
+        QSignalSpy spy(&api, SIGNAL(toolActivity(QString)));
+
+        api.processStreamData("event: tool.execution.started\n"
+                              "data: {\"name\":\"web_search\"}\n");
+        QCOMPARE(spy.count(), 1);
+        QCOMPARE(spy.at(0).at(0).toString(), QString("web_search"));
+    }
+
+    // A stream event carrying an error message sets the error text.
+    void errorEventSetsError()
+    {
+        MistralAPI api;
+        api.processStreamData("event: error\n"
+                              "data: {\"message\":\"model overloaded\"}\n");
+        QVERIFY(api.error().contains(QString("model overloaded")));
     }
 
     void utf8SplitAcrossChunks()
@@ -154,7 +235,9 @@ private slots:
         MistralAPI api;
         QSignalSpy spy(&api, SIGNAL(streamingResponse(QString)));
 
-        QByteArray line = QString::fromUtf8("data: {\"choices\":[{\"delta\":{\"content\":\"caf\xC3\xA9\"}}]}\n").toUtf8();
+        QByteArray line = QString::fromUtf8(
+                    "event: message.output.delta\n"
+                    "data: {\"content\":\"caf\xC3\xA9\"}\n").toUtf8();
         // Split in the middle of the two-byte e-acute sequence
         int cut = line.indexOf("\xC3") + 1;
         api.processStreamData(line.left(cut));
@@ -162,28 +245,6 @@ private slots:
         api.processStreamData(line.mid(cut));
         QCOMPARE(spy.count(), 1);
         QCOMPARE(spy.at(0).at(0).toString(), QString::fromUtf8("caf\xC3\xA9"));
-    }
-
-    void doneMarkerIgnored()
-    {
-        MistralAPI api;
-        QSignalSpy spy(&api, SIGNAL(streamingResponse(QString)));
-        api.processStreamData("data: [DONE]\n");
-        QCOMPARE(spy.count(), 0);
-    }
-
-    void usageChunk()
-    {
-        MistralAPI api;
-        QSignalSpy contentSpy(&api, SIGNAL(streamingResponse(QString)));
-        QSignalSpy usageSpy(&api, SIGNAL(usageReceived(int,int)));
-
-        api.processStreamData("data: {\"choices\":[{\"delta\":{},\"finish_reason\":\"stop\"}],"
-                              "\"usage\":{\"prompt_tokens\":25,\"completion_tokens\":89,\"total_tokens\":114}}\n");
-        QCOMPARE(contentSpy.count(), 0);
-        QCOMPARE(usageSpy.count(), 1);
-        QCOMPARE(usageSpy.at(0).at(0).toInt(), 25);
-        QCOMPARE(usageSpy.at(0).at(1).toInt(), 89);
     }
 
     void malformedLinesIgnored()
@@ -194,7 +255,194 @@ private slots:
         api.processStreamData("data: {broken json\n");
         api.processStreamData(": comment\n");
         api.processStreamData("\n\n");
+        // A data line without an event name is not a delta
+        api.processStreamData("data: {\"content\":\"x\"}\n");
         QCOMPARE(spy.count(), 0);
+    }
+
+    void multipleLinesOneChunk()
+    {
+        MistralAPI api;
+        QSignalSpy spy(&api, SIGNAL(streamingResponse(QString)));
+        api.processStreamData("event: message.output.delta\n"
+                              "data: {\"content\":\"a\"}\n"
+                              "event: message.output.delta\n"
+                              "data: {\"content\":\"b\"}\n"
+                              "event: conversation.response.done\n"
+                              "data: {\"usage\":{}}\n");
+        QCOMPARE(spy.count(), 2);
+        QCOMPARE(spy.at(0).at(0).toString(), QString("a"));
+        QCOMPARE(spy.at(1).at(0).toString(), QString("b"));
+        QVERIFY(api.m_streamDone);
+    }
+
+    // "#stream" is a URL fragment: QUrl would strip a literal '#', so the
+    // path must stay percent-encoded.
+    void turnPathEncodesStreamFragment()
+    {
+        MistralAPI api;
+        QCOMPARE(api.turnPath(QString()), QString("/conversations%23stream"));
+        QCOMPARE(api.turnPath("abc-123"), QString("/conversations/abc-123%23stream"));
+
+        const QUrl url = api.endpoint(api.turnPath("abc-123"));
+        QVERIFY(url.isValid());
+        QCOMPARE(url.path(), QString("/v1/conversations/abc-123#stream"));
+        QVERIFY(!url.hasFragment() || url.fragment() == "stream");
+        // The encoded form survives a round trip through the wire format
+        QVERIFY(url.toEncoded().contains("%23stream"));
+    }
+
+    // Create carries model, instructions and tools; append carries only the
+    // new turn plus completion args.
+    void buildTurnBodyCreateVsAppend()
+    {
+        MistralAPI api;
+
+        const QJsonDocument createDoc = QJsonDocument::fromJson(api.buildTurnBody(
+                    "mistral-large-latest", "  be brief  ", "hello", QString(),
+                    true, true, 0.7, 512));
+        const QJsonObject create = createDoc.object();
+        QCOMPARE(create["model"].toString(), QString("mistral-large-latest"));
+        QCOMPARE(create["instructions"].toString(), QString("be brief"));
+        QCOMPARE(create["tools"].toArray().count(), 1);
+        QCOMPARE(create["tools"].toArray().at(0).toObject()["type"].toString(),
+                 QString("web_search"));
+        QCOMPARE(create["completion_args"].toObject()["temperature"].toDouble(), 0.7);
+        QCOMPARE(create["completion_args"].toObject()["max_tokens"].toInt(), 512);
+
+        const QJsonObject input = create["inputs"].toArray().at(0).toObject();
+        QCOMPARE(input["object"].toString(), QString("entry"));
+        QCOMPARE(input["type"].toString(), QString("message.input"));
+        QCOMPARE(input["role"].toString(), QString("user"));
+        QCOMPARE(input["content"].toString(), QString("hello"));
+
+        // Append: no model, no instructions, no tools.
+        const QJsonDocument appendDoc = QJsonDocument::fromJson(api.buildTurnBody(
+                    "mistral-large-latest", "be brief", "second turn", QString(),
+                    true, false, -1.0, 0));
+        const QJsonObject append = appendDoc.object();
+        QVERIFY(!append.contains("model"));
+        QVERIFY(!append.contains("instructions"));
+        QVERIFY(!append.contains("tools"));
+        QVERIFY(!append.contains("completion_args"));  // defaults omitted
+        QCOMPARE(append["inputs"].toArray().at(0).toObject()["content"].toString(),
+                 QString("second turn"));
+
+        // Without web search the create body has no tools array
+        const QJsonDocument noToolsDoc = QJsonDocument::fromJson(api.buildTurnBody(
+                    "m", QString(), "hi", QString(), false, true, -1.0, 0));
+        QVERIFY(!noToolsDoc.object().contains("tools"));
+        QVERIFY(!noToolsDoc.object().contains("instructions"));
+    }
+
+    // An image turn sends content as a chunk list with a data URL. Skipped
+    // when the test host has no JPEG image plugin (the Sailfish SDK ships
+    // one; a minimal desktop Qt may not).
+    void buildTurnBodyWithImage()
+    {
+        if (!QImageWriter::supportedImageFormats().contains("jpeg")) {
+            QSKIP("No JPEG image plugin on this host");
+        }
+
+        MistralAPI api;
+
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        const QString imagePath = dir.filePath("pic.png");
+        QImage img(4, 4, QImage::Format_RGB32);
+        img.fill(Qt::red);
+        QVERIFY(img.save(imagePath));
+
+        const QJsonDocument doc = QJsonDocument::fromJson(api.buildTurnBody(
+                    "pixtral-large-latest", QString(), "what is this?",
+                    imagePath, false, true, -1.0, 0));
+        const QJsonObject input = doc.object()["inputs"].toArray().at(0).toObject();
+        const QJsonArray chunks = input["content"].toArray();
+        QCOMPARE(chunks.count(), 2);
+        QCOMPARE(chunks.at(0).toObject()["type"].toString(), QString("text"));
+        QCOMPARE(chunks.at(0).toObject()["text"].toString(), QString("what is this?"));
+        QCOMPARE(chunks.at(1).toObject()["type"].toString(), QString("image_url"));
+        QVERIFY(chunks.at(1).toObject()["image_url"].toString()
+                .startsWith(QString("data:image/jpeg;base64,")));
+    }
+
+    // Without a readable image the turn degrades to plain text instead of
+    // failing: the user still gets an answer.
+    void buildTurnBodyWithBrokenImageFallsBackToText()
+    {
+        MistralAPI api;
+
+        const QJsonDocument doc = QJsonDocument::fromJson(api.buildTurnBody(
+                    "m", QString(), "what is this?",
+                    "/nonexistent/image.jpg", false, true, -1.0, 0));
+        const QJsonObject input = doc.object()["inputs"].toArray().at(0).toObject();
+        QCOMPARE(input["content"].toString(), QString("what is this?"));
+    }
+
+    // The reconcile check: does the remote history already contain the turn?
+    void remoteHasUserMessageDetectsTurn()
+    {
+        QJsonObject response;
+        QJsonArray messages;
+
+        QJsonObject userMsg;
+        userMsg["role"] = "user";
+        userMsg["content"] = "  what is the weather?  ";
+        messages.append(userMsg);
+
+        QJsonObject assistantMsg;
+        assistantMsg["role"] = "assistant";
+        assistantMsg["content"] = "sunny";
+        messages.append(assistantMsg);
+
+        // An image turn: content is a chunk list, the text chunk must match
+        QJsonObject imageMsg;
+        imageMsg["role"] = "user";
+        QJsonArray chunks;
+        QJsonObject textChunk;
+        textChunk["type"] = "text";
+        textChunk["text"] = "describe this";
+        chunks.append(textChunk);
+        QJsonObject imageChunk;
+        imageChunk["type"] = "image_url";
+        imageChunk["image_url"] = "data:image/jpeg;base64,AAAA";
+        chunks.append(imageChunk);
+        imageMsg["content"] = chunks;
+        messages.append(imageMsg);
+
+        response["messages"] = messages;
+
+        QVERIFY(MistralAPI::remoteHasUserMessage(response, "what is the weather?"));
+        QVERIFY(MistralAPI::remoteHasUserMessage(response, "describe this"));
+        QVERIFY(!MistralAPI::remoteHasUserMessage(response, "not sent yet"));
+        QVERIFY(!MistralAPI::remoteHasUserMessage(response, QString()));
+    }
+
+    // The title answer is read from the non-streaming outputs array.
+    void outputsToTextConcatenates()
+    {
+        QJsonArray outputs;
+
+        QJsonObject plain;
+        plain["content"] = "plain answer";
+        outputs.append(plain);
+
+        QJsonObject reasoned;
+        QJsonArray chunks;
+        QJsonObject thinking;
+        thinking["type"] = "thinking";
+        thinking["thinking"] = "let me think";
+        chunks.append(thinking);
+        QJsonObject text;
+        text["type"] = "text";
+        text["text"] = "real answer";
+        chunks.append(text);
+        reasoned["content"] = chunks;
+        outputs.append(reasoned);
+
+        QCOMPARE(MistralAPI::outputsToText(outputs),
+                 QString("plain answerreal answer"));
+        QCOMPARE(MistralAPI::outputsToText(QJsonArray()), QString());
     }
 
     // A free tier turns requests away routinely; the policy that decides
@@ -206,6 +454,7 @@ private slots:
 
         QVERIFY(api.shouldRetry(429));
         QVERIFY(api.shouldRetry(503));
+        QVERIFY(api.shouldRetry(529));
         QVERIFY(!api.shouldRetry(200));
         QVERIFY(!api.shouldRetry(401));  // a bad key stays bad
 
@@ -221,9 +470,15 @@ private slots:
         api.m_streamStarted = false;
         api.m_retryCount = 3;
         QVERIFY(!api.shouldRetry(429));
+
+        // A timed-out request is not retried either: the fate of the turn on
+        // the server is unknown, and the reconcile path handles appends.
+        api.m_retryCount = 0;
+        api.m_timedOut = true;
+        QVERIFY(!api.shouldRetry(429));
     }
 
-    void spacesRequestsOutPerProvider()
+    void spacesRequestsOut()
     {
         MistralAPI api;
 
@@ -232,24 +487,6 @@ private slots:
 
         api.noteRequestSent();
         QVERIFY(api.throttleDelayMs() > 0);
-
-        // A custom endpoint is the user's own machine as often as not.
-        api.setEndpoint("custom", "http://192.168.0.2:8080/v1",
-                        Providers::OpenAiCatalogue, false, false);
-        api.noteRequestSent();
-        QCOMPARE(api.throttleDelayMs(), 0);
-    }
-
-    void multipleLinesOneChunk()
-    {
-        MistralAPI api;
-        QSignalSpy spy(&api, SIGNAL(streamingResponse(QString)));
-        api.processStreamData("data: {\"choices\":[{\"delta\":{\"content\":\"a\"}}]}\n"
-                              "data: {\"choices\":[{\"delta\":{\"content\":\"b\"}}]}\n"
-                              "data: [DONE]\n");
-        QCOMPARE(spy.count(), 2);
-        QCOMPARE(spy.at(0).at(0).toString(), QString("a"));
-        QCOMPARE(spy.at(1).at(0).toString(), QString("b"));
     }
 };
 
@@ -640,60 +877,51 @@ private slots:
         QCOMPARE(manager.recategorizeConversations(), 0);
     }
 
-    void buildApiMessagesDropsPendingBubble()
+    // The remote conversation id is persisted with the conversation and
+    // survives a reload: it is what tells sendMessage to append rather than
+    // create again.
+    void remoteConversationIdRoundTrip()
     {
         ConversationManager manager;
         manager.purgeAllConversations();
 
-        manager.currentConversation()->addUserMessage("question");
+        // Not created yet: empty, so the first turn creates the remote one
+        QCOMPARE(manager.remoteConversationId(), QString());
+
+        const QString localId = manager.currentConversationId();
+        manager.currentConversation()->addUserMessage("hello");
+
+        // Simulate the API reporting a created remote conversation while this
+        // conversation is the one being answered.
+        MistralAPI api;
+        manager.bindApi(&api);
+        api.sendMessage("key", "model", QString(), "hello", QString(), false,
+                        QString());
+        api.processStreamData("event: conversation.created\n"
+                              "data: {\"conversation_id\":\"remote-42\"}\n");
+        QCOMPARE(manager.remoteConversationId(), QString("remote-42"));
+
+        // Survives a switch away and back
+        manager.createNewConversation();
+        QCOMPARE(manager.remoteConversationId(), QString());
+        manager.loadConversation(localId);
+        QCOMPARE(manager.remoteConversationId(), QString("remote-42"));
+    }
+
+    // The pending turn handed to the API is the last user message of the
+    // current conversation, image included.
+    void pendingUserTurnAccessors()
+    {
+        ConversationManager manager;
+        manager.purgeAllConversations();
+
+        QCOMPARE(manager.pendingUserContent(), QString());
+        QCOMPARE(manager.pendingUserImagePath(), QString());
+
+        manager.currentConversation()->addUserMessage("question", "/tmp/img.jpg");
         manager.currentConversation()->addAssistantMessage("");
-
-        QVariantList payload = manager.buildApiMessages(0, QString());
-        QCOMPARE(payload.count(), 1);
-        QCOMPARE(payload.at(0).toMap()["role"].toString(), QString("user"));
-        QCOMPARE(payload.at(0).toMap()["content"].toString(), QString("question"));
-    }
-
-    void buildApiMessagesPrependsSystemPrompt()
-    {
-        ConversationManager manager;
-        manager.purgeAllConversations();
-
-        manager.currentConversation()->addUserMessage("hi");
-
-        QVariantList payload = manager.buildApiMessages(0, "  be brief  ");
-        QCOMPARE(payload.count(), 2);
-        QCOMPARE(payload.at(0).toMap()["role"].toString(), QString("system"));
-        QCOMPARE(payload.at(0).toMap()["content"].toString(), QString("be brief"));
-
-        // A blank prompt adds nothing
-        QCOMPARE(manager.buildApiMessages(0, "   ").count(), 1);
-    }
-
-    void buildApiMessagesTrimsToContextLimit()
-    {
-        ConversationManager manager;
-        manager.purgeAllConversations();
-
-        ConversationModel *model = manager.currentConversation();
-        for (int i = 0; i < 5; ++i) {
-            model->addUserMessage(QString("q%1").arg(i));
-            model->addAssistantMessage(QString("a%1").arg(i));
-        }
-
-        QCOMPARE(manager.trimmedMessageCount(0), 0);
-        QCOMPARE(manager.buildApiMessages(0, QString()).count(), 10);
-
-        // Keep the last 4, and the window must open on a user turn
-        QCOMPARE(manager.trimmedMessageCount(4), 6);
-        QVariantList payload = manager.buildApiMessages(4, QString());
-        QCOMPARE(payload.count(), 4);
-        QCOMPARE(payload.at(0).toMap()["role"].toString(), QString("user"));
-        QCOMPARE(payload.at(0).toMap()["content"].toString(), QString("q3"));
-
-        // An odd limit would start on an assistant turn: that one is dropped
-        payload = manager.buildApiMessages(5, QString());
-        QCOMPARE(payload.at(0).toMap()["role"].toString(), QString("user"));
+        QCOMPARE(manager.pendingUserContent(), QString("question"));
+        QCOMPARE(manager.pendingUserImagePath(), QString("/tmp/img.jpg"));
     }
 
     void conversationOverridesRoundTrip()
@@ -1167,20 +1395,6 @@ private slots:
                  QString("llama-3.3-70b-versatile"));
 
         settings.setProviderId("mistral");
-    }
-
-    void contextLimitIsRoundedToPairs()
-    {
-        SettingsManager settings;
-
-        settings.setContextMessageLimit(11);
-        QCOMPARE(settings.contextMessageLimit(), 12);
-
-        settings.setContextMessageLimit(-5);
-        QCOMPARE(settings.contextMessageLimit(), 0);
-
-        settings.setContextMessageLimit(20);
-        QCOMPARE(settings.contextMessageLimit(), 20);
     }
 
     void chatStyleRejectsUnknownValues()

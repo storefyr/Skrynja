@@ -16,18 +16,18 @@ specs in `docs/features/` remain as historical reference; the ones marked **remo
 | # | Feature | Spec | Status |
 |---|---------|------|--------|
 | F1 | Rename to Skrynja (app name, harbour id, packaging, paths, docs, translations) | — | done (v0.1.0) |
-| F2 | `mistralapi.cpp` rewrite: request builder for `/v1/conversations#stream` + `/v1/conversations/{id}#stream`, typed SSE parser (`message.output.delta`, `conversation.response.done`, `tool.execution.*`), `conversation_id` handling | — | in progress |
+| F2 | `mistralapi.cpp` rewrite: request builder for `/v1/conversations#stream` + `/v1/conversations/{id}#stream`, typed SSE parser (`message.output.delta`, `conversation.response.done`, `tool.execution.*`), `conversation_id` handling | — | done (unreleased) |
 | F3 | Web search: `tools: [{"type": "web_search"}]` at creation, toggle in Settings, "Searching the web…" indicator, source chips in `MessageBubble` | — | todo |
-| F4 | `conversationmanager.cpp`: persistent `remoteConversationId` + `dirty` fields, migration of the JSON format | — | todo |
-| F5 | Reconcile-before-retry: `GET /v1/conversations/{id}/messages` after an ambiguous failure | — | todo |
+| F4 | `conversationmanager.cpp`: persistent `remoteConversationId` + `dirty` fields, migration of the JSON format | — | done (unreleased) |
+| F5 | Reconcile-before-retry: `GET /v1/conversations/{id}/messages` after an ambiguous failure | — | done (unreleased) |
 | F6 | Cancel = dirty; next message via `POST /v1/conversations/{id}/restart#stream` (new id, delete old) | — | todo |
 | F7 | Remote deletion: `DELETE /v1/conversations/{id}` on conversation delete / purge | — | todo |
 | F8 | Remove multi-provider: `providers.cpp` trimmed to Mistral, provider picker and per-provider keys removed from Settings/UI | — | todo |
-| F9 | Remove context-limit trimming (`buildApiMessages`, `trimmedMessageCount`, trim indicator) | — | todo |
+| F9 | Remove context-limit trimming (`buildApiMessages`, `trimmedMessageCount`, trim indicator) | — | done (unreleased) |
 | F10 | Model fixed per conversation; remove `nextMessageModel` and per-conversation model override | — | todo |
-| F11 | Remove edit & regenerate (entry-level restart deferred) | — | todo |
+| F11 | Remove edit & regenerate (entry-level restart deferred) | — | done (unreleased) |
 | F12 | Privacy notice in UI + docs (history lives on Mistral's servers) | — | todo |
-| F13 | Unit tests: `%23stream` URL building, SSE event parser, reconcile, dirty/restart | — | todo |
+| F13 | Unit tests: `%23stream` URL building, SSE event parser, reconcile, dirty/restart | — | done (unreleased) |
 | F14 | Vision via `MessageInputEntry` chunks (text + image_url), image stored once server-side | — | todo |
 | F15 | Reasoning models: `content` arrives as a chunk list (thinking + text) — parse and render both | — | todo |
 

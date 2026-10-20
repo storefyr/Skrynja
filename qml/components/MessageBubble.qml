@@ -18,8 +18,6 @@ ListItem {
     property string messageModel: ""
     property string messageProvider: ""
 
-    signal regenerateRequested()
-    signal editRequested()
     signal pinToggled()
 
     // --- Presentation, driven by the chat style setting -------------------
@@ -67,16 +65,6 @@ ListItem {
             onClicked: {
                 Clipboard.text = extractCodeBlocks(messageItem.content)
             }
-        }
-        MenuItem {
-            text: qsTr("Edit")
-            visible: messageItem.isUser && !mistralApi.isBusy
-            onClicked: messageItem.editRequested()
-        }
-        MenuItem {
-            text: qsTr("Regenerate")
-            visible: messageItem.role === "assistant" && messageItem.isLast && !mistralApi.isBusy
-            onClicked: messageItem.regenerateRequested()
         }
     }
 
