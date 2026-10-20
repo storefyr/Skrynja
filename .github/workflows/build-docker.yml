@@ -29,6 +29,7 @@ jobs:
           if [[ $GITHUB_REF == refs/tags/* ]]; then
             VERSION=${GITHUB_REF#refs/tags/v}
           else
+            # RPM forbids '-' in Version, so manual builds use a plain number
             VERSION="0.1.0"
           fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
@@ -157,13 +158,16 @@ jobs:
           1. Launch **Skrynja** from your app drawer
           2. Pull down and select **Settings**
           3. Enter your Mistral AI API key (get one free at [console.mistral.ai](https://console.mistral.ai))
-          4. Choose your preferred model (Small/Large/Pixtral)
-          5. Start chatting with AI! 💬
+          4. Choose your preferred model
+          5. Optionally enable **web search**
+          6. Start chatting with AI! 💬
 
           ## ℹ️ About
 
-          Skrynja is a native Sailfish OS client for Le Chat de Mistral AI with:
+          Skrynja is a native Sailfish OS client for Mistral AI, built on the
+          Conversations API (`/v1/conversations`) with:
           - Real-time streaming responses
+          - Web search mid-conversation
           - Native Silica UI
           - Multiple model support
           - Conversation history
