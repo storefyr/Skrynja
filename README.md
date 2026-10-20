@@ -46,7 +46,7 @@ harbour-skrynja/
 ├── harbour-skrynja.pro        # qmake projektfil (sailfishapp)
 ├── harbour-skrynja.desktop    # Desktop entry
 ├── harbour-skrynja.yaml       # RPM spec (yaml)
-├── LICENSE                    # GPL-2.0
+├── LICENSE                    # GPL-3.0
 ├── README.md
 ├── icon/                      # App-ikoner (86–256 px + SVG)
 ├── qml/
@@ -69,7 +69,7 @@ Al trafik går direkte til `https://api.mistral.ai` over HTTPS. Appen logger ell
 
 ## Licens
 
-GPL-2.0 — se LICENSE.
+GPL-3.0 — se LICENSE.
 
 ## Kontakt
 
