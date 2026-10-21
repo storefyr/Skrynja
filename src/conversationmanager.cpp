@@ -357,6 +357,9 @@ QJsonObject ConversationManager::conversationToJson(const Conversation &conv) co
         msgObj["timestamp"] = msg.timestamp;
         msgObj["pinned"] = msg.pinned;
         msgObj["imagePath"] = msg.imagePath;
+        if (!msg.imageFileId.isEmpty()) {
+            msgObj["imageFileId"] = msg.imageFileId;
+        }
         if (!msg.sources.isEmpty()) {
             QJsonArray sourcesArray;
             for (const QString &s : msg.sources) {
@@ -405,6 +408,7 @@ Conversation ConversationManager::conversationFromJson(const QJsonObject &obj)
         msg.timestamp = msgObj["timestamp"].toVariant().toLongLong();
         msg.pinned = msgObj["pinned"].toBool();
         msg.imagePath = msgObj["imagePath"].toString();
+        msg.imageFileId = msgObj["imageFileId"].toString();
         const QJsonArray sourcesArray = msgObj["sources"].toArray();
         for (const QJsonValue &s : sourcesArray) {
             msg.sources.append(s.toString());
@@ -586,7 +590,7 @@ void ConversationManager::loadConversation(const QString &conversationId)
         m_currentConversation->addMessage(msg.role, msg.content, msg.timestamp,
                                           msg.pinned, msg.imagePath,
                                           msg.model, msg.provider, msg.sources,
-                                          msg.thinking);
+                                          msg.thinking, msg.imageFileId);
     }
 
     // Coming back to a conversation that is still receiving an answer: the
@@ -785,6 +789,17 @@ QString ConversationManager::pendingUserContent() const
 QString ConversationManager::pendingUserImagePath() const
 {
     return m_currentConversation->getLastUserImagePath();
+}
+
+QString ConversationManager::pendingUserImageFileId() const
+{
+    return m_currentConversation->getLastUserImageFileId();
+}
+
+void ConversationManager::setLastUserImageFileId(const QString &fileId)
+{
+    m_currentConversation->setLastUserImageFileId(fileId);
+    saveCurrentConversation();
 }
 
 // ---------------------------------------------------------------- overrides

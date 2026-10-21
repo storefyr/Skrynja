@@ -136,6 +136,36 @@ private slots:
         model.addAssistantMessage("");
         QCOMPARE(model.getLastAssistantMessage(), QString("first answer"));
     }
+
+    // F14: the remote file id rides along with the image path and survives
+    // the JSON round trip.
+    void imageFileIdRoundTrip()
+    {
+        ConversationModel model;
+        model.addUserMessage("look", "/tmp/photo.jpg", "file-id-abc");
+        QCOMPARE(model.getLastUserImageFileId(), QString("file-id-abc"));
+        QCOMPARE(model.toJsonArray().at(0).toObject()["imageFileId"].toString(),
+                 QString("file-id-abc"));
+
+        // setLastUserImageFileId updates the last user message
+        model.addUserMessage("second");
+        model.setLastUserImageFileId("file-id-xyz");
+        QCOMPARE(model.getLastUserImageFileId(), QString("file-id-xyz"));
+        // An assistant message is not a user message: the setter is a no-op
+        model.addAssistantMessage("answer");
+        model.setLastUserImageFileId("should-not-stick");
+        QCOMPARE(model.getLastUserImageFileId(), QString("file-id-xyz"));
+    }
+
+    // Without a file id the field stays empty: old conversations load as
+    // they were.
+    void imageFileIdDefaultsToEmpty()
+    {
+        ConversationModel model;
+        model.addUserMessage("plain text");
+        QCOMPARE(model.getLastUserImageFileId(), QString());
+        QVERIFY(!model.toJsonArray().at(0).toObject().contains("imageFileId"));
+    }
 };
 
 class TestMistralAPI : public QObject
@@ -522,6 +552,71 @@ private slots:
                     "/nonexistent/image.jpg", false, true, -1.0, 0));
         const QJsonObject input = doc.object()["inputs"].toArray().at(0).toObject();
         QCOMPARE(input["content"].toString(), QString("what is this?"));
+    }
+
+    // F14: an uploaded image is referenced by a file chunk, not a data URL.
+    // The request body stays small no matter how large the image was.
+    void buildTurnBodyWithFileIdUsesFileChunk()
+    {
+        MistralAPI api;
+
+        const QJsonDocument doc = QJsonDocument::fromJson(api.buildTurnBody(
+                    "pixtral-large-latest", QString(), "what is this?",
+                    "/some/local/path.jpg", false, true, -1.0, 0,
+                    "abc-123-file-id"));
+        const QJsonObject input = doc.object()["inputs"].toArray().at(0).toObject();
+        const QJsonArray chunks = input["content"].toArray();
+        QCOMPARE(chunks.count(), 2);
+        QCOMPARE(chunks.at(0).toObject()["type"].toString(), QString("text"));
+        QCOMPARE(chunks.at(0).toObject()["text"].toString(), QString("what is this?"));
+        QCOMPARE(chunks.at(1).toObject()["type"].toString(), QString("file"));
+        QCOMPARE(chunks.at(1).toObject()["file_id"].toString(),
+                 QString("abc-123-file-id"));
+        // No base64 payload anywhere in the body
+        QVERIFY(!doc.toJson().contains("base64"));
+    }
+
+    // A file id with no text: the chunk list holds only the file chunk.
+    void buildTurnBodyWithFileIdOnlyImage()
+    {
+        MistralAPI api;
+
+        const QJsonDocument doc = QJsonDocument::fromJson(api.buildTurnBody(
+                    "m", QString(), QString(),
+                    "/path.jpg", false, true, -1.0, 0, "fid-1"));
+        const QJsonObject input = doc.object()["inputs"].toArray().at(0).toObject();
+        const QJsonArray chunks = input["content"].toArray();
+        QCOMPARE(chunks.count(), 1);
+        QCOMPARE(chunks.at(0).toObject()["type"].toString(), QString("file"));
+        QCOMPARE(chunks.at(0).toObject()["file_id"].toString(), QString("fid-1"));
+    }
+
+    // The file id wins over the inline path: when both are set the body
+    // carries the reference, not the data URL.
+    void buildTurnBodyFileIdTakesPrecedenceOverInline()
+    {
+        if (!QImageWriter::supportedImageFormats().contains("jpeg")) {
+            QSKIP("No JPEG image plugin on this host");
+        }
+
+        MistralAPI api;
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        const QString imagePath = dir.filePath("pic.png");
+        QImage img(4, 4, QImage::Format_RGB32);
+        img.fill(Qt::red);
+        QVERIFY(img.save(imagePath));
+
+        const QJsonDocument doc = QJsonDocument::fromJson(api.buildTurnBody(
+                    "m", QString(), "look", imagePath, false, true, -1.0, 0,
+                    "uploaded-id"));
+        const QJsonObject input = doc.object()["inputs"].toArray().at(0).toObject();
+        const QJsonArray chunks = input["content"].toArray();
+        QCOMPARE(chunks.count(), 2);
+        QCOMPARE(chunks.at(1).toObject()["type"].toString(), QString("file"));
+        QCOMPARE(chunks.at(1).toObject()["file_id"].toString(),
+                 QString("uploaded-id"));
+        QVERIFY(!doc.toJson().contains("base64"));
     }
 
     // The reconcile check: does the remote history already contain the turn?
@@ -991,11 +1086,42 @@ private slots:
 
         QCOMPARE(manager.pendingUserContent(), QString());
         QCOMPARE(manager.pendingUserImagePath(), QString());
+        QCOMPARE(manager.pendingUserImageFileId(), QString());
 
         manager.currentConversation()->addUserMessage("question", "/tmp/img.jpg");
-        manager.currentConversation()->addAssistantMessage("");
         QCOMPARE(manager.pendingUserContent(), QString("question"));
         QCOMPARE(manager.pendingUserImagePath(), QString("/tmp/img.jpg"));
+        QCOMPARE(manager.pendingUserImageFileId(), QString());
+
+        // After an upload the file id is visible to the caller
+        manager.setLastUserImageFileId("remote-file-1");
+        QCOMPARE(manager.pendingUserImageFileId(), QString("remote-file-1"));
+
+        // The assistant turn that follows does not disturb the accessors:
+        // they look at the last user message, not the last message.
+        manager.currentConversation()->addAssistantMessage("");
+        QCOMPARE(manager.pendingUserContent(), QString("question"));
+        QCOMPARE(manager.pendingUserImageFileId(), QString("remote-file-1"));
+    }
+
+    // F14: the file id survives the save + reload cycle, so a retry or a
+    // later turn references the same server-side file.
+    void imageFileIdSurvivesReload()
+    {
+        ConversationManager manager;
+        manager.purgeAllConversations();
+
+        const QString id = manager.currentConversationId();
+        manager.currentConversation()->addUserMessage(
+                    "describe this", "/tmp/photo.jpg", "file-id-42");
+        manager.saveCurrentConversation();
+
+        manager.createNewConversation();
+        manager.loadConversation(id);
+
+        QCOMPARE(manager.pendingUserImageFileId(), QString("file-id-42"));
+        QCOMPARE(manager.currentConversation()->getLastUserImagePath(),
+                 QString("/tmp/photo.jpg"));
     }
 
     void conversationOverridesRoundTrip()

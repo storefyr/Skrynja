@@ -5,6 +5,21 @@ All notable changes to Skrynja will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-10-21
+Skrynja 0.3.0 — Vision: images uploaded once to Mistral's Files API.
+
+### Added
+- **Vision images are uploaded once, server-side (F14).** Attached images are
+  uploaded to Mistral's Files API (`POST /v1/files`, multipart) before the turn
+  is sent. The turn references the returned file id with a
+  `{"type":"file","file_id":"..."}` chunk instead of carrying a base64 data URL,
+  so the request body stays small no matter how large the image was. The file id
+  is persisted on the user message (`imageFileId` field) and survives reloads;
+  a retry or a later turn references the same server-side file. If the upload
+  fails the turn falls back to an inline base64 `image_url` chunk so the user
+  still gets an answer. The chat shows an "Uploading image…" indicator while the
+  upload runs.
+
 ## [0.2.0] - 2026-10-21
 Skrynja 0.2.0 — Phase 0 feature batch: web search sources, Mistral-only,
 model fixed per conversation, reasoning model support.
@@ -40,7 +55,9 @@ model fixed per conversation, reasoning model support.
 - `StatsPage.qml`: restored the `Column` wrapper around the per-model
   answers section.
 
-## [Unreleased]### Changed- **Reasoning models show their thinking.** `type: "thinking"` chunks  are accumulated during streaming and attached to the assistant message  as a `thinking` field, rendered collapsed under the answer in  `MessageBubble` (tap "Show reasoning" to expand). Persisted in the  conversation JSON alongside `sources`.- **Web search sources are shown and persisted.** `tool.execution.finished`  events are parsed for `web_search` result URLs, deduplicated, attached to  the assistant message and rendered as tappable source chips in  `MessageBubble`. Sources survive save/reload via a new `sources` field on  each message.- **Settings: "Web search" toggle replaces "Limit conversation context".** The  context limit is gone (server-side history); web search is a create-time  option, so the description says so.
+## [Unreleased]
+
+### Changed- **Reasoning models show their thinking.** `type: "thinking"` chunks  are accumulated during streaming and attached to the assistant message  as a `thinking` field, rendered collapsed under the answer in  `MessageBubble` (tap "Show reasoning" to expand). Persisted in the  conversation JSON alongside `sources`.- **Web search sources are shown and persisted.** `tool.execution.finished`  events are parsed for `web_search` result URLs, deduplicated, attached to  the assistant message and rendered as tappable source chips in  `MessageBubble`. Sources survive save/reload via a new `sources` field on  each message.- **Settings: "Web search" toggle replaces "Limit conversation context".** The  context limit is gone (server-side history); web search is a create-time  option, so the description says so.
 - **System prompt description** now says "when a conversation is created" instead  of "before every conversation".
 
 ### Removed- `SettingsManager::contextMessageLimit` and its Settings UI. The Conversations  API keeps the history server-side; there is nothing to trim locally.- **Per-message and per-conversation model override.** `nextMessageModel`,  the ChatPage quick model switcher, `ModelSelector.qml` and the model  ComboBox in `ConversationSettingsPage` are gone. The model is chosen  when a conversation is created (`createNewConversation(model)`) and  fixed for its life — the Conversations API locks it server-side.  `SettingsManager::nextMessageModel` and its QSettings key are removed.- **Multi-provider registry.** `Providers::all()/byId()/isValid()/defaultId()`  and the `Provider` struct are gone; `providers.cpp` now only holds the  Mistral constants and the catalogue filters (`isChatModelId`,  `looksLikeVisionModel`). Per-provider keys, base URLs and model caches are  removed from `SettingsManager` and the Settings UI — the Conversations API  exists only on Mistral.- `ProviderBadge.qml` and `ProvidersUi.js` deleted; `MessageBubble` and  `StatsPage` show the model name only.

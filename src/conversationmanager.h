@@ -99,6 +99,13 @@ public:
     Q_INVOKABLE QString pendingUserContent() const;
     // The local path of the image attached to the last user message, if any.
     Q_INVOKABLE QString pendingUserImagePath() const;
+    // The remote file id of the last user message's uploaded image, empty
+    // when the image has not been uploaded yet (or was inlined as base64).
+    Q_INVOKABLE QString pendingUserImageFileId() const;
+    // Records the file id returned by MistralAPI::uploadImage on the last
+    // user message and persists it, so a retry or a later turn references the
+    // same server-side file instead of uploading again.
+    Q_INVOKABLE void setLastUserImageFileId(const QString &fileId);
 
     // Re-run the local classifier over every conversation still labelled
     // "other" or unlabelled. Returns the number of conversations relabelled.

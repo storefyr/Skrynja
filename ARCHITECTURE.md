@@ -62,6 +62,7 @@ Conversations de Mistral AI (`https://api.mistral.ai/v1/conversations`) avec sup
 - `GET /v1/conversations/{id}/messages` — réconciliation avant un nouvel essai
 - `DELETE /v1/conversations/{id}` — suppression distante
 - `GET /v1/models` — catalogue des modèles
+- `POST /v1/files` — upload multipart d'une image (vision) ; retourne un `file_id`
 
 **Piège important**: `#stream` est un fragment d'URL. `QUrl` le traiterait comme tel et
 `QNetworkAccessManager` ne l'envoie pas dans la requête. Il faut l'encoder (`%23stream`).
@@ -74,6 +75,11 @@ Conversations de Mistral AI (`https://api.mistral.ai/v1/conversations`) avec sup
 - Gestion des erreurs réseau et API
 - Annulation des requêtes en cours
 - Réconciliation (`GET .../messages`) avant de renvoyer une requête ambiguë
+- Upload d'images (F14) : `uploadImage()` envoie l'image à `POST /v1/files`
+  (multipart, JPEG redimensionné à 1024px) et émet `imageUploaded(fileId)`.
+  Le tour référence ensuite le fichier par `{"type":"file","file_id":"..."}`
+  au lieu d'un data URL base64. En cas d'échec, repli sur un chunk
+  `image_url` base64.
 
 **Signaux Qt**:
 - `streamingResponse(QString)` - Émis pour chaque chunk de texte reçu
@@ -82,6 +88,8 @@ Conversations de Mistral AI (`https://api.mistral.ai/v1/conversations`) avec sup
 - `conversationCreated(QString id)` - Émis avec le `conversation_id` retourné à la création
 - `toolActivity(QString name)` - Émis quand un outil (ex. `web_search`) démarre
 - `sourcesReceived(QStringList)` - Émis avec les sources de la recherche web
+- `imageUploaded(QString fileId)` - Émis quand l'upload d'une image réussit (F14)
+- `imageUploadFailed()` - Émis quand l'upload d'une image échoue
 - `errorChanged()` - Émis en cas d'erreur
 
 **Propriétés Q_PROPERTY**:
@@ -97,9 +105,11 @@ Conversations de Mistral AI (`https://api.mistral.ai/v1/conversations`) avec sup
 **Structure de données**:
 ```cpp
 struct Message {
-    QString role;      // "user" ou "assistant"
-    QString content;   // Contenu du message
-    qint64 timestamp;  // Horodatage Unix
+    QString role;       // "user" ou "assistant"
+    QString content;    // Contenu du message
+    QString imagePath;  // Chemin local de l'image jointe (vision)
+    QString imageFileId;// file_id distant (upload /v1/files, F14)
+    qint64 timestamp;   // Horodatage Unix
 };
 ```
 
@@ -129,6 +139,9 @@ en mettant à jour le dernier message au fur et à mesure que les chunks arriven
   n'a pas été créée côté serveur)
 - `dirty` — positionné quand une réponse a été annulée en cours de streaming ; le prochain
   message repart de zéro via `/restart#stream`
+- `imageFileId` (par message) — le `file_id` retourné par `POST /v1/files` après l'upload
+  d'une image (F14) ; persisté pour qu'un nouvel essai ou un tour suivant référence le
+  même fichier côté serveur
 
 **Méthodes Q_INVOKABLE** (inchangées pour la plupart):
 - `createNewConversation(model)` - Crée une conversation avec un modèle fixé

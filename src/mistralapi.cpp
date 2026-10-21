@@ -2,6 +2,7 @@
 #include "categories.h"
 #include <QBuffer>
 #include <QFile>
+#include <QHttpMultiPart>
 #include <QImage>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -189,7 +190,8 @@ QByteArray MistralAPI::buildTurnBody(const QString &modelName,
                                      bool webSearch,
                                      bool isCreate,
                                      double temperature,
-                                     int maxTokens) const
+                                     int maxTokens,
+                                     const QString &imageFileId) const
 {
     // The user message as a MessageInputEntry. content is a plain string for
     // text, a chunk list when an image is attached.
@@ -198,8 +200,24 @@ QByteArray MistralAPI::buildTurnBody(const QString &modelName,
     input["type"] = "message.input";
     input["role"] = "user";
 
+    // An uploaded file is referenced by id (F14); an inline image falls back
+    // to a base64 data URL. The file chunk keeps the request body small: the
+    // image is stored server-side once, not resent on every turn.
     const QString dataUrl = imagePath.isEmpty() ? QString() : imageToDataUrl(imagePath);
-    if (!dataUrl.isEmpty()) {
+    if (!imageFileId.isEmpty()) {
+        QJsonArray chunks;
+        if (!userContent.isEmpty()) {
+            QJsonObject textChunk;
+            textChunk["type"] = "text";
+            textChunk["text"] = userContent;
+            chunks.append(textChunk);
+        }
+        QJsonObject fileChunk;
+        fileChunk["type"] = "file";
+        fileChunk["file_id"] = imageFileId;
+        chunks.append(fileChunk);
+        input["content"] = chunks;
+    } else if (!dataUrl.isEmpty()) {
         QJsonArray chunks;
         if (!userContent.isEmpty()) {
             QJsonObject textChunk;
@@ -259,7 +277,8 @@ void MistralAPI::sendMessage(const QString &apiKey,
                                bool webSearch,
                                const QString &remoteConversationId,
                                double temperature,
-                               int maxTokens)
+                               int maxTokens,
+                               const QString &imageFileId)
 {
     if (m_isBusy) {
         qWarning() << "Request already in progress";
@@ -300,9 +319,10 @@ void MistralAPI::sendMessage(const QString &apiKey,
     m_pendingApiKey = apiKey;
     m_pendingBody = buildTurnBody(modelName, systemPrompt, userContent,
                                   imagePath, webSearch, isCreate,
-                                  temperature, maxTokens);
+                                  temperature, maxTokens, imageFileId);
     m_pendingRemoteId = remoteConversationId;
     m_pendingUserContent = userContent;
+    m_pendingImageFileId = imageFileId;
 
     // Announced here rather than once the POST leaves: the request may be held
     // back for a moment, and the empty assistant bubble has to belong to the
@@ -353,6 +373,7 @@ void MistralAPI::forgetPendingRequest()
     m_pendingBody.clear();
     m_pendingRemoteId.clear();
     m_pendingUserContent.clear();
+    m_pendingImageFileId.clear();
     m_retryCount = 0;
 }
 
@@ -434,6 +455,103 @@ void MistralAPI::fetchModels(const QString &apiKey)
 
     connect(reply, &QNetworkReply::finished,
             this, &MistralAPI::onModelsFetchFinished);
+}
+
+// ---------------------------------------------------------------- image upload
+
+void MistralAPI::uploadImage(const QString &apiKey, const QString &imagePath)
+{
+    if ((apiKey.isEmpty() && m_keyRequired) || m_baseUrl.isEmpty()) {
+        emit imageUploadFailed();
+        return;
+    }
+
+    QString localPath = imagePath;
+    if (localPath.startsWith("file:")) {
+        localPath = QUrl(localPath).toLocalFile();
+    }
+
+    // Downscale and re-encode before upload: the request body would otherwise
+    // carry the gallery original, and the file id is what the conversation
+    // keeps, so the stored copy should be the bounded one.
+    QImage img(localPath);
+    if (img.isNull()) {
+        qWarning() << "Cannot load image for upload:" << localPath;
+        emit imageUploadFailed();
+        return;
+    }
+    if (img.width() > MAX_IMAGE_DIMENSION || img.height() > MAX_IMAGE_DIMENSION) {
+        img = img.scaled(MAX_IMAGE_DIMENSION, MAX_IMAGE_DIMENSION,
+                         Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    }
+    QByteArray bytes;
+    QBuffer buffer(&bytes);
+    buffer.open(QIODevice::WriteOnly);
+    img.save(&buffer, "JPEG", JPEG_QUALITY);
+    buffer.close();
+    if (bytes.isEmpty()) {
+        emit imageUploadFailed();
+        return;
+    }
+
+    // Multipart upload to the Files API. The purpose is "ocr" because that
+    // is the only purpose the API documents for general file storage; the
+    // file id is what conversations reference.
+    QHttpMultiPart *multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
+
+    QHttpPart filePart;
+    filePart.setHeader(QNetworkRequest::ContentTypeHeader,
+                       QVariant("image/jpeg"));
+    filePart.setHeader(QNetworkRequest::ContentDispositionHeader,
+                       QVariant("form-data; name=\"file\"; filename=\"image.jpg\""));
+    filePart.setBody(bytes);
+    multiPart->append(filePart);
+
+    QHttpPart purposePart;
+    purposePart.setHeader(QNetworkRequest::ContentDispositionHeader,
+                          QVariant("form-data; name=\"purpose\""));
+    purposePart.setBody("ocr");
+    multiPart->append(purposePart);
+
+    QNetworkRequest request(endpoint("/files"));
+    if (!apiKey.isEmpty()) {
+        request.setRawHeader("Authorization",
+                             QString("Bearer %1").arg(apiKey).toUtf8());
+    }
+    applyTransportSecurity(request);
+
+    noteRequestSent();
+    QNetworkReply *reply = m_networkManager->post(request, multiPart);
+    multiPart->setParent(reply);  // deleted with the reply
+
+    connect(reply, &QNetworkReply::finished,
+            this, &MistralAPI::onImageUploadFinished);
+}
+
+void MistralAPI::onImageUploadFinished()
+{
+    QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
+    if (!reply) {
+        return;
+    }
+
+    reply->deleteLater();
+
+    if (reply->error() != QNetworkReply::NoError) {
+        qWarning() << "Image upload failed:" << reply->errorString();
+        emit imageUploadFailed();
+        return;
+    }
+
+    const QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
+    const QString fileId = doc.object()["id"].toString();
+    if (fileId.isEmpty()) {
+        qWarning() << "Image upload returned no file id";
+        emit imageUploadFailed();
+        return;
+    }
+
+    emit imageUploaded(fileId);
 }
 
 void MistralAPI::cancelRequest()
@@ -743,7 +861,8 @@ bool MistralAPI::remoteHasUserMessage(const QJsonObject &messagesResponse,
         if (msg["role"].toString() != "user") {
             continue;
         }
-        // content is a string, or a chunk list when the turn carried an image.
+        // content is a string, or a chunk list when the turn carried an
+        // image (inline base64 or an uploaded file id).
         const QJsonValue content = msg["content"];
         if (content.isString() && content.toString().trimmed() == needle) {
             return true;

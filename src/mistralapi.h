@@ -33,9 +33,11 @@ public:
     QString error() const;
 
     // Sends one user turn. An empty remoteConversationId creates the remote
-    // conversation; a set one appends to it. imagePath, when not empty, is
-    // inlined as a base64 image chunk. temperature < 0 and maxTokens <= 0 are
-    // omitted so the API applies its own defaults.
+    // conversation; a set one appends to it. When imageFileId is set the image
+    // was uploaded to Mistral's Files API and the turn references it with a
+    // file chunk; otherwise imagePath is inlined as a base64 image chunk.
+    // temperature < 0 and maxTokens <= 0 are omitted so the API applies its
+    // own defaults.
     Q_INVOKABLE void sendMessage(const QString &apiKey,
                                  const QString &modelName,
                                  const QString &systemPrompt,
@@ -44,7 +46,8 @@ public:
                                  bool webSearch,
                                  const QString &remoteConversationId,
                                  double temperature = -1.0,
-                                 int maxTokens = 0);
+                                 int maxTokens = 0,
+                                 const QString &imageFileId = QString());
     // targetId is echoed back with the result so a caller can tell which
     // conversation the title belongs to. Runs on the Conversations API with
     // store=false: nothing is persisted server-side.
@@ -53,6 +56,11 @@ public:
                                      const QString &conversationText,
                                      const QString &targetId = QString());
     Q_INVOKABLE void fetchModels(const QString &apiKey);
+    // Uploads an image to Mistral's Files API (POST /v1/files, multipart)
+    // so the turn can reference it by file id instead of carrying base64.
+    // Emits imageUploaded(fileId) or imageUploadFailed().
+    Q_INVOKABLE void uploadImage(const QString &apiKey,
+                                 const QString &imagePath);
     Q_INVOKABLE void cancelRequest();
     Q_INVOKABLE void clearError();
 
@@ -85,6 +93,9 @@ signals:
     void titleGenerationFailed(const QString &targetId);
     void modelsFetched(const QVariantList &models);
     void modelsFetchFailed();
+    // A file upload finished: the id to reference in the next turn.
+    void imageUploaded(const QString &fileId);
+    void imageUploadFailed();
     // The provider turned the request away (429/503) and it will be sent
     // again: the answer is still coming, so this is not an error yet.
     void rateLimited(int seconds, int attempt, int maxAttempts);
@@ -96,6 +107,7 @@ private slots:
     void onTitleGenerationFinished();
     void onModelsFetchFinished();
     void onReconcileFinished();
+    void onImageUploadFinished();
     void onTimeout();
     void sendPendingChatRequest();
 
@@ -134,6 +146,9 @@ private:
     QString m_pendingRemoteId;
     // The user turn as sent, for the reconcile comparison.
     QString m_pendingUserContent;
+    // The remote file id sent with the turn, empty when the image went out
+    // inlined as base64 (or there was no image).
+    QString m_pendingImageFileId;
     // Last conversation_id seen on the wire, used to build the reconcile URL.
     QString m_remoteConversationId;
     // A reconcile GET is in flight: the chat reply is parked meanwhile.
@@ -176,7 +191,8 @@ private:
                              bool webSearch,
                              bool isCreate,
                              double temperature,
-                             int maxTokens) const;
+                             int maxTokens,
+                             const QString &imageFileId = QString()) const;
     QString turnPath(const QString &remoteConversationId) const;
     // Starts the reconcile GET before an append is retried.
     void startReconcile();

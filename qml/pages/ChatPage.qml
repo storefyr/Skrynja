@@ -16,6 +16,9 @@ Page {
     property int conversationTokens: 0
     property int pendingScrollIndex: -1
     property string attachedImagePath: ""
+    // Set while the attached image is being uploaded to Mistral's Files API.
+    // The send waits for the upload: the turn references the file id.
+    property bool uploadingImage: false
     property bool titleRequested: false
     // Server-side tool currently running (e.g. web_search), empty when idle.
     property string toolName: ""
@@ -316,7 +319,7 @@ Page {
 
             Rectangle {
                 id: scanGlow
-                visible: mistralApi.isBusy
+                visible: mistralApi.isBusy || chatPage.uploadingImage
                 width: separatorArea.width / 3
                 height: Theme.paddingSmall / 2
                 radius: height / 2
@@ -327,7 +330,15 @@ Page {
             }
 
             Label {
-                visible: chatPage.toolName !== ""
+                visible: chatPage.uploadingImage
+                anchors.centerIn: parent
+                text: qsTr("Uploading image…")
+                font.pixelSize: Theme.fontSizeTiny
+                color: Theme.secondaryColor
+            }
+
+            Label {
+                visible: !chatPage.uploadingImage && chatPage.toolName !== ""
                 anchors.centerIn: parent
                 text: chatPage.toolName === "web_search"
                       ? qsTr("Searching the web…")
@@ -337,7 +348,8 @@ Page {
             }
             Rectangle {
                 id: scanLine
-                visible: mistralApi.isBusy && chatPage.toolName === ""
+                visible: (mistralApi.isBusy && chatPage.toolName === "")
+                         || chatPage.uploadingImage
                 width: separatorArea.width / 5
                 height: 2
                 radius: 1
@@ -345,7 +357,7 @@ Page {
                 color: Theme.highlightColor
 
                 SequentialAnimation on x {
-                    running: mistralApi.isBusy
+                    running: mistralApi.isBusy || chatPage.uploadingImage
                     loops: Animation.Infinite
                     NumberAnimation {
                         from: -scanLine.width
@@ -377,6 +389,7 @@ Page {
                                                               chatPage.activeModel)
                     icon.source: "image://theme/icon-m-attach"
                     icon.highlighted: chatPage.attachedImagePath !== ""
+                    enabled: !chatPage.uploadingImage
                     onClicked: {
                         if (chatPage.attachedImagePath !== "") {
                             chatPage.attachedImagePath = ""
@@ -391,9 +404,11 @@ Page {
                     width: parent.width - sendButton.width - parent.spacing * 2
                            - (attachButton.visible ? attachButton.width + parent.spacing : 0)
                     height: Math.min(implicitHeight, Theme.itemSizeSmall * 2.5)
-                    placeholderText: qsTr("Type a message...")
+                    placeholderText: chatPage.uploadingImage
+                                     ? qsTr("Uploading image...")
+                                     : qsTr("Type a message...")
                     labelVisible: false
-                    enabled: !mistralApi.isBusy && chatPage.providerReady
+                    enabled: !mistralApi.isBusy && !chatPage.uploadingImage && chatPage.providerReady
                     font.pixelSize: Theme.fontSizeSmall
 
                     // A disabled Enter key is greyed out and does nothing, it does
@@ -416,7 +431,7 @@ Page {
                     icon.source: mistralApi.isBusy
                         ? "image://theme/icon-m-pause"
                         : "image://theme/icon-m-message"
-                    enabled: (!mistralApi.isBusy && messageInput.text.trim().length > 0 && chatPage.providerReady) || mistralApi.isBusy
+                    enabled: (!mistralApi.isBusy && !chatPage.uploadingImage && messageInput.text.trim().length > 0 && chatPage.providerReady) || mistralApi.isBusy
 
                     // Pulsing halo while a request is in flight
                     Rectangle {
@@ -687,6 +702,20 @@ Page {
         target: mistralApi
 
         onModelsFetched: settingsManager.updateModelCache(models)
+
+        // The image upload finished: store the file id on the user message
+        // and send the turn that references it.
+        onImageUploaded: {
+            chatPage.uploadingImage = false
+            conversationManager.setLastUserImageFileId(fileId)
+            chatPage.sendTurn()
+        }
+        // The upload failed: fall back to an inline base64 image so the user
+        // still gets an answer.
+        onImageUploadFailed: {
+            chatPage.uploadingImage = false
+            chatPage.sendTurn()
+        }
     }
 
     Component.onCompleted: {
@@ -773,10 +802,29 @@ Page {
 
     function dispatchRequest() {
         var content = conversationManager.pendingUserContent()
-        if (content.trim().length === 0
-                && conversationManager.pendingUserImagePath() === "") {
+        var imagePath = conversationManager.pendingUserImagePath()
+        if (content.trim().length === 0 && imagePath === "") {
             return
         }
+
+        // F14: when an image is attached, upload it to Mistral's Files API
+        // first, then send the turn with the returned file id. The image is
+        // stored server-side once instead of being resent as base64 on every
+        // turn of the conversation.
+        if (imagePath !== ""
+                && conversationManager.pendingUserImageFileId() === "") {
+            uploadingImage = true
+            mistralApi.uploadImage(settingsManager.apiKey, imagePath)
+            return
+        }
+
+        sendTurn()
+    }
+
+    function sendTurn() {
+        var content = conversationManager.pendingUserContent()
+        var imagePath = conversationManager.pendingUserImagePath()
+        var imageFileId = conversationManager.pendingUserImageFileId()
 
         autoScroll = true
         // Recorded before the call: the token statistics are attributed in C++
@@ -789,11 +837,12 @@ Page {
                                activeModel,
                                effectiveSystemPrompt(),
                                content,
-                               conversationManager.pendingUserImagePath(),
+                               imagePath,
                                settingsManager.webSearch,
                                conversationManager.remoteConversationId(),
                                settingsManager.temperature,
-                               settingsManager.maxTokens)
+                               settingsManager.maxTokens,
+                               imageFileId)
     }
 
     function sendMessage() {

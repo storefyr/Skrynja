@@ -38,6 +38,8 @@ QVariant ConversationModel::data(const QModelIndex &index, int role) const
         return message.sources;
     case ThinkingRole:
         return message.thinking;
+    case ImageFileIdRole:
+        return message.imageFileId;
     default:
         return QVariant();
     }
@@ -57,13 +59,15 @@ QHash<int, QByteArray> ConversationModel::roleNames() const
     roles[ProviderRole] = "provider";
     roles[SourcesRole] = "sources";
     roles[ThinkingRole] = "thinking";
+    roles[ImageFileIdRole] = "imageFileId";
     return roles;
 }
 
 void ConversationModel::addMessage(const QString &role, const QString &content, qint64 timestamp,
                                    bool pinned, const QString &imagePath,
                                    const QString &model, const QString &provider,
-                                   const QStringList &sources, const QString &thinking)
+                                   const QStringList &sources, const QString &thinking,
+                                   const QString &imageFileId)
 {
     Message msg;
     msg.role = role;
@@ -71,6 +75,7 @@ void ConversationModel::addMessage(const QString &role, const QString &content, 
     msg.timestamp = timestamp;
     msg.pinned = pinned;
     msg.imagePath = imagePath;
+    msg.imageFileId = imageFileId;
     msg.model = model;
     msg.provider = provider;
     msg.sources = sources;
@@ -83,9 +88,11 @@ void ConversationModel::addMessage(const QString &role, const QString &content, 
     emit countChanged();
 }
 
-void ConversationModel::addUserMessage(const QString &content, const QString &imagePath)
+void ConversationModel::addUserMessage(const QString &content, const QString &imagePath,
+                                       const QString &imageFileId)
 {
-    addMessage("user", content, QDateTime::currentMSecsSinceEpoch(), false, imagePath);
+    addMessage("user", content, QDateTime::currentMSecsSinceEpoch(), false, imagePath,
+               QString(), QString(), QStringList(), QString(), imageFileId);
 }
 
 void ConversationModel::addAssistantMessage(const QString &content,
@@ -124,6 +131,20 @@ void ConversationModel::setLastAssistantThinking(const QString &thinking)
     m_messages[lastIndex].thinking = thinking;
     QModelIndex index = createIndex(lastIndex, 0);
     emit dataChanged(index, index, {ThinkingRole});
+}
+
+void ConversationModel::setLastUserImageFileId(const QString &fileId)
+{
+    if (m_messages.isEmpty())
+        return;
+
+    int lastIndex = m_messages.count() - 1;
+    if (m_messages.at(lastIndex).role != "user")
+        return;
+
+    m_messages[lastIndex].imageFileId = fileId;
+    QModelIndex index = createIndex(lastIndex, 0);
+    emit dataChanged(index, index, {ImageFileIdRole});
 }
 
 void ConversationModel::updateLastAssistantMessage(const QString &content)
@@ -231,6 +252,16 @@ QString ConversationModel::getLastUserImagePath() const
     return QString();
 }
 
+QString ConversationModel::getLastUserImageFileId() const
+{
+    for (int i = m_messages.count() - 1; i >= 0; --i) {
+        if (m_messages.at(i).role == "user") {
+            return m_messages.at(i).imageFileId;
+        }
+    }
+    return QString();
+}
+
 QString ConversationModel::getFirstUserMessage() const
 {
     for (const Message &msg : m_messages) {
@@ -262,6 +293,9 @@ QJsonArray ConversationModel::toJsonArray() const
         msgObj["timestamp"] = msg.timestamp;
         msgObj["pinned"] = msg.pinned;
         msgObj["imagePath"] = msg.imagePath;
+        if (!msg.imageFileId.isEmpty()) {
+            msgObj["imageFileId"] = msg.imageFileId;
+        }
         // Only on the messages that have them, which keeps user turns and
         // pre-2.3 files exactly as they were
         if (!msg.model.isEmpty()) {
