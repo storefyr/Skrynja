@@ -11,6 +11,7 @@
 #include <QNetworkRequest>
 #include <QRegularExpression>
 #include <QSet>
+#include <QStandardPaths>
 #include <QSslConfiguration>
 #include <QSslSocket>
 #include <QDebug>
@@ -845,6 +846,102 @@ void MistralAPI::onImageUploadFinished()
     }
 
     emit imageUploaded(fileId);
+}
+
+// ---------------------------------------------------------------- F18 voice input
+
+QString MistralAPI::tempAudioPath() const
+{
+    // A unique path inside the app's cache directory for the next recording.
+    return QStandardPaths::writableLocation(QStandardPaths::CacheLocation)
+            + "/skrynja-recording-"
+            + QString::number(QDateTime::currentMSecsSinceEpoch()) + ".wav";
+}
+
+void MistralAPI::transcribeAudio(const QString &apiKey, const QString &audioPath)
+{
+    if ((apiKey.isEmpty() && m_keyRequired) || m_baseUrl.isEmpty()) {
+        emit transcriptionFailed();
+        return;
+    }
+
+    QString localPath = audioPath;
+    if (localPath.startsWith("file:")) {
+        localPath = QUrl(localPath).toLocalFile();
+    }
+
+    QFile audioFile(localPath);
+    if (!audioFile.open(QIODevice::ReadOnly)) {
+        qWarning() << "Cannot open audio file for transcription:" << localPath;
+        emit transcriptionFailed();
+        return;
+    }
+    const QByteArray audioData = audioFile.readAll();
+    audioFile.close();
+    if (audioData.isEmpty()) {
+        emit transcriptionFailed();
+        return;
+    }
+
+    // Multipart upload to the Audio Transcriptions API.
+    // POST /v1/audio/transcriptions with model=voxtral-mini-latest.
+    QHttpMultiPart *multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
+
+    QHttpPart filePart;
+    filePart.setHeader(QNetworkRequest::ContentTypeHeader,
+                       QVariant("audio/wav"));
+    filePart.setHeader(QNetworkRequest::ContentDispositionHeader,
+                       QVariant("form-data; name=\"file\"; filename=\"recording.wav\""));
+    filePart.setBody(audioData);
+    multiPart->append(filePart);
+
+    QHttpPart modelPart;
+    modelPart.setHeader(QNetworkRequest::ContentDispositionHeader,
+                        QVariant("form-data; name=\"model\""));
+    modelPart.setBody("voxtral-mini-latest");
+    multiPart->append(modelPart);
+
+    QNetworkRequest request(endpoint("/audio/transcriptions"));
+    if (!apiKey.isEmpty()) {
+        request.setRawHeader("Authorization",
+                             QString("Bearer %1").arg(apiKey).toUtf8());
+    }
+    applyTransportSecurity(request);
+
+    noteRequestSent();
+    QNetworkReply *reply = m_networkManager->post(request, multiPart);
+    multiPart->setParent(reply);  // deleted with the reply
+
+    connect(reply, &QNetworkReply::finished,
+            this, &MistralAPI::onTranscriptionFinished);
+}
+
+void MistralAPI::onTranscriptionFinished()
+{
+    QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
+    if (!reply) {
+        return;
+    }
+
+    const QByteArray body = reply->readAll();
+    reply->deleteLater();
+
+    if (reply->error() != QNetworkReply::NoError) {
+        qWarning() << "Transcription failed:" << reply->errorString()
+                   << "body:" << body.left(500);
+        emit transcriptionFailed();
+        return;
+    }
+
+    const QJsonDocument doc = QJsonDocument::fromJson(body);
+    const QString text = doc.object()["text"].toString();
+    if (text.isEmpty()) {
+        qWarning() << "Transcription returned no text, body:" << body.left(500);
+        emit transcriptionFailed();
+        return;
+    }
+
+    emit transcriptionReady(text);
 }
 
 void MistralAPI::cancelRequest()

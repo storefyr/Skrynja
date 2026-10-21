@@ -2,6 +2,7 @@ import QtQuick 2.0
 import Sailfish.Silica 1.0
 import Sailfish.Pickers 1.0
 import Nemo.Notifications 1.0
+import QtMultimedia 5.0
 import "../components"
 
 Page {
@@ -19,6 +20,10 @@ Page {
     // Set while the attached image is being uploaded to Mistral's Files API.
     // The send waits for the upload: the turn references the file id.
     property bool uploadingImage: false
+    // F18: voice input state
+    property bool recording: false
+    property bool transcribing: false
+    property string recordingPath: ""
     property bool titleRequested: false
     // Server-side tool currently running (e.g. web_search), empty when idle.
     property string toolName: ""
@@ -427,16 +432,73 @@ Page {
                     }
                 }
 
+                // F18: Voice input — record, transcribe, fill the input.
+                IconButton {
+                    id: micButton
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: chatPage.providerReady
+                    icon.source: chatPage.recording
+                        ? "image://theme/icon-m-microphone"
+                        : "image://theme/icon-m-microphone"
+                    icon.highlighted: chatPage.recording || chatPage.transcribing
+                    enabled: !mistralApi.isBusy && !chatPage.uploadingImage
+                             && !chatPage.recording && !chatPage.transcribing
+                    opacity: chatPage.recording ? 1.0 : (chatPage.transcribing ? 0.5 : 1.0)
+
+                    // Pulsing ring while recording
+                    Rectangle {
+                        anchors.centerIn: parent
+                        width: parent.width * 1.6
+                        height: width
+                        radius: width / 2
+                        color: "transparent"
+                        border.color: Theme.errorColor
+                        border.width: 2
+                        visible: chatPage.recording
+                        z: -1
+                        SequentialAnimation on opacity {
+                            running: chatPage.recording
+                            loops: Animation.Infinite
+                            NumberAnimation { from: 1.0; to: 0.2; duration: 600 }
+                            NumberAnimation { from: 0.2; to: 1.0; duration: 600 }
+                        }
+                    }
+
+                    onClicked: {
+                        if (chatPage.recording) {
+                            // Stop recording and transcribe
+                            chatPage.recording = false
+                            audioRecorder.stop()
+                            chatPage.transcribing = true
+                            mistralApi.transcribeAudio(settingsManager.apiKey,
+                                                        chatPage.recordingPath)
+                        } else if (!chatPage.transcribing) {
+                            // Start recording
+                            chatPage.recordingPath = mistralApi.tempAudioPath()
+                            audioRecorder.outputLocation = chatPage.recordingPath
+                            audioRecorder.record()
+                            chatPage.recording = true
+                        }
+                    }
+                }
+
                 TextArea {
                     id: messageInput
                     width: parent.width - sendButton.width - parent.spacing * 2
                            - (attachButton.visible ? attachButton.width + parent.spacing : 0)
+                           - (micButton.visible ? micButton.width + parent.spacing : 0)
                     height: Math.min(implicitHeight, Theme.itemSizeSmall * 2.5)
-                    placeholderText: chatPage.uploadingImage
-                                     ? qsTr("Uploading image...")
-                                     : qsTr("Type a message...")
+                    placeholderText: chatPage.recording
+                                     ? qsTr("Recording... tap mic to stop")
+                                     : (chatPage.transcribing
+                                        ? qsTr("Transcribing...")
+                                        : (chatPage.uploadingImage
+                                           ? qsTr("Uploading image...")
+                                           : qsTr("Type a message...")))
                     labelVisible: false
-                    enabled: !mistralApi.isBusy && !chatPage.uploadingImage && chatPage.providerReady
+                    enabled: !mistralApi.isBusy && !chatPage.uploadingImage
+                             && !chatPage.recording && !chatPage.transcribing
+                             && chatPage.providerReady
                     font.pixelSize: Theme.fontSizeSmall
 
                     // A disabled Enter key is greyed out and does nothing, it does
@@ -459,7 +521,7 @@ Page {
                     icon.source: mistralApi.isBusy
                         ? "image://theme/icon-m-pause"
                         : "image://theme/icon-m-message"
-                    enabled: (!mistralApi.isBusy && !chatPage.uploadingImage && messageInput.text.trim().length > 0 && chatPage.providerReady) || mistralApi.isBusy
+                    enabled: (!mistralApi.isBusy && !chatPage.uploadingImage && !chatPage.recording && !chatPage.transcribing && messageInput.text.trim().length > 0 && chatPage.providerReady) || mistralApi.isBusy
 
                     // Pulsing halo while a request is in flight
                     Rectangle {
@@ -956,6 +1018,56 @@ Page {
             exportNotification.previewBody = ""
         }
         exportNotification.publish()
+    }
+
+    // F18: Audio recorder for voice input. Inert until record() is called.
+    AudioRecorder {
+        id: audioRecorder
+        audioEncodingMode: AudioRecorder.ConstantBitRateEncoding
+        mediaObject {
+            // The actual audio input is provided by the system's default
+            // audio source. QtMultimedia on Sailfish picks up the microphone
+            // automatically when the app has the Microphone permission.
+        }
+        onStopped: {
+            // Recording finished: the file is ready for transcription.
+            // The actual transcription is triggered by the mic button.
+        }
+        onError: {
+            chatPage.recording = false
+            chatPage.transcribing = false
+            console.warn("AudioRecorder error: " + errorString)
+        }
+    }
+
+    // F18: Transcription result handler.
+    Connections {
+        target: mistralApi
+
+        onTranscriptionReady: {
+            chatPage.transcribing = false
+            if (text.length > 0) {
+                // Fill the input field with the transcribed text. The user
+                // can edit before sending.
+                if (messageInput.text.length > 0) {
+                    messageInput.text = messageInput.text + " " + text
+                } else {
+                    messageInput.text = text
+                }
+                messageInput.focus = true
+                messageInput.cursorPosition = messageInput.text.length
+            }
+            // Clean up the temporary recording.
+            if (chatPage.recordingPath !== "") {
+                // The file is in the cache directory; it will be overwritten
+                // or cleaned by the system. No explicit delete needed.
+            }
+        }
+
+        onTranscriptionFailed: {
+            chatPage.transcribing = false
+            console.warn("Transcription failed")
+        }
     }
 
 }

@@ -8,6 +8,6 @@ Comment=Le Chat de Mistral AI avec recherche web
 Categories=Network;Chat;
 
 [X-Sailjail]
-Permissions=Internet;Pictures;Documents
+Permissions=Internet;Pictures;Documents;Microphone
 OrganizationName=org.skrynja
 ApplicationName=Skrynja

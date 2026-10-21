@@ -77,6 +77,13 @@ public:
     // Emits imageUploaded(fileId) or imageUploadFailed().
     Q_INVOKABLE void uploadImage(const QString &apiKey,
                                  const QString &imagePath);
+    // F18: Transcribes an audio file using Mistral's audio transcription API
+    // (POST /v1/audio/transcriptions). Emits transcriptionReady(text) or
+    // transcriptionFailed().
+    Q_INVOKABLE void transcribeAudio(const QString &apiKey,
+                                     const QString &audioPath);
+    // A writable path for a temporary audio recording.
+    Q_INVOKABLE QString tempAudioPath() const;
     Q_INVOKABLE void cancelRequest();
     Q_INVOKABLE void clearError();
 
@@ -122,6 +129,9 @@ signals:
     // A file upload finished: the id to reference in the next turn.
     void imageUploaded(const QString &fileId);
     void imageUploadFailed();
+    // F18: audio transcription result.
+    void transcriptionReady(const QString &text);
+    void transcriptionFailed();
     // The provider turned the request away (429/503) and it will be sent
     // again: the answer is still coming, so this is not an error yet.
     void rateLimited(int seconds, int attempt, int maxAttempts);
@@ -137,6 +147,7 @@ private slots:
     void onRemoteConversationsFinished();
     void onRemoteMessagesFinished();
     void onRemoteDeleteFinished();
+    void onTranscriptionFinished();
     void onTimeout();
     void sendPendingChatRequest();
 

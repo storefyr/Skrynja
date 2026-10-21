@@ -5,6 +5,20 @@ All notable changes to Skrynja will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2026-10-21
+Skrynja 0.8.0 — New feature (F18): voice input with Mistral transcription.
+
+### Added
+- **Voice input**: a microphone button in the chat input area records audio
+  using `AudioRecorder` (QtMultimedia). Tap to start, tap again to stop.
+  While recording, the button shows a pulsing red ring and the input field
+  shows "Recording...".
+- **Transcription**: the recording is sent to Mistral's Audio Transcriptions
+  API (`POST /v1/audio/transcriptions`, model `voxtral-mini-latest`). The
+  transcribed text fills the input field so the user can edit before sending.
+- **Microphone permission** added to the SailJail `[X-Sailjail]` section.
+- **Qt Multimedia** added as a build dependency.
+
 ## [0.7.2] - 2026-10-21
 Skrynja 0.7.2 — Feature: archive conversations deleted on other devices.
 

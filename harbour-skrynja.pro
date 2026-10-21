@@ -2,11 +2,11 @@ TARGET = harbour-skrynja
 
 CONFIG += sailfishapp
 
-QT += network
+QT += network multimedia
 
 # Version is passed by the spec file (%qmake5 VERSION=%{version})
 isEmpty(VERSION) {
-    VERSION = 0.7.2
+    VERSION = 0.8.0
 }
 DEFINES += APP_VERSION=\\\"$$VERSION\\\"
 
