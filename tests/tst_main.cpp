@@ -8,6 +8,7 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QJsonDocument>
+#include <QDateTime>
 #include <QUrl>
 #include <QImage>
 #include <QImageWriter>
@@ -1869,6 +1870,34 @@ private slots:
 
         const QString title = manager.getConversationsList().at(0).toObject()["title"].toString();
         QCOMPARE(title, QString("Fortæl mig om bier"));
+    }
+
+    // F17: an attached conversation gets updatedAt = now, so it appears at
+    // the top of the history regardless of the original message timestamps.
+    void attachRemoteConversationSetsUpdatedAtToNow()
+    {
+        ConversationManager manager;
+        manager.purgeAllConversations();
+
+        const qint64 before = QDateTime::currentMSecsSinceEpoch();
+
+        QVariantList messages;
+        QVariantMap m1;
+        m1["role"] = "user";
+        m1["content"] = "old question from 2020";
+        // 2020-01-01 in epoch ms — far in the past.
+        m1["timestamp"] = 1577836800000LL;
+        messages.append(m1);
+
+        const QString localId = manager.attachRemoteConversation(
+                    "remote-old", "Old conversation", "model", messages);
+        QVERIFY(!localId.isEmpty());
+
+        const qint64 updatedAt = manager.getConversationsList().at(0)
+                .toObject()["updatedAt"].toVariant().toLongLong();
+        QVERIFY2(updatedAt >= before,
+                 qPrintable(QString("updatedAt %1 should be >= %2")
+                            .arg(updatedAt).arg(before)));
     }
 };
 

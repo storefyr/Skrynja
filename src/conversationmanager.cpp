@@ -627,7 +627,10 @@ QString ConversationManager::attachRemoteConversation(const QString &remoteId,
         return QString();
     }
 
-    conv.updatedAt = conv.messages.last().timestamp;
+    // An attached conversation is new to the user, so it should appear at
+    // the top of the history regardless of when the original messages were
+    // sent on the server.
+    conv.updatedAt = QDateTime::currentMSecsSinceEpoch();
     // Derive a title from the first user message when the remote name is empty
     // or when only the model name was passed as a fallback.
     if (conv.title.isEmpty() || conv.title == conv.model) {
