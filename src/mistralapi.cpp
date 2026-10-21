@@ -515,16 +515,32 @@ void MistralAPI::onRemoteConversationsFinished()
     if (!reply)
         return;
 
+    const int httpStatus = reply->attribute(
+                QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    const QByteArray body = reply->readAll();
     reply->deleteLater();
 
     if (reply->error() != QNetworkReply::NoError) {
-        qWarning() << "Remote conversations fetch failed:" << reply->errorString();
+        qWarning() << "Remote conversations fetch failed: HTTP" << httpStatus
+                   << reply->errorString() << "body:" << body.left(500);
         emit remoteConversationsFetchFailed();
         return;
     }
 
-    const QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
+    // The SDK returns List[ModelConversation|AgentConversation]: a bare JSON
+    // array at the top level, not wrapped in {"data": [...]}.
+    const QJsonDocument doc = QJsonDocument::fromJson(body);
+    if (doc.isArray()) {
+        QJsonObject wrapper;
+        wrapper["data"] = doc.array();
+        const QVariantList conversations = parseRemoteConversations(wrapper);
+        emit remoteConversationsFetched(conversations);
+        return;
+    }
+
     if (!doc.isObject()) {
+        qWarning() << "Remote conversations: unexpected response shape, HTTP"
+                   << httpStatus << "body:" << body.left(500);
         emit remoteConversationsFetchFailed();
         return;
     }
@@ -540,16 +556,22 @@ void MistralAPI::onRemoteMessagesFinished()
         return;
 
     const QString remoteId = reply->property("remoteConversationId").toString();
+    const int httpStatus = reply->attribute(
+                QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    const QByteArray body = reply->readAll();
     reply->deleteLater();
 
     if (reply->error() != QNetworkReply::NoError) {
-        qWarning() << "Remote messages fetch failed:" << reply->errorString();
+        qWarning() << "Remote messages fetch failed: HTTP" << httpStatus
+                   << reply->errorString() << "body:" << body.left(500);
         emit remoteMessagesFetchFailed(remoteId);
         return;
     }
 
-    const QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
+    const QJsonDocument doc = QJsonDocument::fromJson(body);
     if (!doc.isObject()) {
+        qWarning() << "Remote messages: unexpected response shape, HTTP"
+                   << httpStatus << "body:" << body.left(500);
         emit remoteMessagesFetchFailed(remoteId);
         return;
     }
@@ -589,26 +611,44 @@ QVariantList MistralAPI::parseRemoteConversations(const QJsonObject &doc)
 
 QVariantList MistralAPI::parseRemoteMessages(const QJsonObject &doc)
 {
-    // GET /v1/conversations/{id}/messages returns {"object": "list",
-    // "data": [...], "has_more": bool, ...}. Each message has role, content
-    // (string or chunk list), created_at and possibly outputs.
+    // GET /v1/conversations/{id}/messages returns
+    // {"conversation_id": "...", "messages": [...], "object": "conversation.messages"}.
+    // Each message is a MessageInputEntry (role + content + type="message.input")
+    // or MessageOutputEntry (content + type="message.output" + role="assistant").
+    // Older API versions returned {"object": "list", "data": [...]}; accept both.
     QJsonArray items;
-    if (doc.contains("data") && doc["data"].isArray()) {
-        items = doc["data"].toArray();
-    } else if (doc.contains("messages") && doc["messages"].isArray()) {
+    if (doc.contains("messages") && doc["messages"].isArray()) {
         items = doc["messages"].toArray();
+    } else if (doc.contains("data") && doc["data"].isArray()) {
+        items = doc["data"].toArray();
     }
 
     QVariantList result;
     for (const QJsonValue &value : items) {
         const QJsonObject obj = value.toObject();
+        const QString type = obj["type"].toString();
         const QString role = obj["role"].toString();
-        if (role != "user" && role != "assistant") {
+
+        // message.input → user (or assistant in some edge cases)
+        // message.output → assistant
+        // Legacy shape: role field directly
+        QString effectiveRole;
+        if (type == "message.input") {
+            effectiveRole = role; // "user" or "assistant"
+        } else if (type == "message.output") {
+            effectiveRole = "assistant";
+        } else {
+            effectiveRole = role; // legacy: bare role field
+        }
+
+        if (effectiveRole != "user" && effectiveRole != "assistant") {
             continue;
         }
 
         QVariantMap entry;
-        entry["role"] = role;
+        entry["role"] = effectiveRole;
+        // Content is directly on the entry (string or chunk list), not
+        // nested under "outputs".
         entry["content"] = messageContentToText(obj["content"]);
 
         // created_at is ISO 8601; parse to epoch ms for local storage.
@@ -618,33 +658,12 @@ QVariantList MistralAPI::parseRemoteMessages(const QJsonObject &doc)
                 ? dt.toMSecsSinceEpoch()
                 : QDateTime::currentMSecsSinceEpoch();
 
-        // Assistant messages may carry outputs (the actual generated content)
-        // when the message is an entry wrapper. Prefer outputs text.
-        if (role == "assistant" && obj.contains("outputs")) {
-            const QString outputsText = outputsToText(obj["outputs"].toArray());
-            if (!outputsText.isEmpty()) {
-                entry["content"] = outputsText;
+        // Capture the model on assistant messages for statistics.
+        if (effectiveRole == "assistant") {
+            const QString model = obj["model"].toString();
+            if (!model.isEmpty()) {
+                entry["model"] = model;
             }
-        }
-
-        // Collect sources from tool executions if present.
-        QStringList sources;
-        const QJsonArray outputs = obj["outputs"].toArray();
-        for (const QJsonValue &outVal : outputs) {
-            const QJsonObject outObj = outVal.toObject();
-            if (outObj["type"].toString() == "tool.execution") {
-                const QJsonObject data = outObj["data"].toObject();
-                const QJsonArray results = data["output"].toArray();
-                for (const QJsonValue &r : results) {
-                    const QString url = r.toObject()["url"].toString();
-                    if (!url.isEmpty() && !sources.contains(url)) {
-                        sources.append(url);
-                    }
-                }
-            }
-        }
-        if (!sources.isEmpty()) {
-            entry["sources"] = sources;
         }
 
         result.append(entry);
@@ -654,8 +673,9 @@ QVariantList MistralAPI::parseRemoteMessages(const QJsonObject &doc)
 
 QString MistralAPI::messageContentToText(const QJsonValue &content)
 {
-    // User message content: a plain string, or a chunk list when the turn
-    // carried an image (text + image_url/file chunks).
+    // Message content: a plain string, or a chunk list when the turn carried
+    // an image (text + image_url/file chunks) or the model reasoned (thinking
+    // + text chunks). Only text chunks are returned; thinking is dropped.
     if (content.isString()) {
         return content.toString();
     }

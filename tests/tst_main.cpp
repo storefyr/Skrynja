@@ -803,7 +803,8 @@ private slots:
     }
 
     // F17: parseRemoteConversations extracts id, name, model, timestamps
-    // from a GET /v1/conversations response.
+    // from a GET /v1/conversations response (SDK shape: bare array wrapped
+    // in {"data": [...]}; live API may return a bare array directly).
     void parseRemoteConversationsExtractsFields()
     {
         const QJsonObject doc = QJsonDocument::fromJson(
@@ -829,6 +830,24 @@ private slots:
         const QVariantMap second = result.at(1).toMap();
         QCOMPARE(second["id"].toString(), QString("conv-2"));
         QCOMPARE(second["name"].toString(), QString());
+    }
+
+    // F17: parseRemoteConversations handles agent conversations (agent_id
+    // instead of model).
+    void parseRemoteConversationsHandlesAgentShape()
+    {
+        const QJsonObject doc = QJsonDocument::fromJson(
+                    "{\"data\":[{\"id\":\"conv-agent\","
+                    "\"agent_id\":\"ag_123\","
+                    "\"name\":\"Agent chat\","
+                    "\"created_at\":\"2026-01-01T10:00:00Z\","
+                    "\"updated_at\":\"2026-01-01T11:00:00Z\"}]}"
+                    ).object();
+
+        const QVariantList result = MistralAPI::parseRemoteConversations(doc);
+        QCOMPARE(result.count(), 1);
+        QCOMPARE(result.at(0).toMap()["id"].toString(), QString("conv-agent"));
+        QCOMPARE(result.at(0).toMap()["name"].toString(), QString("Agent chat"));
     }
 
     // F17: parseRemoteConversations skips entries without an id.
@@ -901,21 +920,51 @@ private slots:
         QCOMPARE(result.at(0).toMap()["role"].toString(), QString("user"));
     }
 
-    // F17: parseRemoteMessages prefers outputs text over content for
-    // assistant messages (entry wrapper shape).
-    void parseRemoteMessagesPrefersOutputs()
+    // F17: parseRemoteMessages reads the typed entry shape (message.input /
+    // message.output) that the live API returns.
+    void parseRemoteMessagesHandlesTypedEntries()
     {
         const QJsonObject doc = QJsonDocument::fromJson(
-                    "{\"data\":["
-                    "{\"role\":\"assistant\",\"content\":\"\","
-                    "\"outputs\":[{\"type\":\"message.output\","
-                    "\"content\":\"The answer is 42.\"}]}]}"
+                    "{\"conversation_id\":\"conv-1\","
+                    "\"messages\":["
+                    "{\"object\":\"entry\",\"type\":\"message.input\","
+                    "\"role\":\"user\",\"content\":\"What is 2+2?\","
+                    "\"created_at\":\"2026-01-01T10:00:00Z\"},"
+                    "{\"object\":\"entry\",\"type\":\"message.output\","
+                    "\"role\":\"assistant\",\"content\":\"4\","
+                    "\"model\":\"mistral-small-latest\","
+                    "\"created_at\":\"2026-01-01T10:00:05Z\"}]}"
+                    ).object();
+
+        const QVariantList result = MistralAPI::parseRemoteMessages(doc);
+        QCOMPARE(result.count(), 2);
+
+        QCOMPARE(result.at(0).toMap()["role"].toString(), QString("user"));
+        QCOMPARE(result.at(0).toMap()["content"].toString(), QString("What is 2+2?"));
+
+        QCOMPARE(result.at(1).toMap()["role"].toString(), QString("assistant"));
+        QCOMPARE(result.at(1).toMap()["content"].toString(), QString("4"));
+        QCOMPARE(result.at(1).toMap()["model"].toString(),
+                 QString("mistral-small-latest"));
+    }
+
+    // F17: parseRemoteMessages handles assistant content as a chunk list
+    // (thinking + text) in the typed entry shape.
+    void parseRemoteMessagesHandlesChunkContent()
+    {
+        const QJsonObject doc = QJsonDocument::fromJson(
+                    "{\"messages\":["
+                    "{\"type\":\"message.output\",\"role\":\"assistant\","
+                    "\"content\":["
+                    "{\"type\":\"thinking\",\"thinking\":[{\"type\":\"text\",\"text\":\"hmm\"}]},"
+                    "{\"type\":\"text\",\"text\":\"The answer\"}"
+                    "]}]}"
                     ).object();
 
         const QVariantList result = MistralAPI::parseRemoteMessages(doc);
         QCOMPARE(result.count(), 1);
         QCOMPARE(result.at(0).toMap()["content"].toString(),
-                 QString("The answer is 42."));
+                 QString("The answer"));
     }
 
     // F17: messageContentToText handles both string and chunk-list content.

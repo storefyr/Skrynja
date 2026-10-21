@@ -5,6 +5,18 @@ All notable changes to Skrynja will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.1] - 2026-10-21
+Skrynja 0.5.1 — Hotfix: match the live Conversations API response shapes.
+
+### Fixed
+- **Remote conversations list**: the API returns a bare JSON array, not
+  `{"data": [...]}`. Both shapes are now accepted.
+- **Remote messages**: entries use the typed shape (`type: "message.input"` /
+  `"message.output"`) with content directly on the entry, not nested under
+  `outputs`. The parser now reads the correct fields and captures the model
+  name on assistant messages.
+- Added HTTP status and response body logging on fetch failures for diagnosis.
+
 ## [0.5.0] - 2026-10-21
 Skrynja 0.5.0 — New feature: attach remote conversations from Mistral's servers.
 
