@@ -5,6 +5,18 @@ All notable changes to Skrynja will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.9] - 2026-10-21
+Skrynja 0.8.9 — Fix: timeouts prevent "Transcribing..." from hanging forever.
+
+### Fixed
+- Added a 30-second timeout (`m_transcriptionTimer`) for the transcription
+  HTTP request. If the server does not respond in time, the request is
+  aborted and `transcriptionFailed("Transcription timed out")` is emitted.
+- Added a 5-second safety timer (`m_stopTimer`) in `AudioRecorder::stop()`.
+  If `QAudioRecorder` never reaches `StoppedState` (e.g. PulseAudio backend
+  hangs), the `stopped` signal is force-emitted so the UI does not stay
+  in "Transcribing..." forever.
+
 ## [0.8.8] - 2026-10-21
 Skrynja 0.8.8 — Fix: wait for file flush before transcribing.
 

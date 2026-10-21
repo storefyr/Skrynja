@@ -6,7 +6,7 @@ QT += network multimedia
 
 # Version is passed by the spec file (%qmake5 VERSION=%{version})
 isEmpty(VERSION) {
-    VERSION = 0.8.8
+    VERSION = 0.8.9
 }
 DEFINES += APP_VERSION=\\\"$$VERSION\\\"
 

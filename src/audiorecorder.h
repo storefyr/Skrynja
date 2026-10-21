@@ -5,6 +5,8 @@
 #include <QAudioRecorder>
 #include <QAudioEncoderSettings>
 
+class QTimer;
+
 class AudioRecorder : public QObject
 {
     Q_OBJECT
@@ -42,10 +44,12 @@ signals:
 private slots:
     void onStateChanged(QAudioRecorder::State state);
     void onError(QAudioRecorder::Error error);
+    void onStopTimeout();
 
 private:
     QAudioRecorder *m_recorder;
     QString m_outputLocation;
+    QTimer *m_stopTimer;
 };
 
 #endif

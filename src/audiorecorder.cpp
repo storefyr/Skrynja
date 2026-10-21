@@ -3,6 +3,7 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QUrl>
+#include <QTimer>
 
 AudioRecorder::AudioRecorder(QObject *parent)
     : QObject(parent)
@@ -14,6 +15,11 @@ AudioRecorder::AudioRecorder(QObject *parent)
             this, SIGNAL(durationChanged(qint64)));
     connect(m_recorder, SIGNAL(error(QAudioRecorder::Error)),
             this, SLOT(onError(QAudioRecorder::Error)));
+
+    m_stopTimer = new QTimer(this);
+    m_stopTimer->setSingleShot(true);
+    m_stopTimer->setInterval(5000);
+    connect(m_stopTimer, SIGNAL(timeout()), this, SLOT(onStopTimeout()));
 
     QAudioEncoderSettings settings;
     settings.setCodec("audio/x-wav");
@@ -71,7 +77,19 @@ void AudioRecorder::record()
 
 void AudioRecorder::stop()
 {
-    m_recorder->stop();
+    if (m_recorder->state() == QAudioRecorder::RecordingState) {
+        // Safety timer: if 'stopped' never arrives within 5 seconds,
+        // emit it anyway so the UI is not stuck.
+        m_stopTimer->start();
+        m_recorder->stop();
+    }
+}
+
+void AudioRecorder::onStopTimeout()
+{
+    // The recorder never reached StoppedState. Force-emit stopped so the
+    // UI can proceed (the file may be incomplete, but better than hanging).
+    emit stopped();
 }
 
 void AudioRecorder::pause()
@@ -88,6 +106,7 @@ void AudioRecorder::onStateChanged(QAudioRecorder::State state)
 {
     emit recordingChanged();
     if (state == QAudioRecorder::StoppedState) {
+        m_stopTimer->stop();
         emit stopped();
     }
 }

@@ -108,6 +108,8 @@ MistralAPI::MistralAPI(QObject *parent)
     , m_currentReply(nullptr)
     , m_timeoutTimer(new QTimer(this))
     , m_requestTimer(new QTimer(this))
+    , m_transcriptionReply(nullptr)
+    , m_transcriptionTimer(new QTimer(this))
     , m_isBusy(false)
     , m_timedOut(false)
     , m_keyRequired(true)
@@ -125,6 +127,11 @@ MistralAPI::MistralAPI(QObject *parent)
     m_requestTimer->setSingleShot(true);
     connect(m_requestTimer, &QTimer::timeout,
             this, &MistralAPI::sendPendingChatRequest);
+
+    m_transcriptionTimer->setSingleShot(true);
+    m_transcriptionTimer->setInterval(30000);
+    connect(m_transcriptionTimer, &QTimer::timeout,
+            this, &MistralAPI::onTranscriptionTimeout);
 
     // The only provider: Mistral AI. The base URL is fixed; a custom endpoint
     // speaks the OpenAI dialect and cannot serve /v1/conversations.
@@ -915,8 +922,21 @@ void MistralAPI::transcribeAudio(const QString &apiKey, const QString &audioPath
     QNetworkReply *reply = m_networkManager->post(request, multiPart);
     multiPart->setParent(reply);  // deleted with the reply
 
+    m_transcriptionReply = reply;
+    m_transcriptionTimer->start();
+
     connect(reply, &QNetworkReply::finished,
             this, &MistralAPI::onTranscriptionFinished);
+}
+
+void MistralAPI::onTranscriptionTimeout()
+{
+    if (m_transcriptionReply) {
+        m_transcriptionReply->abort();
+    }
+    m_transcriptionReply = nullptr;
+    m_transcriptionTimer->stop();
+    emit transcriptionFailed(tr("Transcription timed out. Try again."));
 }
 
 void MistralAPI::onTranscriptionFinished()
@@ -924,6 +944,11 @@ void MistralAPI::onTranscriptionFinished()
     QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
     if (!reply) {
         return;
+    }
+
+    m_transcriptionTimer->stop();
+    if (m_transcriptionReply == reply) {
+        m_transcriptionReply = nullptr;
     }
 
     const QByteArray body = reply->readAll();

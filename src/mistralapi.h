@@ -148,6 +148,7 @@ private slots:
     void onRemoteMessagesFinished();
     void onRemoteDeleteFinished();
     void onTranscriptionFinished();
+    void onTranscriptionTimeout();
     void onTimeout();
     void sendPendingChatRequest();
 
@@ -160,6 +161,8 @@ private:
     QTimer *m_timeoutTimer;
     // Holds a chat request back, either to space it out or to retry it.
     QTimer *m_requestTimer;
+    QNetworkReply *m_transcriptionReply;
+    QTimer *m_transcriptionTimer;
     // Since the last request actually left, whatever its kind.
     QElapsedTimer m_lastRequestAt;
     bool m_isBusy;
