@@ -803,6 +803,31 @@ private slots:
         QVERIFY(api.throttleDelayMs() > 0);
     }
 
+    // F17: parseRemoteConversations handles the bare-array top-level shape
+    // that the live API returns (not wrapped in {"data": [...]}).
+    void parseRemoteConversationsHandlesBareArray()
+    {
+        const QJsonDocument doc = QJsonDocument::fromJson(
+                    "[{\"id\":\"conv-aaa\",\"name\":\"First\","
+                    "\"model\":\"mistral-small-latest\","
+                    "\"created_at\":\"2026-01-01T10:00:00Z\","
+                    "\"updated_at\":\"2026-01-01T11:00:00Z\"},"
+                    "{\"id\":\"conv-bbb\",\"name\":\"Second\","
+                    "\"model\":\"mistral-large-latest\","
+                    "\"created_at\":\"2026-01-02T10:00:00Z\","
+                    "\"updated_at\":\"2026-01-02T11:00:00Z\"}]");
+        QVERIFY(doc.isArray());
+
+        QJsonObject wrapper;
+        wrapper["data"] = doc.array();
+        const QVariantList result = MistralAPI::parseRemoteConversations(wrapper);
+        QCOMPARE(result.count(), 2);
+        QCOMPARE(result.at(0).toMap()["id"].toString(), QString("conv-aaa"));
+        QCOMPARE(result.at(0).toMap()["name"].toString(), QString("First"));
+        QCOMPARE(result.at(1).toMap()["id"].toString(), QString("conv-bbb"));
+        QCOMPARE(result.at(1).toMap()["name"].toString(), QString("Second"));
+    }
+
     // F17: parseRemoteConversations extracts id, name, model, timestamps
     // from a GET /v1/conversations response (SDK shape: bare array wrapped
     // in {"data": [...]}; live API may return a bare array directly).

@@ -93,7 +93,7 @@ Page {
                     }
 
                     Label {
-                        text: remoteId ? "· " + remoteId.substring(0, 8) : ""
+                        text: remoteId ? "· " + remoteId.substring(0, 13) : ""
                         visible: remoteName === ""
                         color: remoteItem.highlighted ? Theme.secondaryHighlightColor : Theme.secondaryColor
                         font.pixelSize: Theme.fontSizeExtraSmall
