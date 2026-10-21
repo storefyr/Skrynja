@@ -311,8 +311,8 @@ Dialog {
 
             ComboBox {
                 id: modelComboBox
-                label: qsTr("Model")
-                description: qsTr("Select the model to use")
+                label: qsTr("Default model")
+                description: qsTr("Used for new conversations; fixed once created")
                 width: parent.width
                 visible: settingsPage.availableModelsList.length > 0
 

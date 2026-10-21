@@ -3,8 +3,8 @@ import Sailfish.Silica 1.0
 import "../components"
 import "../components/Categories.js" as Categories
 
-// Per-conversation overrides: title, category, model and system prompt.
-// Anything left empty falls back to the global setting.
+// Per-conversation overrides: title, category and system prompt.
+// The model is fixed at creation and cannot be changed here.
 //
 // This is a Page, not a Dialog: it is attached to the chat (one swipe forward)
 // and follows the current conversation. Changes are written when leaving it,
@@ -28,11 +28,7 @@ Page {
     property string loadedTitle: ""
     property string loadedPrompt: ""
     property string loadedCategory: ""
-    property string loadedModel: ""
 
-    // Models the provider serves, read fresh on reload(): the page is reused
-    // for whatever conversation is open.
-    property var modelOptions: [""]
     property var categoryOptions: Categories.all()
 
     onStatusChanged: {
@@ -123,27 +119,27 @@ Page {
                 }
             }
 
+            // The model is fixed at creation (Conversations API locks it
+            // server-side), so it is shown, not chosen.
             SectionHeader {
                 text: qsTr("Model")
             }
-            ComboBox {
-                id: modelCombo
-                width: parent.width
-                label: qsTr("Model for this conversation")
-                description: qsTr("Overrides the default model")
-
-                menu: ContextMenu {
-                    Repeater {
-                        model: conversationSettings.modelOptions
-
-                        MenuItem {
-                            text: modelData === ""
-                                  ? qsTr("Use default (%1)").arg(settingsManager.modelName)
-                                  : modelData
-                            property string modelValue: modelData
-                        }
-                    }
-                }
+            Label {
+                x: Theme.horizontalPageMargin
+                width: parent.width - 2 * Theme.horizontalPageMargin
+                text: conversationManager.conversationModel(loadedId) !== ""
+                      ? conversationManager.conversationModel(loadedId)
+                      : qsTr("Default (%1)").arg(settingsManager.modelName)
+                color: Theme.highlightColor
+                font.pixelSize: Theme.fontSizeSmall
+            }
+            Label {
+                x: Theme.horizontalPageMargin
+                width: parent.width - 2 * Theme.horizontalPageMargin
+                text: qsTr("Fixed when the conversation was created")
+                color: Theme.secondaryColor
+                font.pixelSize: Theme.fontSizeExtraSmall
+                wrapMode: Text.WordWrap
             }
 
             SectionHeader {
@@ -209,8 +205,6 @@ Page {
         loadedTitle = overrides.title || ""
         loadedPrompt = overrides.systemPrompt || ""
         loadedCategory = overrides.category || "other"
-        loadedModel = overrides.model || ""
-        refreshModelOptions()
 
         titleField.text = loadedTitle
         usePromptSwitch.checked = loadedPrompt !== ""
@@ -219,13 +213,6 @@ Page {
         var categoryIndex = categoryOptions.indexOf(loadedCategory)
         categoryCombo.currentIndex = categoryIndex >= 0 ? categoryIndex
                                                         : categoryOptions.length - 1
-
-        var modelIndex = modelOptions.indexOf(loadedModel)
-        modelCombo.currentIndex = modelIndex >= 0 ? modelIndex : 0
-    }
-
-    function refreshModelOptions() {
-        modelOptions = [""].concat(settingsManager.availableModels())
     }
 
     function apply() {
@@ -235,7 +222,6 @@ Page {
 
         var title = titleField.text.trim()
         var prompt = usePromptSwitch.checked ? promptArea.text.trim() : ""
-        var modelValue = modelCombo.currentItem ? modelCombo.currentItem.modelValue : ""
         var category = categoryCombo.currentItem ? categoryCombo.currentItem.categoryValue : ""
 
         if (title !== loadedTitle) {
@@ -243,10 +229,9 @@ Page {
             loadedTitle = title
         }
 
-        if (prompt !== loadedPrompt || modelValue !== loadedModel) {
-            conversationManager.setConversationOverrides(loadedId, modelValue, prompt)
+        if (prompt !== loadedPrompt) {
+            conversationManager.setConversationOverrides(loadedId, prompt)
             loadedPrompt = prompt
-            loadedModel = modelValue
         }
 
         if (category !== "" && category !== loadedCategory) {
@@ -262,11 +247,11 @@ Page {
         }
 
         suggestingTitle = true
-        // Never name a local "model" in QML: it shadows too much. Use the
-        // model this conversation would use for a normal message.
-        var modelId = modelCombo.currentItem && modelCombo.currentItem.modelValue !== ""
-                ? modelCombo.currentItem.modelValue
-                : settingsManager.modelName
+        // Use the model this conversation was created with.
+        var modelId = conversationManager.conversationModel(loadedId)
+        if (modelId === "") {
+            modelId = settingsManager.modelName
+        }
         mistralApi.generateTitle(
                     settingsManager.apiKey,
                     settingsManager.resolveModel(modelId),

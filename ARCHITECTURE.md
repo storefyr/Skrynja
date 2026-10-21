@@ -131,7 +131,9 @@ en mettant à jour le dernier message au fur et à mesure que les chunks arriven
   message repart de zéro via `/restart#stream`
 
 **Méthodes Q_INVOKABLE** (inchangées pour la plupart):
-- `createNewConversation()`, `loadConversation()`, `deleteConversation()` (supprime aussi à distance)
+- `createNewConversation(model)` - Crée une conversation avec un modèle fixé
+  (verrouillé côté serveur par l'API Conversations); `conversationModel(id)` le relit
+- `loadConversation()`, `deleteConversation()` (supprime aussi à distance)
 - `saveCurrentConversation()`, `getConversationsList()`, `getConversationDetails()`
 - `setRemoteConversationId()`, `remoteConversationId()` — suivi de l'id distant
 - `markConversationDirty()` / `isConversationDirty()` — gestion des réponses annulées
@@ -159,7 +161,8 @@ est réduit à :
 
 **Propriétés Q_PROPERTY** (allégées par rapport à SailCat):
 - `apiKey` - Clé API Mistral (unique, stockée brouillée)
-- `modelName` - Modèle sélectionné (fixé à la création de chaque conversation)
+- `modelName` - Modèle par défaut, choisi à la création de chaque conversation
+  et verrouillé côté serveur pour toute sa durée de vie
 - `webSearch` - Active la recherche web (outil `web_search`)
 - `temperature`, `maxTokens` - Paramètres de génération (par requête, via `completion_args`)
 - `systemPrompt` - Prompt système (envoyé comme `instructions` à la création)

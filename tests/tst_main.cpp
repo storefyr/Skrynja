@@ -860,10 +860,9 @@ private slots:
 
         QString id = manager.currentConversationId();
         QVariantMap empty = manager.getConversationOverrides(id);
-        QCOMPARE(empty["model"].toString(), QString());
         QCOMPARE(empty["systemPrompt"].toString(), QString());
 
-        manager.setConversationOverrides(id, "mistral-large-latest", " talk like a pirate ");
+        manager.setConversationOverrides(id, " talk like a pirate ");
         manager.currentConversation()->addUserMessage("ahoy");
         manager.saveCurrentConversation();
 
@@ -872,8 +871,39 @@ private slots:
         manager.loadConversation(id);
 
         QVariantMap overrides = manager.getConversationOverrides(id);
-        QCOMPARE(overrides["model"].toString(), QString("mistral-large-latest"));
         QCOMPARE(overrides["systemPrompt"].toString(), QString("talk like a pirate"));
+    }
+
+    void modelIsFixedAtCreation()
+    {
+        ConversationManager manager;
+        manager.purgeAllConversations();
+
+        // Created with an explicit model
+        manager.createNewConversation("mistral-large-latest");
+        const QString id = manager.currentConversationId();
+        QCOMPARE(manager.conversationModel(id), QString("mistral-large-latest"));
+
+        // setConversationOverrides must not change it
+        manager.setConversationOverrides(id, "you are a pirate");
+        QCOMPARE(manager.conversationModel(id), QString("mistral-large-latest"));
+
+        // A second conversation gets its own model.
+        manager.createNewConversation("mistral-small-latest");
+        const QString id2 = manager.currentConversationId();
+        QCOMPARE(manager.conversationModel(id2), QString("mistral-small-latest"));
+
+        // Survives a save + reload cycle
+        manager.saveCurrentConversation();
+        manager.loadConversation(id);
+        QCOMPARE(manager.conversationModel(id), QString("mistral-large-latest"));
+
+        // A conversation created with no model argument reports empty: the
+        // caller is expected to resolve the global default before the first
+        // turn and store it on the conversation.
+        manager.createNewConversation();
+        QCOMPARE(manager.conversationModel(manager.currentConversationId()),
+                 QString());
     }
 
     void listedConversationsCarryNoReservedRole()
@@ -884,7 +914,7 @@ private slots:
         manager.currentConversation()->addUserMessage("hello");
         manager.saveCurrentConversation();
         manager.setConversationOverrides(manager.currentConversationId(),
-                                         "mistral-large-latest", QString());
+                                         QString());
 
         // These objects are appended to a QML ListModel. A role named "model"
         // shadows the delegate's own model object and turns every other lookup

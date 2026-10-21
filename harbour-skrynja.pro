@@ -38,7 +38,6 @@ DISTFILES += qml/harbour-skrynja.qml \
     qml/pages/SettingsPage.qml \
     qml/pages/StatsPage.qml \
     qml/components/MessageBubble.qml \
-    qml/components/ModelSelector.qml \
     qml/components/TypingIndicator.qml \
     qml/components/CountUpLabel.qml \
     qml/components/RatioDonut.qml \

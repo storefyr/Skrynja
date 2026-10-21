@@ -446,25 +446,6 @@ bool SettingsManager::hasApiKey() const
     return !m_apiKey.isEmpty();
 }
 
-QString SettingsManager::nextMessageModel() const
-{
-    return m_nextMessageModel;
-}
-
-void SettingsManager::setNextMessageModel(const QString &model)
-{
-    if (m_nextMessageModel != model) {
-        m_nextMessageModel = model;
-        saveSettings();
-        emit nextMessageModelChanged();
-    }
-}
-
-void SettingsManager::resetNextMessageModel()
-{
-    setNextMessageModel(QString());
-}
-
 bool SettingsManager::isFirstLaunch() const
 {
     // If the flag is set and true, never show again
@@ -508,7 +489,7 @@ void SettingsManager::loadSettings()
     // the way. Remove the leftover entry.
     m_settings.remove("useCustomKey");
 
-    m_nextMessageModel = m_settings.value("nextMessageModel", "").toString();
+    m_settings.remove("nextMessageModel");
     m_language = m_settings.value("language", "en").toString();
     m_temperature = m_settings.value("generation/temperature", -1.0).toDouble();
     m_maxTokens = m_settings.value("generation/maxTokens", 0).toInt();
@@ -622,11 +603,7 @@ void SettingsManager::saveSettings()
 {
     persistApiKey();
     m_settings.setValue("modelName", m_modelName);
-    if (!m_nextMessageModel.isEmpty()) {
-        m_settings.setValue("nextMessageModel", m_nextMessageModel);
-    } else {
-        m_settings.remove("nextMessageModel");
-    }
+    m_settings.remove("nextMessageModel");
     m_settings.setValue("language", m_language);
     m_settings.setValue("generation/temperature", m_temperature);
     m_settings.setValue("generation/maxTokens", m_maxTokens);

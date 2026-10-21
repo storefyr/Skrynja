@@ -45,7 +45,9 @@ public:
     int conversationCount() const { return m_conversations.count(); }
     QString streamingConversationId() const { return m_streamingConversationId; }
 
-    Q_INVOKABLE void createNewConversation();
+    // The model is chosen here and fixed for the life of the conversation:
+    // the Conversations API locks it at creation time.
+    Q_INVOKABLE void createNewConversation(const QString &model = QString());
     Q_INVOKABLE void loadConversation(const QString &conversationId);
     Q_INVOKABLE void deleteConversation(const QString &conversationId);
     Q_INVOKABLE void renameConversation(const QString &conversationId, const QString &newTitle);
@@ -78,11 +80,14 @@ public:
     Q_INVOKABLE QString conversationDigest(const QString &conversationId) const;
     Q_INVOKABLE QString exportConversation(const QString &conversationId) const;
 
-    // Per-conversation overrides. An empty value means "use the global setting".
+    // Per-conversation overrides. The model is not one: it is fixed at
+    // creation (see createNewConversation). Only the system prompt can
+    // still be overridden per conversation.
     Q_INVOKABLE QVariantMap getConversationOverrides(const QString &conversationId) const;
     Q_INVOKABLE void setConversationOverrides(const QString &conversationId,
-                                              const QString &model,
                                               const QString &systemPrompt);
+    // The model this conversation was created with, empty before creation.
+    Q_INVOKABLE QString conversationModel(const QString &conversationId) const;
 
     // The remote conversation id of the current conversation, empty when the
     // remote conversation has not been created yet. Pass it to

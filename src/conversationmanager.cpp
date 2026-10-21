@@ -493,7 +493,7 @@ void ConversationManager::loadAllConversations()
 
 // ---------------------------------------------------------------- lifecycle
 
-void ConversationManager::createNewConversation()
+void ConversationManager::createNewConversation(const QString &model)
 {
     if (!m_currentConversationId.isEmpty()) {
         saveCurrentConversation();
@@ -503,6 +503,9 @@ void ConversationManager::createNewConversation()
     newConv.id = generateConversationId();
     newConv.title = ""; // Generated from the first exchange
     newConv.provider = Providers::ID;
+    // The model is locked at creation on the Conversations API. Empty means
+    // "whatever the global default is" — resolved by the caller.
+    newConv.model = model.trimmed();
     newConv.createdAt = QDateTime::currentMSecsSinceEpoch();
     newConv.updatedAt = newConv.createdAt;
 
@@ -761,7 +764,6 @@ QVariantMap ConversationManager::getConversationOverrides(const QString &convers
 }
 
 void ConversationManager::setConversationOverrides(const QString &conversationId,
-                                                   const QString &model,
                                                    const QString &systemPrompt)
 {
     Conversation *conv = findConversation(conversationId);
@@ -769,10 +771,16 @@ void ConversationManager::setConversationOverrides(const QString &conversationId
         return;
     }
 
-    conv->model = model.trimmed();
+    // The model is deliberately not touched: it is fixed at creation.
     conv->systemPrompt = systemPrompt.trimmed();
     markDirty(conversationId);
     saveDirtyConversations();
+}
+
+QString ConversationManager::conversationModel(const QString &conversationId) const
+{
+    const Conversation *conv = findConversation(conversationId);
+    return conv ? conv->model : QString();
 }
 
 // ---------------------------------------------------------------- listing

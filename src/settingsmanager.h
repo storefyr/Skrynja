@@ -14,7 +14,6 @@ class SettingsManager : public QObject
     // else. The key, the default model and the model cache are single entries.
     Q_PROPERTY(QString apiKey READ apiKey WRITE setApiKey NOTIFY apiKeyChanged)
     Q_PROPERTY(QString modelName READ modelName WRITE setModelName NOTIFY modelNameChanged)
-    Q_PROPERTY(QString nextMessageModel READ nextMessageModel WRITE setNextMessageModel NOTIFY nextMessageModelChanged)
     Q_PROPERTY(QString language READ language WRITE setLanguage NOTIFY languageChanged)
     Q_PROPERTY(bool hasApiKey READ hasApiKey NOTIFY hasApiKeyChanged)
     Q_PROPERTY(double temperature READ temperature WRITE setTemperature NOTIFY temperatureChanged)
@@ -37,9 +36,6 @@ public:
 
     QString modelName() const;
     void setModelName(const QString &model);
-
-    QString nextMessageModel() const;
-    void setNextMessageModel(const QString &model);
 
     QString language() const;
     void setLanguage(const QString &lang);
@@ -93,7 +89,6 @@ public:
     Q_INVOKABLE void clearApiKey();
     Q_INVOKABLE bool isFirstLaunch() const;
     Q_INVOKABLE void setFirstLaunchComplete();
-    Q_INVOKABLE void resetNextMessageModel();
 
     // Saved prompt library. Each entry is a map with "title" and "text".
     Q_INVOKABLE void addSavedPrompt(const QString &title, const QString &text);
@@ -110,7 +105,6 @@ public:
 signals:
     void apiKeyChanged();
     void modelNameChanged();
-    void nextMessageModelChanged();
     void languageChanged();
     void hasApiKeyChanged();
     void temperatureChanged();
@@ -128,7 +122,6 @@ private:
     QSettings m_settings;
     QString m_apiKey;
     QString m_modelName;
-    QString m_nextMessageModel;
     QString m_language;
     double m_temperature;
     int m_maxTokens;

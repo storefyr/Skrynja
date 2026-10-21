@@ -324,7 +324,9 @@ Page {
             MenuItem {
                 text: qsTr("New conversation")
                 onClicked: {
-                    conversationManager.createNewConversation()
+                    // The model is fixed at creation: pick the global default.
+                    conversationManager.createNewConversation(
+                                settingsManager.resolveModel(settingsManager.modelName))
                     historyPage.openChat()
                 }
             }

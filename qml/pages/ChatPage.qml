@@ -17,7 +17,6 @@ Page {
     property int pendingScrollIndex: -1
     property string attachedImagePath: ""
     property bool titleRequested: false
-    property string lastUsedModel: ""
     // Server-side tool currently running (e.g. web_search), empty when idle.
     property string toolName: ""
 
@@ -27,21 +26,20 @@ Page {
     property int retryAttempt: 0
     property int retryAttempts: 0
 
-    // Mirrors of the per-conversation overrides. Kept as properties rather
-    // than read on demand so bindings actually re-evaluate when they change.
-    property string conversationModelOverride: ""
+    // Per-conversation system prompt override. Kept as a property rather
+    // than read on demand so bindings actually re-evaluate when it changes.
     property string conversationPromptOverride: ""
 
-    // A one-shot model chosen for the next message wins over the
-    // per-conversation override, which wins over the global setting.
-    readonly property string requestedModel:
-        settingsManager.nextMessageModel !== "" ? settingsManager.nextMessageModel
-        : (conversationModelOverride !== "" ? conversationModelOverride
-                                            : settingsManager.modelName)
+    // The model is fixed when the conversation is created (Conversations API
+    // locks it server-side). Empty before creation: the global default is
+    // used for the first turn and then stored on the conversation.
+    readonly property string activeModel: {
+        var m = conversationManager.conversationModel(
+                    conversationManager.currentConversationId())
+        return m !== "" ? m : settingsManager.resolveModel(settingsManager.modelName)
+    }
 
     readonly property bool providerReady: settingsManager.hasApiKey
-    readonly property string activeModel:
-        settingsManager.resolveModel(requestedModel)
 
     onStatusChanged: {
         if (status === PageStatus.Active) {
@@ -91,10 +89,8 @@ Page {
 
         header: PageHeader {
             title: "Skrynja"
-            // Which model is going to answer. A trailing asterisk marks a
-            // model pinned to this conversation.
-            description: chatPage.conversationModelOverride !== ""
-                            ? chatPage.activeModel + " *" : chatPage.activeModel
+            // Which model is answering this conversation.
+            description: chatPage.activeModel
         }
 
         // The two pulleys used to carry the same seven entries, which made both
@@ -371,14 +367,6 @@ Page {
                 }
                 spacing: Theme.paddingMedium
 
-                // Quick model switcher
-                IconButton {
-                    id: modelButton
-                    anchors.verticalCenter: parent.verticalCenter
-                    icon.source: "image://theme/icon-m-levels"
-                    onClicked: pageStack.push(modelSelector)
-                }
-
                 // Image attachment (vision models only)
                 IconButton {
                     id: attachButton
@@ -398,7 +386,7 @@ Page {
 
                 TextArea {
                     id: messageInput
-                    width: parent.width - modelButton.width - sendButton.width - parent.spacing * 2
+                    width: parent.width - sendButton.width - parent.spacing * 2
                            - (attachButton.visible ? attachButton.width + parent.spacing : 0)
                     height: Math.min(implicitHeight, Theme.itemSizeSmall * 2.5)
                     placeholderText: qsTr("Type a message...")
@@ -773,7 +761,6 @@ Page {
     function refreshOverrides() {
         var overrides = conversationManager.getConversationOverrides(
                             conversationManager.currentConversationId())
-        conversationModelOverride = overrides.model || ""
         conversationPromptOverride = overrides.systemPrompt || ""
     }
 
@@ -789,16 +776,15 @@ Page {
             return
         }
 
-        lastUsedModel = activeModel
         autoScroll = true
         // Recorded before the call: the token statistics are attributed in C++
-        conversationManager.setActiveModel(lastUsedModel)
+        conversationManager.setActiveModel(activeModel)
 
         // The Conversations API is stateful: the first turn creates the remote
         // conversation (model, system prompt and web search are locked there),
         // later turns only append the new message.
         mistralApi.sendMessage(settingsManager.apiKey,
-                               lastUsedModel,
+                               activeModel,
                                effectiveSystemPrompt(),
                                content,
                                conversationManager.pendingUserImagePath(),
@@ -849,7 +835,9 @@ Page {
     }
 
     function startNewConversation() {
-        conversationManager.createNewConversation()
+        // The model is fixed at creation: pick the global default now.
+        conversationManager.createNewConversation(
+                    settingsManager.resolveModel(settingsManager.modelName))
     }
 
     function openPinned() {
@@ -883,22 +871,4 @@ Page {
         exportNotification.publish()
     }
 
-
-    ModelSelector {
-        id: modelSelector
-        currentModel: chatPage.activeModel
-
-        // Acts on this conversation rather than on the global default: the
-        // button sits next to its input.
-        onModelSelected: function(selectedModel) {
-            conversationManager.setConversationOverrides(
-                        conversationManager.currentConversationId(),
-                        selectedModel, chatPage.conversationPromptOverride)
-            chatPage.refreshOverrides()
-            exportNotification.previewSummary =
-                    qsTr("This conversation now uses %1").arg(selectedModel)
-            exportNotification.previewBody = ""
-            exportNotification.publish()
-        }
-    }
 }

@@ -24,7 +24,7 @@ specs in `docs/features/` remain as historical reference; the ones marked **remo
 | F7 | Remote deletion: `DELETE /v1/conversations/{id}` on conversation delete / purge | — | todo |
 | F8 | Remove multi-provider: `providers.cpp` trimmed to Mistral, provider picker and per-provider keys removed from Settings/UI | — | done |
 | F9 | Remove context-limit trimming (`buildApiMessages`, `trimmedMessageCount`, trim indicator) | — | done (unreleased) |
-| F10 | Model fixed per conversation; remove `nextMessageModel` and per-conversation model override | — | todo |
+| F10 | Model fixed per conversation; remove `nextMessageModel` and per-conversation model override | — | done |
 | F11 | Remove edit & regenerate (entry-level restart deferred) | — | done (unreleased) |
 | F12 | Privacy notice in UI + docs (history lives on Mistral's servers) | — | todo |
 | F13 | Unit tests: `%23stream` URL building, SSE event parser, reconcile, dirty/restart | — | done (unreleased) |
