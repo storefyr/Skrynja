@@ -148,9 +148,7 @@ QUrl MistralAPI::endpoint(const QString &path) const
     if (m_baseUrl.isEmpty()) {
         return QUrl();
     }
-    // FromEncoded: "#stream" must reach the wire as %23stream. A literal '#'
-    // would be parsed as a fragment and stripped by QNetworkAccessManager.
-    return QUrl::fromEncoded(m_baseUrl.toUtf8() + path.toUtf8());
+    return QUrl(m_baseUrl + path);
 }
 
 void MistralAPI::prepareRequest(QNetworkRequest &request, const QString &apiKey) const
@@ -176,11 +174,10 @@ QString MistralAPI::error() const
 
 QString MistralAPI::turnPath(const QString &remoteConversationId) const
 {
-    // %23, not '#': see endpoint().
     if (remoteConversationId.isEmpty()) {
-        return QString("/conversations%23stream");
+        return QString("/conversations");
     }
-    return QString("/conversations/%1%23stream").arg(remoteConversationId);
+    return QString("/conversations/%1").arg(remoteConversationId);
 }
 
 QByteArray MistralAPI::buildTurnBody(const QString &modelName,
@@ -238,6 +235,10 @@ QByteArray MistralAPI::buildTurnBody(const QString &modelName,
     QJsonArray inputs;
     inputs.append(input);
     requestBody["inputs"] = inputs;
+    // Streaming is a body parameter, not a URL fragment: Mistral's docs
+    // show "#stream" as endpoint notation, but the wire path is plain
+    // /v1/conversations with "stream": true in the JSON body.
+    requestBody["stream"] = true;
 
     if (isCreate) {
         // Create-time only: model, instructions and tools are locked here.

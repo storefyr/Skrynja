@@ -16,10 +16,10 @@
 
 // Talks to Mistral's Conversations API (/v1/conversations), the only Mistral
 // API that offers the web_search tool. The API is stateful: the first message
-// of a conversation creates it (POST /v1/conversations#stream) and carries
-// the model, the system prompt (instructions) and the tools; later messages
-// only append (POST /v1/conversations/{id}#stream). The class keeps its name
-// because the app started Mistral-only.
+// of a conversation creates it (POST /v1/conversations with "stream": true)
+// and carries the model, the system prompt (instructions) and the tools;
+// later messages only append (POST /v1/conversations/{id} with "stream": true).
+// The class keeps its name because the app started Mistral-only.
 class MistralAPI : public QObject
 {
     Q_OBJECT
@@ -163,9 +163,7 @@ private:
 
     void setIsBusy(bool busy);
     void setError(const QString &error);
-    // Endpoint URL, or an invalid one when no base URL is configured. The
-    // path may contain %23: "#stream" is a URL fragment, and QNetworkAccessManager
-    // would strip a literal '#' before sending, so it must stay encoded.
+    // Endpoint URL, or an invalid one when no base URL is configured.
     QUrl endpoint(const QString &path) const;
     // Content type, bearer token when there is one, TLS pinning.
     void prepareRequest(QNetworkRequest &request, const QString &apiKey) const;

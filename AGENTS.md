@@ -38,9 +38,10 @@ These are non-negotiable. Violating them produces code that does not compile or 
 2. **QML: QtQuick 2.0 + Sailfish.Silica 1.0.** No QtQuick.Controls, no ToolTip, no `additionalContent`, no Qt Labs modules. Only Silica components. Past crashes were caused by exactly this (see git log).
 3. **Harbour rules.** App name keeps the `harbour-` prefix. Only Harbour-allowed imports (Sailfish.Silica, Sailfish.Pickers, QtQuick, QtQuick.Layouts, Nemo.Configuration, Nemo.Notifications). `Sailfish.TransferEngine` and `Sailfish.Share` are NOT allowed.
 4. **JavaScript in QML is ES5.** No arrow functions, no `let`/`const` in older QML contexts, no template literals.
-5. **`#stream` in URLs is a fragment, not a path.** `QUrl("https://api.mistral.ai/v1/conversations#stream")`
-   would send the request without `#stream`. Always percent-encode it (`%23stream`) or set the
-   request target manually. The unit tests cover this.
+5. **Conversations API streaming is a body parameter, not a URL fragment.** Mistral's docs write
+   `/v1/conversations#stream` as endpoint notation, but the wire path is plain `/v1/conversations`
+   with `"stream": true` in the JSON body (plus `Accept: text/event-stream`). Do NOT put `#stream`
+   or `%23stream` in the URL — the server answers 404. The unit tests cover this.
 6. **SailJail sandboxing is mandatory** (since Sailfish OS 4.4.0). The desktop file must have an
    `[X-Sailjail]` section with `Permissions=`, `OrganizationName=org.skrynja` and
    `ApplicationName=Skrynja`. `QStandardPaths::AppDataLocation` / `AppConfigLocation` always
@@ -51,8 +52,9 @@ These are non-negotiable. Violating them produces code that does not compile or 
 ## Architecture
 
 - `src/mistralapi.{h,cpp}` — HTTP + SSE streaming to the Conversations API. Endpoints:
-  `POST /v1/conversations#stream` (create), `POST /v1/conversations/{id}#stream` (append),
-  `POST /v1/conversations/{id}/restart#stream` (after a cancelled answer),
+  `POST /v1/conversations` with `"stream": true` (create),
+  `POST /v1/conversations/{id}` with `"stream": true` (append),
+  `POST /v1/conversations/{id}/restart` with `"stream": true` (after a cancelled answer),
   `GET /v1/conversations/{id}/messages` (reconcile before retry),
   `DELETE /v1/conversations/{id}` (delete), `GET /v1/models` (catalogue).
   Signals: `streamingResponse(content)`, `responseCompleted()`, `messageSent()`,
@@ -127,14 +129,16 @@ New source files must be added to `harbour-skrynja.pro` (SOURCES/HEADERS) and ne
 ## Mistral Conversations API Quick Reference
 
 ```
-POST https://api.mistral.ai/v1/conversations%23stream
+POST https://api.mistral.ai/v1/conversations
 Authorization: Bearer <key>
+Accept: text/event-stream
 {"model": "...", "instructions": "...", "tools": [{"type": "web_search"}],
+ "stream": true,
  "inputs": [{"object": "entry", "type": "message.input", "role": "user", "content": "..."}],
  "completion_args": {"temperature": 0.7}}
 
-POST https://api.mistral.ai/v1/conversations/{id}%23stream   (append; inputs + completion_args only)
-POST https://api.mistral.ai/v1/conversations/{id}/restart%23stream  (from_entry_id; returns a NEW id)
+POST https://api.mistral.ai/v1/conversations/{id}          (append; "stream": true, inputs + completion_args only)
+POST https://api.mistral.ai/v1/conversations/{id}/restart  ("stream": true; from_entry_id; returns a NEW id)
 GET  https://api.mistral.ai/v1/conversations/{id}/messages   (reconcile)
 DELETE https://api.mistral.ai/v1/conversations/{id}
 ```

@@ -5,6 +5,17 @@ All notable changes to Skrynja will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] - 2026-10-21
+Skrynja 0.4.1 — Hotfix: Conversations API streaming URL was wrong (404 on every send).
+
+### Fixed
+- **Streaming endpoint path.** Mistral's docs write `/v1/conversations#stream` as endpoint
+  notation, but `#stream` is not a URL fragment — it is their way of naming the streaming
+  variant of the same path. The wire path is plain `POST /v1/conversations` with
+  `"stream": true` in the JSON body (plus `Accept: text/event-stream`). The old code sent
+  requests to `/v1/conversations%23stream`, which the server answered with 404 Not Found.
+  `turnPath()` now returns plain paths and `buildTurnBody()` always sets `"stream": true`.
+
 ## [0.4.0] - 2026-10-21
 Skrynja 0.4.0 — SailJail sandboxing (mandatory since Sailfish OS 4.4.0).
 

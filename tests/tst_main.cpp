@@ -451,20 +451,33 @@ private slots:
         QVERIFY(api.m_streamDone);
     }
 
-    // "#stream" is a URL fragment: QUrl would strip a literal '#', so the
-    // path must stay percent-encoded.
-    void turnPathEncodesStreamFragment()
+    // The Conversations API uses plain paths; streaming is a body parameter
+    // ("stream": true), not a URL fragment. Mistral's docs write "#stream"
+    // as endpoint notation, but the wire path is just /v1/conversations.
+    void turnPathIsPlainConversations()
     {
         MistralAPI api;
-        QCOMPARE(api.turnPath(QString()), QString("/conversations%23stream"));
-        QCOMPARE(api.turnPath("abc-123"), QString("/conversations/abc-123%23stream"));
+        QCOMPARE(api.turnPath(QString()), QString("/conversations"));
+        QCOMPARE(api.turnPath("abc-123"), QString("/conversations/abc-123"));
 
         const QUrl url = api.endpoint(api.turnPath("abc-123"));
         QVERIFY(url.isValid());
-        QCOMPARE(url.path(), QString("/v1/conversations/abc-123#stream"));
-        QVERIFY(!url.hasFragment() || url.fragment() == "stream");
-        // The encoded form survives a round trip through the wire format
-        QVERIFY(url.toEncoded().contains("%23stream"));
+        QCOMPARE(url.path(), QString("/v1/conversations/abc-123"));
+        QVERIFY(!url.hasFragment());
+        QVERIFY(!url.toEncoded().contains("%23"));
+    }
+
+    // The request body must carry "stream": true so the server answers with
+    // SSE instead of a single JSON response.
+    void buildTurnBodyHasStreamTrue()
+    {
+        MistralAPI api;
+        const QByteArray body = api.buildTurnBody("mistral-small-latest",
+                                                  QString(), "hello",
+                                                  QString(), false,
+                                                  true, -1.0, 0);
+        const QJsonObject obj = QJsonDocument::fromJson(body).object();
+        QCOMPARE(obj["stream"].toBool(), true);
     }
 
     // Create carries model, instructions and tools; append carries only the
