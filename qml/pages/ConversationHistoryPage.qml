@@ -171,7 +171,8 @@ Page {
                     text: qsTr("Delete")
                     onClicked: {
                         conversationItem.remorseAction(qsTr("Deleting"), function() {
-                            conversationManager.deleteConversation(model.id)
+                            conversationManager.deleteConversationWithRemote(
+                                        model.id, settingsManager.apiKey)
                             refreshList()
                         })
                     }
@@ -298,7 +299,8 @@ Page {
                 text: qsTr("Purge all conversations")
                 onClicked: {
                     remorse.execute(qsTr("Purging all conversations"), function() {
-                        conversationManager.purgeAllConversations()
+                        conversationManager.purgeAllConversationsWithRemote(
+                                    settingsManager.apiKey)
                         refreshList()
                     })
                 }

@@ -56,6 +56,12 @@ public:
     Q_INVOKABLE void createNewConversation(const QString &model = QString());
     Q_INVOKABLE void loadConversation(const QString &conversationId);
     Q_INVOKABLE void deleteConversation(const QString &conversationId);
+    // F7: Deletes a conversation both locally and on Mistral's servers (when
+    // the conversation has a remote id and an API key is available). The
+    // remote deletion is fire-and-forget: the local copy is removed
+    // immediately regardless of the server outcome.
+    Q_INVOKABLE void deleteConversationWithRemote(const QString &conversationId,
+                                                  const QString &apiKey);
     Q_INVOKABLE void renameConversation(const QString &conversationId, const QString &newTitle);
     Q_INVOKABLE void updateCurrentConversationTitle(const QString &newTitle);
     Q_INVOKABLE void updateCurrentConversationCategory(const QString &category);
@@ -70,6 +76,9 @@ public:
     Q_INVOKABLE qint64 getStorageSize() const;
     Q_INVOKABLE QString getStorageSizeFormatted() const;
     Q_INVOKABLE void purgeAllConversations();
+    // F7: like purgeAllConversations but also deletes every remote
+    // conversation on Mistral's servers first.
+    Q_INVOKABLE void purgeAllConversationsWithRemote(const QString &apiKey);
     Q_INVOKABLE QVariantMap getStatistics() const;
     Q_INVOKABLE QVariantMap getConversationStatistics(const QString &conversationId) const;
     Q_INVOKABLE QVariantMap getFunStats() const;

@@ -743,6 +743,21 @@ void ConversationManager::deleteConversation(const QString &conversationId)
     }
 }
 
+void ConversationManager::deleteConversationWithRemote(const QString &conversationId,
+                                                       const QString &apiKey)
+{
+    // Capture the remote id before the local copy is destroyed.
+    const Conversation *conv = findConversation(conversationId);
+    const QString remoteId = conv ? conv->remoteConversationId : QString();
+
+    deleteConversation(conversationId);
+
+    // F7: also delete on the server so auto-sync does not bring it back.
+    if (!remoteId.isEmpty() && m_api && !apiKey.isEmpty()) {
+        m_api->deleteRemoteConversation(apiKey, remoteId);
+    }
+}
+
 void ConversationManager::renameConversation(const QString &conversationId, const QString &newTitle)
 {
     Conversation *conv = findConversation(conversationId);
@@ -1080,6 +1095,20 @@ void ConversationManager::purgeAllConversations()
     createNewConversation();
 
     emit conversationCountChanged();
+}
+
+void ConversationManager::purgeAllConversationsWithRemote(const QString &apiKey)
+{
+    // F7: delete every remote conversation on the server first, so
+    // auto-sync does not bring them back after the local purge.
+    if (m_api && !apiKey.isEmpty()) {
+        for (const Conversation &conv : m_conversations) {
+            if (!conv.remoteConversationId.isEmpty()) {
+                m_api->deleteRemoteConversation(apiKey, conv.remoteConversationId);
+            }
+        }
+    }
+    purgeAllConversations();
 }
 
 // ---------------------------------------------------------------- pins & export

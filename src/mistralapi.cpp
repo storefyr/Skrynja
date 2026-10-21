@@ -581,6 +581,55 @@ void MistralAPI::onRemoteMessagesFinished()
     emit remoteMessagesFetched(remoteId, messages);
 }
 
+void MistralAPI::deleteRemoteConversation(const QString &apiKey,
+                                          const QString &remoteConversationId)
+{
+    if (apiKey.isEmpty() && m_keyRequired) {
+        emit remoteConversationDeleteFailed(remoteConversationId);
+        return;
+    }
+    if (m_baseUrl.isEmpty() || remoteConversationId.isEmpty()) {
+        emit remoteConversationDeleteFailed(remoteConversationId);
+        return;
+    }
+
+    QNetworkRequest request(endpoint(
+                QString("/conversations/%1").arg(remoteConversationId)));
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    prepareRequest(request, apiKey);
+
+    noteRequestSent();
+    QNetworkReply *reply = m_networkManager->deleteResource(request);
+    reply->setProperty("remoteConversationId", remoteConversationId);
+
+    connect(reply, &QNetworkReply::finished,
+            this, &MistralAPI::onRemoteDeleteFinished);
+}
+
+void MistralAPI::onRemoteDeleteFinished()
+{
+    QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
+    if (!reply)
+        return;
+
+    const QString remoteId = reply->property("remoteConversationId").toString();
+    const int httpStatus = reply->attribute(
+                QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    const QByteArray body = reply->readAll();
+    reply->deleteLater();
+
+    // 404 means the conversation is already gone server-side — that counts
+    // as success for our purposes.
+    if (reply->error() == QNetworkReply::NoError || httpStatus == 404) {
+        emit remoteConversationDeleted(remoteId);
+        return;
+    }
+
+    qWarning() << "Remote conversation delete failed: HTTP" << httpStatus
+               << reply->errorString() << "body:" << body.left(500);
+    emit remoteConversationDeleteFailed(remoteId);
+}
+
 QVariantList MistralAPI::parseRemoteConversations(const QJsonObject &doc)
 {
     // GET /v1/conversations returns {"data": [...], "has_more": bool, ...}.

@@ -67,6 +67,11 @@ public:
     // or remoteMessagesFetchFailed(id).
     Q_INVOKABLE void fetchRemoteMessages(const QString &apiKey,
                                          const QString &remoteConversationId);
+    // F7: Deletes a remote conversation on Mistral's servers
+    // (DELETE /v1/conversations/{id}). Emits remoteConversationDeleted(id)
+    // or remoteConversationDeleteFailed(id).
+    Q_INVOKABLE void deleteRemoteConversation(const QString &apiKey,
+                                              const QString &remoteConversationId);
     // Uploads an image to Mistral's Files API (POST /v1/files, multipart)
     // so the turn can reference it by file id instead of carrying base64.
     // Emits imageUploaded(fileId) or imageUploadFailed().
@@ -111,6 +116,9 @@ signals:
     void remoteMessagesFetched(const QString &remoteConversationId,
                                const QVariantList &messages);
     void remoteMessagesFetchFailed(const QString &remoteConversationId);
+    // F7: remote conversation deletion result.
+    void remoteConversationDeleted(const QString &remoteConversationId);
+    void remoteConversationDeleteFailed(const QString &remoteConversationId);
     // A file upload finished: the id to reference in the next turn.
     void imageUploaded(const QString &fileId);
     void imageUploadFailed();
@@ -128,6 +136,7 @@ private slots:
     void onImageUploadFinished();
     void onRemoteConversationsFinished();
     void onRemoteMessagesFinished();
+    void onRemoteDeleteFinished();
     void onTimeout();
     void sendPendingChatRequest();
 

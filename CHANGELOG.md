@@ -5,6 +5,19 @@ All notable changes to Skrynja will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-10-21
+Skrynja 0.7.0 — Feature (F7): delete conversations on the server too.
+
+### Added
+- **Remote deletion**: when a conversation is deleted locally, it is also
+  deleted on Mistral's servers (`DELETE /v1/conversations/{id}`) when the
+  conversation has a remote id and an API key is available. This prevents
+  auto-sync from bringing the conversation back on next startup.
+- **Purge all** now also deletes all remote conversations on the server.
+- The remote deletion is fire-and-forget: the local copy is removed
+  immediately regardless of the server outcome. A 404 (already gone) counts
+  as success.
+
 ## [0.6.1] - 2026-10-21
 Skrynja 0.6.1 — Feature: automatic remote conversation sync.
 
