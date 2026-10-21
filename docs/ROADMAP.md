@@ -32,6 +32,7 @@ specs in `docs/features/` remain as historical reference; the ones marked **remo
 | F15 | Reasoning models: `content` arrives as a chunk list (thinking + text) — parse and render both | — | done |
 | F16 | SailJail: `[X-Sailjail]` desktop section, sandboxed QSettings paths, remove homePath fallbacks, org name `org.skrynja` | — | done (v0.4.0) |
 | F17 | Attach remote conversation: `GET /v1/conversations` list, `GET /v1/conversations/{id}/messages` fetch, UI page, local conv keeps remote id | — | done (v0.5.0) |
+| F17b | Bulk attach: "Attach all" menu on remote page, sequential fetch+attach with progress | — | done (v0.6.0) |
 
 ## Removed in the fork
 

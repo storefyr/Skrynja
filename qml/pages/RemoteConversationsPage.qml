@@ -8,10 +8,32 @@ Page {
     property bool loadingMessages: false
     property string pendingRemoteId: ""
     property string errorMessage: ""
+    property var attachQueue: []
+    property int attachTotal: 0
+    property int attachDone: 0
 
     SilicaListView {
         id: remoteList
         anchors.fill: parent
+
+        PullDownMenu {
+            MenuItem {
+                text: remotePage.attachQueue.length > 0
+                      ? qsTr("Attaching %1 of %2...").arg(remotePage.attachDone).arg(remotePage.attachTotal)
+                      : qsTr("Attach all")
+                enabled: !remotePage.loading && !remotePage.loadingMessages
+                         && remotePage.attachQueue.length === 0
+                onClicked: remotePage.startAttachAll()
+            }
+            MenuItem {
+                text: qsTr("Refresh")
+                onClicked: {
+                    remotePage.loading = true
+                    remotePage.errorMessage = ""
+                    mistralApi.fetchRemoteConversations(settingsManager.apiKey)
+                }
+            }
+        }
 
         header: Column {
             width: parent.width
@@ -195,17 +217,27 @@ Page {
             var localId = conversationManager.attachRemoteConversation(
                         remoteConversationId, title, model, messages)
             if (localId !== "") {
-                // Pop back to the history page, which will show the new
-                // conversation, then open the chat on top of it.
-                pageStack.pop()
-                var historyPage = pageStack.find(function(page) {
-                    return page.openChat !== undefined
-                })
-                if (historyPage) {
-                    historyPage.openChat()
+                if (remotePage.attachQueue.length > 0) {
+                    // Bulk attach: keep going with the next one.
+                    remotePage.attachDone++
+                    remotePage.processNextInQueue()
+                } else {
+                    // Single attach: pop back to history and open the chat.
+                    pageStack.pop()
+                    var historyPage = pageStack.find(function(page) {
+                        return page.openChat !== undefined
+                    })
+                    if (historyPage) {
+                        historyPage.openChat()
+                    }
                 }
             } else {
-                remotePage.errorMessage = qsTr("Could not attach conversation.")
+                if (remotePage.attachQueue.length > 0) {
+                    remotePage.attachDone++
+                    remotePage.processNextInQueue()
+                } else {
+                    remotePage.errorMessage = qsTr("Could not attach conversation.")
+                }
             }
         }
 
@@ -214,7 +246,12 @@ Page {
             if (remoteConversationId === remotePage.pendingRemoteId) {
                 remotePage.pendingRemoteId = ""
             }
-            remotePage.errorMessage = qsTr("Could not fetch messages for this conversation.")
+            if (remotePage.attachQueue.length > 0) {
+                remotePage.attachDone++
+                remotePage.processNextInQueue()
+            } else {
+                remotePage.errorMessage = qsTr("Could not fetch messages for this conversation.")
+            }
         }
     }
 
@@ -229,5 +266,42 @@ Page {
         var dt = new Date(isoString)
         if (isNaN(dt.getTime())) return isoString
         return Qt.formatDateTime(dt, "yyyy-MM-dd hh:mm")
+    }
+
+    function startAttachAll() {
+        attachQueue = []
+        for (var i = 0; i < remoteModel.count; ++i) {
+            var item = remoteModel.get(i)
+            if (!conversationManager.hasRemoteConversation(item.remoteId)) {
+                attachQueue.push(item.remoteId)
+            }
+        }
+        attachTotal = attachQueue.length
+        attachDone = 0
+        if (attachQueue.length === 0) {
+            return
+        }
+        processNextInQueue()
+    }
+
+    function processNextInQueue() {
+        if (attachQueue.length === 0) {
+            // All done: refresh the list so attached items show as such,
+            // then pop back to history.
+            attachTotal = 0
+            attachDone = 0
+            pageStack.pop()
+            var historyPage = pageStack.find(function(page) {
+                return page.openChat !== undefined
+            })
+            if (historyPage) {
+                historyPage.refreshList()
+            }
+            return
+        }
+        var nextId = attachQueue.shift()
+        pendingRemoteId = nextId
+        loadingMessages = true
+        mistralApi.fetchRemoteMessages(settingsManager.apiKey, nextId)
     }
 }

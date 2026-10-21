@@ -5,6 +5,16 @@ All notable changes to Skrynja will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-10-21
+Skrynja 0.6.0 — New feature: bulk-attach all remote conversations.
+
+### Added
+- **Attach all** pull-down menu on the Remote Conversations page: attaches
+  every not-yet-attached remote conversation in sequence, showing progress
+  ("Attaching N of M..."). When done, returns to the history page with all
+  conversations visible.
+- **Refresh** pull-down menu entry to re-fetch the remote list.
+
 ## [0.5.10] - 2026-10-21
 Skrynja 0.5.10 — Hotfix: show full conversation id for unnamed remotes.
 
