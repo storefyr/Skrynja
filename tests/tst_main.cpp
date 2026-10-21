@@ -430,9 +430,69 @@ private slots:
         api.processStreamData("data: {broken json\n");
         api.processStreamData(": comment\n");
         api.processStreamData("\n\n");
-        // A data line without an event name is not a delta
+        // A data line without an event name and without a "type" field
+        // is not a delta we can identify.
         api.processStreamData("data: {\"content\":\"x\"}\n");
         QCOMPARE(spy.count(), 0);
+    }
+
+    // SSE spec: the space after the colon is optional. "data:{...}" and
+    // "event:foo" must parse the same as "data: {...}" and "event: foo".
+    void sseNoSpaceAfterColon()
+    {
+        MistralAPI api;
+        QSignalSpy spy(&api, SIGNAL(streamingResponse(QString)));
+        api.processStreamData("event:message.output.delta\n"
+                              "data:{\"content\":\"nospace\"}\n");
+        QCOMPARE(spy.count(), 1);
+        QCOMPARE(spy.at(0).at(0).toString(), QString("nospace"));
+    }
+
+    // Some servers send data-only SSE (no "event:" line). The payload
+    // self-describes via its "type" field and must be dispatched.
+    void dataOnlySseSelfDescribesViaType()
+    {
+        MistralAPI api;
+        QSignalSpy streamSpy(&api, SIGNAL(streamingResponse(QString)));
+        QSignalSpy convSpy(&api, SIGNAL(conversationCreated(QString)));
+        QSignalSpy doneSpy(&api, SIGNAL(usageReceived(int,int)));
+
+        api.processStreamData("data: {\"type\":\"conversation.response.started\","
+                              "\"conversation_id\":\"data-only-1\"}\n");
+        api.processStreamData("data: {\"type\":\"message.output.delta\","
+                              "\"content\":\"hello\"}\n");
+        api.processStreamData("data: {\"type\":\"conversation.response.done\","
+                              "\"usage\":{\"prompt_tokens\":5,\"completion_tokens\":3}}\n");
+
+        QCOMPARE(convSpy.count(), 1);
+        QCOMPARE(convSpy.at(0).at(0).toString(), QString("data-only-1"));
+        QCOMPARE(streamSpy.count(), 1);
+        QCOMPARE(streamSpy.at(0).at(0).toString(), QString("hello"));
+        QCOMPARE(doneSpy.count(), 1);
+        QVERIFY(api.m_streamDone);
+    }
+
+    // ThinkChunk.thinking is a list of text chunks, not a plain string.
+    // The reasoning text must be extracted from the nested structure.
+    void thinkingChunkListIsFlattened()
+    {
+        MistralAPI api;
+        QSignalSpy thinkingSpy(&api, SIGNAL(thinkingResponse(QString)));
+        QSignalSpy streamSpy(&api, SIGNAL(streamingResponse(QString)));
+
+        api.processStreamData("event: message.output.delta\n"
+                              "data: {\"content\":["
+                              "{\"type\":\"thinking\","
+                              "\"thinking\":[{\"type\":\"text\",\"text\":\"let me think\"}]},"
+                              "{\"type\":\"text\",\"text\":\"answer\"}"
+                              "]}\n");
+        api.processStreamData("event: conversation.response.done\n"
+                              "data: {\"usage\":{}}\n");
+
+        QCOMPARE(streamSpy.count(), 1);
+        QCOMPARE(streamSpy.at(0).at(0).toString(), QString("answer"));
+        QCOMPARE(thinkingSpy.count(), 1);
+        QCOMPARE(thinkingSpy.at(0).at(0).toString(), QString("let me think"));
     }
 
     void multipleLinesOneChunk()

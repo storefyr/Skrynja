@@ -5,6 +5,24 @@ All notable changes to Skrynja will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.5] - 2026-10-21
+Skrynja 0.4.5 — Hotfix: robust SSE parsing (no-space colons, data-only fallback, ThinkChunk list).
+
+### Fixed
+- **SSE field parsing** now follows the spec: the space after the colon is
+  optional, so `data:{...}` and `event:foo` parse correctly (was: only
+  `data: {...}` with a space).
+- **Data-only SSE fallback**: when the server sends `data:` lines without an
+  `event:` line (like Chat Completions), the payload self-describes via its
+  `type` field and is dispatched accordingly.
+- **ThinkChunk.thinking** is a list of text/reference chunks, not a plain
+  string. The reasoning text is now extracted from the nested structure
+  (was: `.toString()` on an array returned an empty string, losing all
+  thinking output).
+
+### Added
+- Debug logging from v0.4.4 retained for diagnosis.
+
 ## [0.4.4] - 2026-10-21
 Skrynja 0.4.4 — Debug build: added SSE/network logging to diagnose missing answers.
 

@@ -763,17 +763,32 @@ void MistralAPI::processStreamData(const QByteArray &data)
 void MistralAPI::handleSseLine(const QString &line)
 {
     qDebug() << "SSE line:" << line.left(200);
-    // The Conversations API sends typed events: an "event: <name>" line names
-    // the next "data:" payload, and there is no [DONE] marker.
-    if (line.startsWith("event: ")) {
-        m_currentEvent = line.mid(7).trimmed();
+    // SSE field parsing: "field:value" or "field: value" (leading space after
+    // the colon is optional per the SSE spec). The Conversations API sends
+    // typed events: an "event: <name>" line names the next "data:" payload,
+    // and there is no [DONE] marker.
+    const int colon = line.indexOf(':');
+    if (colon <= 0) {
+        // Comment line (":...") or garbage: ignore.
         return;
     }
-    if (!line.startsWith("data: ")) {
+    const QString field = line.left(colon);
+    QString value = line.mid(colon + 1);
+    if (value.startsWith(' ')) {
+        value = value.mid(1);
+    }
+
+    if (field == "event") {
+        m_currentEvent = value.trimmed();
+        return;
+    }
+    if (field != "data") {
         return;
     }
 
-    const QString jsonData = line.mid(6);
+    // A blank line dispatches the event per the SSE spec, but the API does
+    // not send blank lines between events; every data line is its own event.
+    const QString jsonData = value;
     const QString event = m_currentEvent;
     m_currentEvent.clear();
     parseStreamLine(event, jsonData);
@@ -1132,9 +1147,22 @@ void MistralAPI::parseStreamLine(const QString &event, const QString &jsonData)
                 } else if (type == "thinking") {
                     // Buffered, not streamed: the reasoning is shown
                     // collapsed under the answer once it is complete.
-                    const QString thinking = obj["thinking"].toString();
-                    if (!thinking.isEmpty()) {
-                        m_pendingThinking += thinking;
+                    // ThinkChunk.thinking is a list of text/reference
+                    // chunks, not a plain string — flatten it.
+                    const QJsonValue thinkingVal = obj["thinking"];
+                    if (thinkingVal.isString()) {
+                        const QString thinking = thinkingVal.toString();
+                        if (!thinking.isEmpty()) {
+                            m_pendingThinking += thinking;
+                        }
+                    } else if (thinkingVal.isArray()) {
+                        const QJsonArray thinkingChunks = thinkingVal.toArray();
+                        for (const QJsonValue &tc : thinkingChunks) {
+                            const QString thinking = tc.toObject()["text"].toString();
+                            if (!thinking.isEmpty()) {
+                                m_pendingThinking += thinking;
+                            }
+                        }
                     }
                 }
             }
@@ -1171,5 +1199,33 @@ void MistralAPI::parseStreamLine(const QString &event, const QString &jsonData)
         return;
     }
 
-    // Untyped data (no event line) or an event we do not handle: ignore.
+    // Some servers send data-only SSE (no "event:" line, like Chat
+    // Completions). The payload self-describes via its "type" field.
+    if (event.isEmpty()) {
+        const QJsonDocument doc = QJsonDocument::fromJson(jsonData.toUtf8());
+        const QJsonObject obj = doc.object();
+        const QString type = obj["type"].toString();
+
+        if (type == "message.output.delta") {
+            parseStreamLine("message.output.delta", jsonData);
+        } else if (type == "conversation.response.started") {
+            parseStreamLine("conversation.response.started", jsonData);
+        } else if (type == "conversation.response.done") {
+            parseStreamLine("conversation.response.done", jsonData);
+        } else if (type == "conversation.response.error") {
+            parseStreamLine("conversation.response.error", jsonData);
+        } else if (type == "tool.execution.started") {
+            parseStreamLine("tool.execution.started", jsonData);
+        } else if (type == "tool.execution.delta") {
+            parseStreamLine("tool.execution.delta", jsonData);
+        } else if (type == "tool.execution.done") {
+            parseStreamLine("tool.execution.done", jsonData);
+        } else if (type == "error") {
+            parseStreamLine("error", jsonData);
+        }
+        // Unknown or untyped: ignore.
+        return;
+    }
+
+    // An event we do not handle: ignore.
 }
