@@ -30,6 +30,15 @@ Page {
                 wrapMode: Text.Wrap
             }
 
+            Label {
+                x: Theme.horizontalPageMargin
+                width: parent.width - 2 * Theme.horizontalPageMargin
+                visible: !remotePage.loading && remoteModel.count > 0
+                text: qsTr("%n conversation(s) on server", "", remoteModel.count)
+                font.pixelSize: Theme.fontSizeExtraSmall
+                color: Theme.secondaryColor
+            }
+
             Separator {
                 width: parent.width - 2 * Theme.horizontalPageMargin
                 x: Theme.horizontalPageMargin
@@ -143,8 +152,14 @@ Page {
             remotePage.loading = false
             remotePage.errorMessage = ""
             remoteModel.clear()
+            var seen = {}
+            var added = 0
             for (var i = 0; i < conversations.length; ++i) {
                 var c = conversations[i]
+                if (!c.id || seen[c.id]) {
+                    continue
+                }
+                seen[c.id] = true
                 remoteModel.append({
                     remoteId: c.id,
                     remoteName: c.name || "",
@@ -152,6 +167,7 @@ Page {
                     remoteCreatedAt: c.created_at || "",
                     remoteUpdatedAt: c.updated_at || ""
                 })
+                added++
             }
         }
 
