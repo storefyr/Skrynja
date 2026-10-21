@@ -355,9 +355,6 @@ void MistralAPI::sendPendingChatRequest()
     request.setRawHeader("Accept", "text/event-stream");
     prepareRequest(request, m_pendingApiKey);
 
-    qDebug() << "POST" << request.url().toString();
-    qDebug() << "Body:" << m_pendingBody;
-
     noteRequestSent();
     m_currentReply = m_networkManager->post(request, m_pendingBody);
 
@@ -609,16 +606,6 @@ void MistralAPI::onFinished()
 
     m_timeoutTimer->stop();
 
-    const int httpStatus = m_currentReply->attribute(
-                QNetworkRequest::HttpStatusCodeAttribute).toInt();
-    qDebug() << "Reply finished: HTTP" << httpStatus
-             << "error:" << m_currentReply->error()
-             << "streamDone:" << m_streamDone
-             << "streamStarted:" << m_streamStarted;
-    if (m_currentReply->error() != QNetworkReply::NoError) {
-        qDebug() << "Error body:" << m_currentReply->readAll();
-    }
-
     // Process remaining data
     if (m_currentReply->error() == QNetworkReply::NoError) {
         QByteArray remaining = m_currentReply->readAll();
@@ -672,7 +659,6 @@ void MistralAPI::onFinished()
 
 void MistralAPI::onError(QNetworkReply::NetworkError error)
 {
-    qWarning() << "Network error:" << error << m_currentReply->errorString();
     if (!m_currentReply)
         return;
 
@@ -746,7 +732,6 @@ void MistralAPI::processStreamData(const QByteArray &data)
 {
     // Buffer raw bytes: a multi-byte UTF-8 character can be split across
     // network chunks, so decode only complete lines
-    qDebug() << "SSE raw chunk:" << data;
     m_streamBuffer.append(data);
 
     int newlinePos;
@@ -762,7 +747,6 @@ void MistralAPI::processStreamData(const QByteArray &data)
 
 void MistralAPI::handleSseLine(const QString &line)
 {
-    qDebug() << "SSE line:" << line.left(200);
     // SSE field parsing: "field:value" or "field: value" (leading space after
     // the colon is optional per the SSE spec). The Conversations API sends
     // typed events: an "event: <name>" line names the next "data:" payload,
@@ -1077,7 +1061,6 @@ void MistralAPI::onModelsFetchFinished()
 
 void MistralAPI::parseStreamLine(const QString &event, const QString &jsonData)
 {
-    qDebug() << "SSE event:" << event << "data:" << jsonData.left(300);
     // The Conversations API streams typed events; anything without a data
     // payload we recognise is metadata we do not need (heartbeats, pings).
     if (event == "conversation.response.started") {

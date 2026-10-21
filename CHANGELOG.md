@@ -5,6 +5,14 @@ All notable changes to Skrynja will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.6] - 2026-10-21
+Skrynja 0.4.6 — Cleanup: removed debug logging now that streaming works.
+
+### Removed
+- **Debug logging** from `MistralAPI` (POST URL, request body, raw SSE chunks,
+  SSE lines, parsed events, HTTP status, error bodies, network errors).
+  The SSE parsing fixes in v0.4.5 resolved the missing-answers issue.
+
 ## [0.4.5] - 2026-10-21
 Skrynja 0.4.5 — Hotfix: robust SSE parsing (no-space colons, data-only fallback, ThinkChunk list).
 
