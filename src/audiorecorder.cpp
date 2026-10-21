@@ -88,5 +88,5 @@ void AudioRecorder::onStateChanged(QAudioRecorder::State state)
 void AudioRecorder::onError(QAudioRecorder::Error error)
 {
     emit errorChanged();
-    emit error(error);
+    emit errorOccurred(error);
 }

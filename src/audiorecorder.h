@@ -34,7 +34,7 @@ signals:
     void errorChanged();
     void outputLocationChanged();
     void stopped();
-    void error(QAudioRecorder::Error error);
+    void errorOccurred(QAudioRecorder::Error error);
 
 private slots:
     void onStateChanged(QAudioRecorder::State state);
