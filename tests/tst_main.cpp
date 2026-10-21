@@ -296,7 +296,7 @@ private slots:
         MistralAPI api;
         QSignalSpy spy(&api, SIGNAL(conversationCreated(QString)));
 
-        api.processStreamData("event: conversation.created\n"
+        api.processStreamData("event: conversation.response.started\n"
                               "data: {\"conversation_id\":\"abc-123\"}\n");
         QCOMPARE(spy.count(), 1);
         QCOMPARE(spy.at(0).at(0).toString(), QString("abc-123"));
@@ -315,15 +315,15 @@ private slots:
         QCOMPARE(spy.at(0).at(0).toString(), QString("web_search"));
     }
 
-    // web_search results arrive on tool.execution.finished and are collected
+    // web_search results arrive on tool.execution.done and are collected
     // as source URLs, deduplicated, in order of first appearance.
-    void toolExecutionFinishedCollectsSources()
+    void toolExecutionDoneCollectsSources()
     {
         MistralAPI api;
         QSignalSpy spy(&api, SIGNAL(sourcesReceived(QStringList)));
 
         api.processStreamData(
-            "event: tool.execution.finished\n"
+            "event: tool.execution.done\n"
             "data: {\"data\":{\"output\":["
             "{\"url\":\"https://example.com/a\"},"
             "{\"url\":\"https://example.com/b\"}"
@@ -347,10 +347,10 @@ private slots:
         QSignalSpy spy(&api, SIGNAL(sourcesReceived(QStringList)));
 
         api.processStreamData(
-            "event: tool.execution.finished\n"
+            "event: tool.execution.done\n"
             "data: {\"data\":{\"output\":[{\"url\":\"https://a.com\"}]}}\n");
         api.processStreamData(
-            "event: tool.execution.finished\n"
+            "event: tool.execution.done\n"
             "data: {\"data\":{\"output\":["
             "{\"url\":\"https://a.com\"},"
             "{\"url\":\"https://b.com\"}"
@@ -1079,7 +1079,7 @@ private slots:
         manager.bindApi(&api);
         api.sendMessage("key", "model", QString(), "hello", QString(), false,
                         QString());
-        api.processStreamData("event: conversation.created\n"
+        api.processStreamData("event: conversation.response.started\n"
                               "data: {\"conversation_id\":\"remote-42\"}\n");
         QCOMPARE(manager.remoteConversationId(), QString("remote-42"));
 

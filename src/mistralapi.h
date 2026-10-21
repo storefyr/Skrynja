@@ -170,7 +170,7 @@ private:
     void processStreamData(const QByteArray &data);
     // One SSE line: tracks the event name, or parses a data payload.
     void handleSseLine(const QString &line);
-    // One typed event: conversation.created, message.output.delta,
+    // One typed event: conversation.response.started, message.output.delta,
     // conversation.response.done, tool.execution.*, error.
     void parseStreamLine(const QString &event, const QString &jsonData);
     // True while the same request is still worth sending again.

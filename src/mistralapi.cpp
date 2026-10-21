@@ -1048,13 +1048,21 @@ void MistralAPI::parseStreamLine(const QString &event, const QString &jsonData)
 {
     // The Conversations API streams typed events; anything without a data
     // payload we recognise is metadata we do not need (heartbeats, pings).
-    if (event == "conversation.created") {
+    if (event == "conversation.response.started") {
         const QJsonDocument doc = QJsonDocument::fromJson(jsonData.toUtf8());
         const QString id = doc.object()["conversation_id"].toString();
         if (!id.isEmpty()) {
             m_remoteConversationId = id;
             emit conversationCreated(id);
         }
+        return;
+    }
+
+    if (event == "conversation.response.error") {
+        const QJsonDocument doc = QJsonDocument::fromJson(jsonData.toUtf8());
+        const QString message = doc.object()["message"].toString();
+        setError(message.isEmpty() ? tr("The API returned an error") : message);
+        m_streamDone = true;
         return;
     }
 
@@ -1067,7 +1075,7 @@ void MistralAPI::parseStreamLine(const QString &event, const QString &jsonData)
         return;
     }
 
-    if (event == "tool.execution.finished") {
+    if (event == "tool.execution.done") {
         // web_search results arrive here as a list of source objects with a
         // "url" field. Collect them for the answer that is being built.
         const QJsonDocument doc = QJsonDocument::fromJson(jsonData.toUtf8());

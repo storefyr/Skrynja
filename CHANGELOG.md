@@ -5,6 +5,19 @@ All notable changes to Skrynja will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.3] - 2026-10-21
+Skrynja 0.4.3 — Hotfix: SSE event names did not match the current API (no answers arrived).
+
+### Fixed
+- **SSE event names updated to match the live API.** The Conversations API renamed
+  its streaming events since the original implementation:
+  - `conversation.created` → `conversation.response.started` (carries `conversation_id`)
+  - `tool.execution.finished` → `tool.execution.done`
+  - Added handler for `conversation.response.error`
+  The old names were silently ignored, so the app never received the conversation
+  id (no append path) and never received text deltas (no answer shown). The token
+  counter worked because `conversation.response.done` was already correct.
+
 ## [0.4.2] - 2026-10-21
 Skrynja 0.4.2 — Hotfix: web search toggle was never saved to disk.
 

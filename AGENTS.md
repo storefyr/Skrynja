@@ -79,9 +79,10 @@ All C++ classes are exposed to QML as context properties: `mistralApi`, `convers
 - **Append is not idempotent.** If a request may have reached the server, reconcile with
   `GET /v1/conversations/{id}/messages` before sending again.
 - **Restart returns a new `conversation_id`.** The old one must be deleted and the new one persisted.
-- **SSE events are typed**, sent as `event: <name>` + `data: {...}`: `conversation.created`,
-  `tool.execution.started/delta/done`, `message.output.delta` (text chunks), `conversation.response.done`
-  (usage). There is no `[DONE]` marker.
+- **SSE events are typed**, sent as `event: <name>` + `data: {...}`: `conversation.response.started`
+  (carries `conversation_id`), `tool.execution.started/delta/done`, `message.output.delta`
+  (text chunks), `conversation.response.done` (usage), `conversation.response.error`.
+  There is no `[DONE]` marker.
 - **Reasoning models** return `content` as a list of chunks (thinking + text), not a plain string.
 
 ## Translations
