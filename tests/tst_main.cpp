@@ -1602,6 +1602,26 @@ private slots:
         settings.setChatStyle("flat");
     }
 
+    void webSearchTogglePersists()
+    {
+        {
+            SettingsManager settings;
+            QCOMPARE(settings.webSearch(), false); // default
+            settings.setWebSearch(true);
+            QCOMPARE(settings.webSearch(), true);
+        }
+        // Reread from disk: the toggle survives a reload
+        {
+            SettingsManager reopened;
+            QCOMPARE(reopened.webSearch(), true);
+            reopened.setWebSearch(false);
+        }
+        {
+            SettingsManager reopened;
+            QCOMPARE(reopened.webSearch(), false);
+        }
+    }
+
     void savedPromptsRoundTrip()
     {
         SettingsManager settings;

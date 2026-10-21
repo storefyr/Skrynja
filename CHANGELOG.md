@@ -5,6 +5,16 @@ All notable changes to Skrynja will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.2] - 2026-10-21
+Skrynja 0.4.2 — Hotfix: web search toggle was never saved to disk.
+
+### Fixed
+- **Web search toggle persistence.** `SettingsManager::saveSettings()` was missing
+  the `generation/webSearch` key, so the toggle reset to off on every launch.
+  The Settings UI wrote to the in-memory property but the value was never
+  persisted. Conversations created without `tools: [{"type": "web_search"}]`
+  have no web search — the model correctly reports it has no internet access.
+
 ## [0.4.1] - 2026-10-21
 Skrynja 0.4.1 — Hotfix: Conversations API streaming URL was wrong (404 on every send).
 

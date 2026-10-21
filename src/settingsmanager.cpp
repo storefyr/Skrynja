@@ -609,6 +609,7 @@ void SettingsManager::saveSettings()
     m_settings.setValue("generation/temperature", m_temperature);
     m_settings.setValue("generation/maxTokens", m_maxTokens);
     m_settings.setValue("generation/systemPrompt", m_systemPrompt);
+    m_settings.setValue("generation/webSearch", m_webSearch);
     m_settings.setValue("generation/autoTitleMode", m_autoTitleMode);
     m_settings.setValue("ui/chatStyle", m_chatStyle);
     m_settings.setValue("ui/showTimestamps", m_showTimestamps);
