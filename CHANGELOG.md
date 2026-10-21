@@ -5,6 +5,14 @@ All notable changes to Skrynja will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.6] - 2026-10-21
+Skrynja 0.5.6 — Hotfix: distinguish unnamed remote conversations.
+
+### Fixed
+- **Remote conversations list**: when a conversation has no name, the
+  first 8 characters of its id are shown next to the date so unnamed
+  conversations can be told apart.
+
 ## [0.5.5] - 2026-10-21
 Skrynja 0.5.5 — Hotfix: attached conversations appear at the top of history.
 

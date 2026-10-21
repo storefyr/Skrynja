@@ -91,6 +91,13 @@ Page {
                         color: remoteItem.highlighted ? Theme.secondaryHighlightColor : Theme.secondaryColor
                         font.pixelSize: Theme.fontSizeExtraSmall
                     }
+
+                    Label {
+                        text: remoteId ? "· " + remoteId.substring(0, 8) : ""
+                        visible: remoteName === ""
+                        color: remoteItem.highlighted ? Theme.secondaryHighlightColor : Theme.secondaryColor
+                        font.pixelSize: Theme.fontSizeExtraSmall
+                    }
                 }
 
                 Label {
