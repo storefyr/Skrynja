@@ -45,15 +45,18 @@ Page {
             id: remoteItem
             contentHeight: contentColumn.height + 2 * Theme.paddingMedium
 
-            property bool alreadyAttached: conversationManager.hasRemoteConversation(model.id)
+            property string remoteId: modelData.id
+            property string remoteName: modelData.name
+            property string remoteModelName: modelData.model
+            property bool alreadyAttached: conversationManager.hasRemoteConversation(remoteId)
 
             onClicked: {
-                if (alreadyAttached) {
+                if (alreadyAttached || remoteId === "") {
                     return
                 }
-                remotePage.pendingRemoteId = model.id
+                remotePage.pendingRemoteId = remoteId
                 remotePage.loadingMessages = true
-                mistralApi.fetchRemoteMessages(settingsManager.apiKey, model.id)
+                mistralApi.fetchRemoteMessages(settingsManager.apiKey, remoteId)
             }
 
             Column {
@@ -69,7 +72,7 @@ Page {
 
                 Label {
                     width: parent.width
-                    text: model.name !== "" ? model.name : qsTr("Untitled")
+                    text: remoteName !== "" ? remoteName : qsTr("Untitled")
                     color: remoteItem.highlighted ? Theme.highlightColor : Theme.primaryColor
                     font.pixelSize: Theme.fontSizeMedium
                     truncationMode: TruncationMode.Fade
@@ -80,14 +83,14 @@ Page {
                     spacing: Theme.paddingMedium
 
                     Label {
-                        text: model.model || ""
+                        text: remoteModelName || ""
                         visible: text !== ""
                         color: remoteItem.highlighted ? Theme.secondaryHighlightColor : Theme.secondaryColor
                         font.pixelSize: Theme.fontSizeExtraSmall
                     }
 
                     Label {
-                        text: remotePage.formatDate(model.updated_at || model.created_at)
+                        text: remotePage.formatDate(modelData.updated_at || modelData.created_at)
                         color: remoteItem.highlighted ? Theme.secondaryHighlightColor : Theme.secondaryColor
                         font.pixelSize: Theme.fontSizeExtraSmall
                     }

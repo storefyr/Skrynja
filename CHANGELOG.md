@@ -5,6 +5,15 @@ All notable changes to Skrynja will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.2] - 2026-10-21
+Skrynja 0.5.2 — Hotfix: fix delegate model role access in RemoteConversationsPage.
+
+### Fixed
+- **Remote Conversations page**: delegate used `model.id` / `model.name` which
+  are not defined for a `ListModel` delegate (only `modelData` or named roles
+  work). Rows showed empty text and `onClicked` received an empty id, so
+  tapping did nothing. Now uses explicit `property` bindings to `modelData`.
+
 ## [0.5.1] - 2026-10-21
 Skrynja 0.5.1 — Hotfix: match the live Conversations API response shapes.
 
