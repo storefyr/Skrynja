@@ -1,0 +1,92 @@
+#include "audiorecorder.h"
+#include <QStandardPaths>
+#include <QDir>
+#include <QFileInfo>
+#include <QUrl>
+
+AudioRecorder::AudioRecorder(QObject *parent)
+    : QObject(parent)
+    , m_recorder(new QAudioRecorder(this))
+{
+    connect(m_recorder, SIGNAL(stateChanged(QAudioRecorder::State)),
+            this, SLOT(onStateChanged(QAudioRecorder::State)));
+    connect(m_recorder, SIGNAL(error(QAudioRecorder::Error)),
+            this, SLOT(onError(QAudioRecorder::Error)));
+
+    QAudioEncoderSettings settings;
+    settings.setCodec("audio/x-wav");
+    settings.setQuality(QMultimedia::HighQuality);
+    m_recorder->setEncodingSettings(settings);
+}
+
+AudioRecorder::~AudioRecorder()
+{
+    if (m_recorder->state() != QAudioRecorder::StoppedState) {
+        m_recorder->stop();
+    }
+}
+
+bool AudioRecorder::recording() const
+{
+    return m_recorder->state() == QAudioRecorder::RecordingState;
+}
+
+bool AudioRecorder::available() const
+{
+    return m_recorder->status() != QAudioRecorder::UnavailableStatus;
+}
+
+QString AudioRecorder::errorString() const
+{
+    return m_recorder->errorString();
+}
+
+QString AudioRecorder::outputLocation() const
+{
+    return m_outputLocation;
+}
+
+void AudioRecorder::setOutputLocation(const QString &location)
+{
+    if (m_outputLocation != location) {
+        m_outputLocation = location;
+        m_recorder->setOutputLocation(QUrl::fromLocalFile(location));
+        emit outputLocationChanged();
+    }
+}
+
+void AudioRecorder::record()
+{
+    if (m_outputLocation.isEmpty()) {
+        QString cacheDir = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
+        QDir().mkpath(cacheDir);
+        m_outputLocation = cacheDir + "/skrynja-recording.wav";
+        m_recorder->setOutputLocation(QUrl::fromLocalFile(m_outputLocation));
+        emit outputLocationChanged();
+    }
+    m_recorder->record();
+}
+
+void AudioRecorder::stop()
+{
+    m_recorder->stop();
+}
+
+void AudioRecorder::pause()
+{
+    m_recorder->pause();
+}
+
+void AudioRecorder::onStateChanged(QAudioRecorder::State state)
+{
+    emit recordingChanged();
+    if (state == QAudioRecorder::StoppedState) {
+        emit stopped();
+    }
+}
+
+void AudioRecorder::onError(QAudioRecorder::Error error)
+{
+    emit errorChanged();
+    emit error(error);
+}

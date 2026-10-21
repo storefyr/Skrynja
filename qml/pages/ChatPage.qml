@@ -2,7 +2,6 @@ import QtQuick 2.0
 import Sailfish.Silica 1.0
 import Sailfish.Pickers 1.0
 import Nemo.Notifications 1.0
-import QtMultimedia 5.0
 import "../components"
 
 Page {
@@ -468,15 +467,15 @@ Page {
                         if (chatPage.recording) {
                             // Stop recording and transcribe
                             chatPage.recording = false
-                            audioRecorder.stop()
+                            globalAudioRecorder.stop()
                             chatPage.transcribing = true
                             mistralApi.transcribeAudio(settingsManager.apiKey,
                                                         chatPage.recordingPath)
                         } else if (!chatPage.transcribing) {
                             // Start recording
                             chatPage.recordingPath = mistralApi.tempAudioPath()
-                            audioRecorder.outputLocation = chatPage.recordingPath
-                            audioRecorder.record()
+                            globalAudioRecorder.outputLocation = chatPage.recordingPath
+                            globalAudioRecorder.record()
                             chatPage.recording = true
                         }
                     }
@@ -1018,21 +1017,6 @@ Page {
             exportNotification.previewBody = ""
         }
         exportNotification.publish()
-    }
-
-    // F18: Audio recorder for voice input. Inert until record() is called.
-    AudioRecorder {
-        id: audioRecorder
-        audioEncodingMode: AudioRecorder.ConstantBitRateEncoding
-        onStopped: {
-            // Recording finished: the file is ready for transcription.
-            // The actual transcription is triggered by the mic button.
-        }
-        onError: {
-            chatPage.recording = false
-            chatPage.transcribing = false
-            console.warn("AudioRecorder error: " + errorString)
-        }
     }
 
     // F18: Transcription result handler.

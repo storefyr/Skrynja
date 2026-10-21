@@ -6,7 +6,7 @@ QT += network multimedia
 
 # Version is passed by the spec file (%qmake5 VERSION=%{version})
 isEmpty(VERSION) {
-    VERSION = 0.8.2
+    VERSION = 0.8.3
 }
 DEFINES += APP_VERSION=\\\"$$VERSION\\\"
 
@@ -17,7 +17,8 @@ SOURCES += src/harbour-skrynja.cpp \
     src/settingsmanager.cpp \
     src/securestore.cpp \
     src/categories.cpp \
-    src/providers.cpp
+    src/providers.cpp \
+    src/audiorecorder.cpp
 
 HEADERS += src/mistralapi.h \
     src/conversationmodel.h \
@@ -25,7 +26,8 @@ HEADERS += src/mistralapi.h \
     src/settingsmanager.h \
     src/securestore.h \
     src/categories.h \
-    src/providers.h
+    src/providers.h \
+    src/audiorecorder.h
 
 DISTFILES += qml/harbour-skrynja.qml \
     qml/cover/CoverPage.qml \

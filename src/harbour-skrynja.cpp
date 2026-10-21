@@ -14,6 +14,8 @@
 #include "conversationmodel.h"
 #include "conversationmanager.h"
 #include "settingsmanager.h"
+#include "audiorecorder.h"
+#include <QtQml>"
 
 int main(int argc, char *argv[])
 {
@@ -32,6 +34,9 @@ int main(int argc, char *argv[])
     MistralAPI mistralApi;
     ConversationManager conversationManager;
     SettingsManager settingsManager;
+    AudioRecorder audioRecorder;
+
+    qmlRegisterType<AudioRecorder>("harbour.skrynja", 1, 0, "AudioRecorder");
 
     // The manager owns the streaming lifecycle so an answer survives the chat
     // page being popped off the stack mid-response.
@@ -73,6 +78,7 @@ int main(int argc, char *argv[])
     context->setContextProperty("conversationManager", &conversationManager);
     context->setContextProperty("conversationModel", conversationManager.currentConversation());
     context->setContextProperty("settingsManager", &settingsManager);
+    context->setContextProperty("globalAudioRecorder", &audioRecorder);
 
     // Load main QML
     view->setSource(SailfishApp::pathTo("qml/harbour-skrynja.qml"));

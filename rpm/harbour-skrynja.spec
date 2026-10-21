@@ -1,6 +1,6 @@
 Name:       harbour-skrynja
 Summary:    Client de chat IA pour Sailfish OS avec recherche web
-Version:    0.8.2
+Version:    0.8.3
 Release:    1
 Group:      Applications/Internet
 License:    MIT
@@ -8,7 +8,6 @@ URL:        https://github.com/storefyr/Skrynja
 Source0:    %{name}-%{version}.tar.bz2
 Requires:   sailfishsilica-qt5 >= 0.10.9
 Requires:   qt5-qtmultimedia
-Requires:   qt5-qtdeclarative-import-multimedia
 Requires:   qt5-qtmultimedia-plugin-audio-pulseaudio
 BuildRequires:  pkgconfig(sailfishapp) >= 1.0.2
 BuildRequires:  pkgconfig(Qt5Core)

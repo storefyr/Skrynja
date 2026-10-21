@@ -1,6 +1,6 @@
 Name: harbour-skrynja
 Summary: Le Chat de Mistral AI pour Sailfish OS, avec recherche web
-Version: 0.8.2
+Version: 0.8.3
 Release: 1
 Group: Applications/Internet
 URL: https://github.com/storefyr/Skrynja
@@ -34,7 +34,6 @@ PkgBR:
 Requires:
   - sailfishsilica-qt5 >= 0.10.9
   - qt5-qtmultimedia
-  - qt5-qtdeclarative-import-multimedia
   - qt5-qtmultimedia-plugin-audio-pulseaudio
 Files:
   - '%{_bindir}/%{name}'

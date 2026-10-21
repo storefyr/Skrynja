@@ -5,6 +5,21 @@ All notable changes to Skrynja will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.3] - 2026-10-21
+Skrynja 0.8.3 — Fix: replaced QML AudioRecorder with C++ QAudioRecorder.
+
+### Fixed
+- Removed `import QtMultimedia 5.0` from `ChatPage.qml` entirely. The QML
+  plugin (`qt5-qtdeclarative-import-multimedia`) was the root cause of
+  "Kunne ikke indlæse siden" — even when installed, it failed to load on
+  the user's device.
+- Created a new C++ class `AudioRecorder` (src/audiorecorder.h/.cpp) that
+  wraps `QAudioRecorder` and is exposed to QML as a context property
+  `globalAudioRecorder`. This only links against `libQt5Multimedia.so.5`
+  (Harbour-allowed) and does not require the QML plugin package.
+- Removed `qt5-qtdeclarative-import-multimedia` from Requires (no longer
+  needed). Kept `qt5-qtmultimedia` and `qt5-qtmultimedia-plugin-audio-pulseaudio`.
+
 ## [0.8.2] - 2026-10-21
 Skrynja 0.8.2 — Fix: added missing Qt Multimedia runtime dependencies.
 
