@@ -381,6 +381,9 @@ QJsonObject ConversationManager::conversationToJson(const Conversation &conv) co
     if (!conv.remoteConversationId.isEmpty()) {
         obj["remoteConversationId"] = conv.remoteConversationId;
     }
+    if (conv.archived) {
+        obj["archived"] = true;
+    }
     obj["unread"] = conv.unread;
     obj["createdAt"] = conv.createdAt;
     obj["updatedAt"] = conv.updatedAt;
@@ -434,6 +437,7 @@ Conversation ConversationManager::conversationFromJson(const QJsonObject &obj)
     // Absent in files written before the Conversations API: empty means the
     // remote conversation does not exist yet (D8: start fresh, no replay).
     conv.remoteConversationId = obj["remoteConversationId"].toString();
+    conv.archived = obj["archived"].toBool();
     conv.unread = obj["unread"].toBool();
     conv.createdAt = obj["createdAt"].toVariant().toLongLong();
     conv.updatedAt = obj["updatedAt"].toVariant().toLongLong();
@@ -996,6 +1000,27 @@ QString ConversationManager::conversationModel(const QString &conversationId) co
     return conv ? conv->model : QString();
 }
 
+bool ConversationManager::isArchived(const QString &conversationId) const
+{
+    const Conversation *conv = findConversation(conversationId);
+    return conv ? conv->archived : false;
+}
+
+void ConversationManager::unarchiveConversation(const QString &conversationId)
+{
+    Conversation *conv = findConversation(conversationId);
+    if (!conv || !conv->archived) {
+        return;
+    }
+    // The remote conversation is gone: clear both flags so the next message
+    // creates a fresh server-side conversation.
+    conv->archived = false;
+    conv->remoteConversationId.clear();
+    markDirty(conversationId);
+    saveDirtyConversations();
+    emit conversationCountChanged();
+}
+
 // ---------------------------------------------------------------- listing
 
 QJsonArray ConversationManager::getConversationsList() const
@@ -1011,6 +1036,7 @@ QJsonArray ConversationManager::getConversationsList() const
         obj["messageCount"] = conv.messages.count();
         obj["category"] = conv.category;
         obj["unread"] = conv.unread;
+        obj["archived"] = conv.archived;
         obj["provider"] = conv.provider;
         // What answered last, so the row can say more than the provider name.
         // Falls back to the pinned model for a conversation with no answer yet.
@@ -1134,6 +1160,37 @@ void ConversationManager::purgeAllConversationsWithRemote(const QString &apiKey)
         }
     }
     purgeAllConversations();
+}
+
+int ConversationManager::deleteAllArchived(const QString &apiKey)
+{
+    Q_UNUSED(apiKey)
+    // Archived conversations have no remote counterpart (that is why they
+    // are archived), so no server-side deletion is needed — just remove
+    // the local copies.
+    int deleted = 0;
+    for (int i = m_conversations.count() - 1; i >= 0; --i) {
+        if (!m_conversations[i].archived) {
+            continue;
+        }
+        const QString id = m_conversations[i].id;
+        m_conversations.removeAt(i);
+        m_dirtyIds.remove(id);
+        const QString path = conversationFilePath(id);
+        if (!path.isEmpty()) {
+            QFile::remove(path);
+        }
+        deleted++;
+    }
+    if (deleted > 0) {
+        if (m_currentConversationId.isEmpty()
+                || findConversation(m_currentConversationId) == nullptr) {
+            m_currentConversationId.clear();
+            createNewConversation();
+        }
+        emit conversationCountChanged();
+    }
+    return deleted;
 }
 
 // ---------------------------------------------------------------- pins & export
@@ -1801,10 +1858,29 @@ void ConversationManager::onAutoSyncConversationsFetched(const QVariantList &con
     if (!m_autoSyncing) {
         return;
     }
+    // Build the set of remote ids that exist on the server.
+    QSet<QString> serverIds;
     for (const QVariant &v : conversations) {
         const QVariantMap entry = v.toMap();
         const QString remoteId = entry["id"].toString();
-        if (remoteId.isEmpty() || hasRemoteConversation(remoteId)) {
+        if (remoteId.isEmpty()) {
+            continue;
+        }
+        serverIds.insert(remoteId);
+        if (hasRemoteConversation(remoteId)) {
+            // Already attached locally: just un-archive it in case it was
+            // archived by a previous sync that saw it missing.
+            Conversation *conv = nullptr;
+            for (Conversation &c : m_conversations) {
+                if (c.remoteConversationId == remoteId) {
+                    conv = &c;
+                    break;
+                }
+            }
+            if (conv && conv->archived) {
+                conv->archived = false;
+                markDirty(conv->id);
+            }
             continue;
         }
         m_autoSyncPending.append(entry);
@@ -1812,6 +1888,24 @@ void ConversationManager::onAutoSyncConversationsFetched(const QVariantList &con
         nameModel["name"] = entry["name"].toString();
         nameModel["model"] = entry["model"].toString();
         m_autoSyncNameModel[remoteId] = nameModel;
+    }
+    // Archive local conversations whose remote counterpart no longer exists
+    // on the server (deleted on another device, or expired). The local copy
+    // is kept and shown as archived; the user can delete it permanently.
+    int archivedCount = 0;
+    for (Conversation &conv : m_conversations) {
+        if (conv.remoteConversationId.isEmpty() || conv.archived) {
+            continue;
+        }
+        if (!serverIds.contains(conv.remoteConversationId)) {
+            conv.archived = true;
+            markDirty(conv.id);
+            archivedCount++;
+        }
+    }
+    if (archivedCount > 0) {
+        saveDirtyConversations();
+        emit conversationCountChanged();
     }
     if (m_autoSyncPending.isEmpty()) {
         m_autoSyncing = false;

@@ -29,6 +29,10 @@ struct Conversation {
     // the first turn has been answered server-side; migration (D8) means old
     // conversations start fresh remotely.
     QString remoteConversationId;
+    // True when the remote conversation no longer exists on Mistral's
+    // servers (deleted on another device, or expired). The local copy is
+    // kept and shown as archived; the user can delete it permanently.
+    bool archived = false;
     bool unread = false;    // an answer landed while the user was elsewhere
     qint64 createdAt;
     qint64 updatedAt;
@@ -79,6 +83,14 @@ public:
     // F7: like purgeAllConversations but also deletes every remote
     // conversation on Mistral's servers first.
     Q_INVOKABLE void purgeAllConversationsWithRemote(const QString &apiKey);
+    // Deletes only archived conversations (those whose remote counterpart
+    // no longer exists on the server). Local-only conversations are kept.
+    Q_INVOKABLE int deleteAllArchived(const QString &apiKey);
+    // True when the conversation is archived (remote copy gone).
+    Q_INVOKABLE bool isArchived(const QString &conversationId) const;
+    // Clears the archived flag and the remote id, so the next message creates
+    // a fresh server-side conversation.
+    Q_INVOKABLE void unarchiveConversation(const QString &conversationId);
     Q_INVOKABLE QVariantMap getStatistics() const;
     Q_INVOKABLE QVariantMap getConversationStatistics(const QString &conversationId) const;
     Q_INVOKABLE QVariantMap getFunStats() const;

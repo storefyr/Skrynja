@@ -177,6 +177,16 @@ Page {
                         })
                     }
                 }
+                MenuItem {
+                    text: qsTr("Delete all archived")
+                    visible: model.archived || false
+                    onClicked: {
+                        remorse.execute(qsTr("Deleting archived conversations"), function() {
+                            conversationManager.deleteAllArchived(settingsManager.apiKey)
+                            refreshList()
+                        })
+                    }
+                }
             }
 
             Row {
@@ -226,7 +236,21 @@ Page {
                         color: conversationItem.highlighted ? Theme.highlightColor : Theme.primaryColor
                         font.pixelSize: Theme.fontSizeMedium
                         font.bold: statusDot.visible
+                        font.italic: model.archived || false
+                        opacity: model.archived ? 0.5 : 1.0
                         truncationMode: TruncationMode.Fade
+                    }
+
+                    // Archived marker: the remote conversation no longer
+                    // exists on Mistral's servers (deleted on another
+                    // device or expired). The local copy is kept.
+                    Label {
+                        width: parent.width
+                        text: qsTr("Archived — deleted on another device")
+                        visible: model.archived || false
+                        color: Theme.secondaryColor
+                        font.pixelSize: Theme.fontSizeTiny
+                        font.italic: true
                     }
 
                     // Show match preview when searching
@@ -295,6 +319,15 @@ Page {
         }
 
         PullDownMenu {
+            MenuItem {
+                text: qsTr("Delete all archived")
+                onClicked: {
+                    remorse.execute(qsTr("Deleting archived conversations"), function() {
+                        conversationManager.deleteAllArchived(settingsManager.apiKey)
+                        refreshList()
+                    })
+                }
+            }
             MenuItem {
                 text: qsTr("Purge all conversations")
                 onClicked: {

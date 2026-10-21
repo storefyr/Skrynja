@@ -96,6 +96,33 @@ Page {
             description: chatPage.activeModel
         }
 
+        // Banner for archived conversations: the remote copy is gone (deleted
+        // on another device), but the local history is still here.
+        Rectangle {
+            id: archivedBanner
+            anchors {
+                top: parent.top
+                left: parent.left
+                right: parent.right
+            }
+            height: archivedLabel.height + 2 * Theme.paddingSmall
+            visible: conversationManager.isArchived(
+                         conversationManager.currentConversationId())
+            color: Theme.rgba(Theme.secondaryHighlightColor, 0.15)
+            z: 1
+
+            Label {
+                id: archivedLabel
+                anchors.centerIn: parent
+                width: parent.width - 2 * Theme.horizontalPageMargin
+                text: qsTr("Archived — deleted on another device. Sending a message starts a new conversation.")
+                font.pixelSize: Theme.fontSizeExtraSmall
+                color: Theme.secondaryColor
+                wrapMode: Text.Wrap
+                horizontalAlignment: Text.AlignHCenter
+            }
+        }
+
         // The two pulleys used to carry the same seven entries, which made both
         // of them a wall of text. They are split by what they act on: the top
         // one leaves this conversation, the bottom one acts on it.
@@ -853,6 +880,14 @@ Page {
         if (!providerReady) {
             pageStack.push(Qt.resolvedUrl("SettingsPage.qml"))
             return
+        }
+
+        // An archived conversation has no remote counterpart anymore: a new
+        // message starts a fresh server-side conversation.
+        if (conversationManager.isArchived(
+                    conversationManager.currentConversationId())) {
+            conversationManager.unarchiveConversation(
+                        conversationManager.currentConversationId())
         }
 
         var imagePath = attachedImagePath
