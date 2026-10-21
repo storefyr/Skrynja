@@ -431,14 +431,14 @@ Page {
                     }
                 }
 
-                // F18: Voice input — record, transcribe, fill the input.
+                // F18: Voice input - record, transcribe, fill the input.
                 IconButton {
                     id: micButton
                     anchors.verticalCenter: parent.verticalCenter
                     visible: chatPage.providerReady
                     icon.source: chatPage.recording
-                        ? "image://theme/icon-m-microphone"
-                        : "image://theme/icon-m-microphone"
+                        ? "image://theme/icon-m-mic-mute"
+                        : "image://theme/icon-m-mic"
                     icon.highlighted: chatPage.recording || chatPage.transcribing
                     enabled: !mistralApi.isBusy && !chatPage.uploadingImage
                              && !chatPage.recording && !chatPage.transcribing
