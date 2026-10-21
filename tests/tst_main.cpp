@@ -221,6 +221,87 @@ private slots:
         QCOMPARE(spy.at(0).at(0).toString(), QString("web_search"));
     }
 
+    // web_search results arrive on tool.execution.finished and are collected
+    // as source URLs, deduplicated, in order of first appearance.
+    void toolExecutionFinishedCollectsSources()
+    {
+        MistralAPI api;
+        QSignalSpy spy(&api, SIGNAL(sourcesReceived(QStringList)));
+
+        api.processStreamData(
+            "event: tool.execution.finished\n"
+            "data: {\"data\":{\"output\":["
+            "{\"url\":\"https://example.com/a\"},"
+            "{\"url\":\"https://example.com/b\"}"
+            "]}}\n");
+        // Emitted only when the response completes, not on the tool event.
+        QCOMPARE(spy.count(), 0);
+
+        api.processStreamData("event: conversation.response.done\n"
+                              "data: {\"usage\":{\"prompt_tokens\":1,\"completion_tokens\":1}}\n");
+        QCOMPARE(spy.count(), 1);
+        const QStringList sources = spy.at(0).at(0).toStringList();
+        QCOMPARE(sources.count(), 2);
+        QCOMPARE(sources.at(0), QString("https://example.com/a"));
+        QCOMPARE(sources.at(1), QString("https://example.com/b"));
+    }
+
+    // Duplicate URLs from multiple searches are kept once.
+    void sourcesAreDeduplicated()
+    {
+        MistralAPI api;
+        QSignalSpy spy(&api, SIGNAL(sourcesReceived(QStringList)));
+
+        api.processStreamData(
+            "event: tool.execution.finished\n"
+            "data: {\"data\":{\"output\":[{\"url\":\"https://a.com\"}]}}\n");
+        api.processStreamData(
+            "event: tool.execution.finished\n"
+            "data: {\"data\":{\"output\":["
+            "{\"url\":\"https://a.com\"},"
+            "{\"url\":\"https://b.com\"}"
+            "]}}\n");
+        api.processStreamData("event: conversation.response.done\n"
+                              "data: {\"usage\":{}}\n");
+        QCOMPARE(spy.count(), 1);
+        QCOMPARE(spy.at(0).at(0).toStringList().count(), 2);
+    }
+
+    // No sources means no signal: the UI does not need to clear anything.
+    void noSourcesNoSignal()
+    {
+        MistralAPI api;
+        QSignalSpy spy(&api, SIGNAL(sourcesReceived(QStringList)));
+
+        api.processStreamData("event: conversation.response.done\n"
+                              "data: {\"usage\":{}}\n");
+        QCOMPARE(spy.count(), 0);
+    }
+
+    // Sources survive a save/load cycle on the conversation file.
+    void sourcesSurvivePersistence()
+    {
+        ConversationManager manager;
+        manager.purgeAllConversations();
+
+        const QString id = manager.currentConversationId();
+        manager.currentConversation()->addUserMessage("what is skynja?");
+        manager.currentConversation()->addAssistantMessage(
+                    "A chat app.",
+                    "mistral-small-latest", "mistral",
+                    QStringList() << "https://example.com/skrynja");
+        manager.saveCurrentConversation();
+
+        manager.createNewConversation("mistral-small-latest");
+        manager.loadConversation(id);
+
+        const QList<Message> &msgs = manager.currentConversation()->messages();
+        QCOMPARE(msgs.count(), 2);
+        QCOMPARE(msgs.at(1).role, QString("assistant"));
+        QCOMPARE(msgs.at(1).sources.count(), 1);
+        QCOMPARE(msgs.at(1).sources.at(0), QString("https://example.com/skrynja"));
+    }
+
     // A stream event carrying an error message sets the error text.
     void errorEventSetsError()
     {

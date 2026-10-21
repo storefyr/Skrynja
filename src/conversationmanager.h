@@ -8,6 +8,7 @@
 #include <QJsonObject>
 #include <QTimer>
 #include <QVariant>
+#include <QStringList>
 #include "conversationmodel.h"
 
 class MistralAPI;
@@ -132,6 +133,7 @@ signals:
 private slots:
     void onMessageSent();
     void onStreamingResponse(const QString &content);
+    void onSourcesReceived(const QStringList &sources);
     void onResponseCompleted();
     void onUsageReceived(int promptTokens, int completionTokens);
     void onSideRequestUsage(int promptTokens, int completionTokens);
@@ -147,6 +149,7 @@ private:
     QSet<QString> m_dirtyIds;
     QTimer *m_streamTimer;
     QString m_streamBuffer;
+    QStringList m_pendingSources;
     QString m_activeModel;
     QString m_streamingConversationId;
     bool m_streamDirty;

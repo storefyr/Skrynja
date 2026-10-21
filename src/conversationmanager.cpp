@@ -101,6 +101,8 @@ void ConversationManager::bindApi(MistralAPI *api)
             this, &ConversationManager::onMessageSent);
     connect(api, &MistralAPI::streamingResponse,
             this, &ConversationManager::onStreamingResponse);
+    connect(api, &MistralAPI::sourcesReceived,
+            this, &ConversationManager::onSourcesReceived);
     connect(api, &MistralAPI::responseCompleted,
             this, &ConversationManager::onResponseCompleted);
     connect(api, &MistralAPI::usageReceived,
@@ -133,6 +135,7 @@ void ConversationManager::onMessageSent()
 {
     m_streamBuffer.clear();
     m_streamDirty = false;
+    m_pendingSources.clear();
 
     if (m_streamingConversationId != m_currentConversationId) {
         m_streamingConversationId = m_currentConversationId;
@@ -152,6 +155,14 @@ void ConversationManager::onStreamingResponse(const QString &content)
     m_streamDirty = true;
 }
 
+void ConversationManager::onSourcesReceived(const QStringList &sources)
+{
+    // Buffer until the response ends: the assistant message may not be the
+    // last one in the model yet (it is created on messageSent, but a retry
+    // or a reconcile can reorder things).
+    m_pendingSources = sources;
+}
+
 void ConversationManager::flushStream()
 {
     if (!m_streamDirty) {
@@ -169,6 +180,9 @@ void ConversationManager::flushStream()
     }
 
     m_currentConversation->updateLastAssistantMessage(m_streamBuffer);
+    if (!m_pendingSources.isEmpty()) {
+        m_currentConversation->setLastAssistantSources(m_pendingSources);
+    }
     emit streamingUpdated();
 }
 
@@ -191,6 +205,7 @@ void ConversationManager::finishBackgroundResponse()
         }
     } else if (endsOnAssistant) {
         conv->messages.last().content = m_streamBuffer;
+        conv->messages.last().sources = m_pendingSources;
     } else {
         Message msg;
         msg.role = "assistant";
@@ -198,6 +213,7 @@ void ConversationManager::finishBackgroundResponse()
         msg.timestamp = QDateTime::currentMSecsSinceEpoch();
         msg.model = m_activeModel;
         msg.provider = Providers::ID;
+        msg.sources = m_pendingSources;
         conv->messages.append(msg);
     }
 
@@ -327,6 +343,13 @@ QJsonObject ConversationManager::conversationToJson(const Conversation &conv) co
         msgObj["timestamp"] = msg.timestamp;
         msgObj["pinned"] = msg.pinned;
         msgObj["imagePath"] = msg.imagePath;
+        if (!msg.sources.isEmpty()) {
+            QJsonArray sourcesArray;
+            for (const QString &s : msg.sources) {
+                sourcesArray.append(s);
+            }
+            msgObj["sources"] = sourcesArray;
+        }
         messagesArray.append(msgObj);
     }
     obj["messages"] = messagesArray;
@@ -365,6 +388,10 @@ Conversation ConversationManager::conversationFromJson(const QJsonObject &obj)
         msg.timestamp = msgObj["timestamp"].toVariant().toLongLong();
         msg.pinned = msgObj["pinned"].toBool();
         msg.imagePath = msgObj["imagePath"].toString();
+        const QJsonArray sourcesArray = msgObj["sources"].toArray();
+        for (const QJsonValue &s : sourcesArray) {
+            msg.sources.append(s.toString());
+        }
         msg.model = msgObj["model"].toString();
         msg.provider = msgObj["provider"].toString();
         // Retroactive stamp. An answer written before 2.3 carries neither
@@ -540,7 +567,7 @@ void ConversationManager::loadConversation(const QString &conversationId)
     for (const Message &msg : conv->messages) {
         m_currentConversation->addMessage(msg.role, msg.content, msg.timestamp,
                                           msg.pinned, msg.imagePath,
-                                          msg.model, msg.provider);
+                                          msg.model, msg.provider, msg.sources);
     }
 
     // Coming back to a conversation that is still receiving an answer: the

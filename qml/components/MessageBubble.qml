@@ -15,6 +15,8 @@ ListItem {
     property string imagePath: ""
     // Who produced this answer. Both empty on user turns; on assistant turns
     property string messageModel: ""
+    // URLs cited by web_search for this answer
+    property var messageSources: []
 
     signal pinToggled()
 
@@ -188,6 +190,46 @@ ListItem {
             font.pixelSize: Theme.fontSizeTiny
             color: Theme.secondaryColor
             truncationMode: TruncationMode.Fade
+        }
+
+        // Sources cited by web_search. Tapping a chip opens the URL.
+        Row {
+            width: parent.width
+            spacing: Theme.paddingSmall
+            visible: !messageItem.isUser && messageItem.messageSources.length > 0
+
+            Repeater {
+                model: messageItem.messageSources
+
+                Rectangle {
+                    height: Theme.itemSizeSmall / 2
+                    width: sourceChipLabel.width + 2 * Theme.paddingSmall
+                    radius: height / 2
+                    color: Theme.rgba(Theme.highlightColor, 0.15)
+                    border.color: Theme.rgba(Theme.highlightColor, 0.4)
+                    border.width: 1
+
+                    Label {
+                        id: sourceChipLabel
+                        anchors.centerIn: parent
+                        text: {
+                            // Show the host name, not the full URL
+                            var u = modelData
+                            var m = u.match(/^https?:\/\/([^\/]+)/)
+                            return m ? m[1] : u
+                        }
+                        font.pixelSize: Theme.fontSizeTiny
+                        color: Theme.highlightColor
+                        truncationMode: TruncationMode.Fade
+                        maximumLineCount: 1
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: Qt.openUrlExternally(modelData)
+                    }
+                }
+            }
         }
     }
 

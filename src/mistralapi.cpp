@@ -292,6 +292,7 @@ void MistralAPI::sendMessage(const QString &apiKey,
     m_retryCount = 0;
     m_streamStarted = false;
     m_streamDone = false;
+    m_pendingSources.clear();
 
     // Kept whole: a rate-limited request has to go out again byte for byte,
     // and the caller must not have to know that it ever came back.
@@ -945,6 +946,21 @@ void MistralAPI::parseStreamLine(const QString &event, const QString &jsonData)
         return;
     }
 
+    if (event == "tool.execution.finished") {
+        // web_search results arrive here as a list of source objects with a
+        // "url" field. Collect them for the answer that is being built.
+        const QJsonDocument doc = QJsonDocument::fromJson(jsonData.toUtf8());
+        const QJsonObject data = doc.object()["data"].toObject();
+        const QJsonArray results = data["output"].toArray();
+        for (const QJsonValue &v : results) {
+            const QString url = v.toObject()["url"].toString();
+            if (!url.isEmpty() && !m_pendingSources.contains(url)) {
+                m_pendingSources.append(url);
+            }
+        }
+        return;
+    }
+
     if (event == "message.output.delta") {
         const QJsonDocument doc = QJsonDocument::fromJson(jsonData.toUtf8());
         const QJsonValue content = doc.object()["content"];
@@ -974,6 +990,11 @@ void MistralAPI::parseStreamLine(const QString &event, const QString &jsonData)
 
     if (event == "conversation.response.done") {
         m_streamDone = true;
+        // Sources are emitted before usage so the manager can attach them to
+        // the assistant message before the response is finalised.
+        if (!m_pendingSources.isEmpty()) {
+            emit sourcesReceived(m_pendingSources);
+        }
         const QJsonDocument doc = QJsonDocument::fromJson(jsonData.toUtf8());
         const QJsonObject usage = doc.object()["usage"].toObject();
         if (!usage.isEmpty()) {

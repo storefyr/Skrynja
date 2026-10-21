@@ -7,6 +7,7 @@
 #include <QNetworkRequest>
 #include <QUrl>
 #include <QString>
+#include <QStringList>
 #include <QByteArray>
 #include <QTimer>
 #include <QElapsedTimer>
@@ -73,6 +74,9 @@ signals:
     void conversationCreated(const QString &conversationId);
     // A server-side tool (web_search) started: the UI can show activity.
     void toolActivity(const QString &toolName);
+    // Sources cited by web_search, collected from tool.execution events.
+    // Emitted once per response, before responseCompleted.
+    void sourcesReceived(const QStringList &sources);
     void titleGenerated(const QString &title, const QString &category,
                         const QString &targetId);
     void titleGenerationFailed(const QString &targetId);
@@ -132,6 +136,9 @@ private:
     // A reconcile GET is in flight: the chat reply is parked meanwhile.
     bool m_reconciling;
     QNetworkReply *m_reconcileReply;
+    // URLs cited by web_search during this response, deduplicated, in order
+    // of first appearance. Emitted once when the response completes.
+    QStringList m_pendingSources;
 
     void setIsBusy(bool busy);
     void setError(const QString &error);

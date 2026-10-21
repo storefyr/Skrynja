@@ -34,6 +34,8 @@ QVariant ConversationModel::data(const QModelIndex &index, int role) const
         return message.model;
     case ProviderRole:
         return message.provider;
+    case SourcesRole:
+        return message.sources;
     default:
         return QVariant();
     }
@@ -51,12 +53,14 @@ QHash<int, QByteArray> ConversationModel::roleNames() const
     // object and silently turns every other lookup into undefined.
     roles[ModelRole] = "messageModel";
     roles[ProviderRole] = "provider";
+    roles[SourcesRole] = "sources";
     return roles;
 }
 
 void ConversationModel::addMessage(const QString &role, const QString &content, qint64 timestamp,
                                    bool pinned, const QString &imagePath,
-                                   const QString &model, const QString &provider)
+                                   const QString &model, const QString &provider,
+                                   const QStringList &sources)
 {
     Message msg;
     msg.role = role;
@@ -66,6 +70,7 @@ void ConversationModel::addMessage(const QString &role, const QString &content, 
     msg.imagePath = imagePath;
     msg.model = model;
     msg.provider = provider;
+    msg.sources = sources;
 
     beginInsertRows(QModelIndex(), m_messages.count(), m_messages.count());
     m_messages.append(msg);
@@ -81,10 +86,25 @@ void ConversationModel::addUserMessage(const QString &content, const QString &im
 
 void ConversationModel::addAssistantMessage(const QString &content,
                                             const QString &model,
-                                            const QString &provider)
+                                            const QString &provider,
+                                            const QStringList &sources)
 {
     addMessage("assistant", content, QDateTime::currentMSecsSinceEpoch(),
-               false, QString(), model, provider);
+               false, QString(), model, provider, sources);
+}
+
+void ConversationModel::setLastAssistantSources(const QStringList &sources)
+{
+    if (m_messages.isEmpty())
+        return;
+
+    int lastIndex = m_messages.count() - 1;
+    if (m_messages.at(lastIndex).role != "assistant")
+        return;
+
+    m_messages[lastIndex].sources = sources;
+    QModelIndex index = createIndex(lastIndex, 0);
+    emit dataChanged(index, index, {SourcesRole});
 }
 
 void ConversationModel::updateLastAssistantMessage(const QString &content)

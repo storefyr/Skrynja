@@ -143,6 +143,7 @@ Page {
             timestamp: model.timestamp
             imagePath: model.imagePath
             messageModel: model.messageModel
+            messageSources: model.sources || []
 
             onPinToggled: {
                 conversationModel.togglePinned(index)

@@ -17,7 +17,7 @@ specs in `docs/features/` remain as historical reference; the ones marked **remo
 |---|---------|------|--------|
 | F1 | Rename to Skrynja (app name, harbour id, packaging, paths, docs, translations) | — | done (v0.1.0) |
 | F2 | `mistralapi.cpp` rewrite: request builder for `/v1/conversations#stream` + `/v1/conversations/{id}#stream`, typed SSE parser (`message.output.delta`, `conversation.response.done`, `tool.execution.*`), `conversation_id` handling | — | done (unreleased) |
-| F3 | Web search: `tools: [{"type": "web_search"}]` at creation, toggle in Settings, "Searching the web…" indicator, source chips in `MessageBubble` | — | todo |
+| F3 | Web search: `tools: [{"type": "web_search"}]` at creation, toggle in Settings, "Searching the web…" indicator, source chips in `MessageBubble` | — | done |
 | F4 | `conversationmanager.cpp`: persistent `remoteConversationId` + `dirty` fields, migration of the JSON format | — | done (unreleased) |
 | F5 | Reconcile-before-retry: `GET /v1/conversations/{id}/messages` after an ambiguous failure | — | done (unreleased) |
 | F6 | Cancel = dirty; next message via `POST /v1/conversations/{id}/restart#stream` (new id, delete old) | — | todo |

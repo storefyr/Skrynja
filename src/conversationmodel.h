@@ -5,6 +5,7 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QList>
+#include <QStringList>
 
 struct Message {
     QString role;      // "user" or "assistant"
@@ -15,6 +16,9 @@ struct Message {
     // anything written before 2.3.
     QString model;
     QString provider;
+    // URLs cited by web_search, attached to the assistant message that
+    // used them. Empty for answers that did not search.
+    QStringList sources;
     qint64 timestamp;
     bool pinned = false;
 };
@@ -32,7 +36,8 @@ public:
         PinnedRole,
         ImagePathRole,
         ModelRole,
-        ProviderRole
+        ProviderRole,
+        SourcesRole
     };
 
     explicit ConversationModel(QObject *parent = nullptr);
@@ -44,8 +49,11 @@ public:
     Q_INVOKABLE void addUserMessage(const QString &content, const QString &imagePath = QString());
     Q_INVOKABLE void addAssistantMessage(const QString &content,
                                         const QString &model = QString(),
-                                        const QString &provider = QString());
+                                        const QString &provider = QString(),
+                                        const QStringList &sources = QStringList());
     Q_INVOKABLE void updateLastAssistantMessage(const QString &content);
+    // Attaches web_search source URLs to the last assistant message.
+    void setLastAssistantSources(const QStringList &sources);
     Q_INVOKABLE void removeLastMessageIfEmpty();
     Q_INVOKABLE void removeLastAssistantMessage();
     Q_INVOKABLE void truncateFrom(int index);
@@ -58,7 +66,8 @@ public:
 
     void addMessage(const QString &role, const QString &content, qint64 timestamp,
                     bool pinned = false, const QString &imagePath = QString(),
-                    const QString &model = QString(), const QString &provider = QString());
+                    const QString &model = QString(), const QString &provider = QString(),
+                    const QStringList &sources = QStringList());
     QJsonArray toJsonArray() const;
 
     // Read-only view used by ConversationManager to build the API payload.
