@@ -5,6 +5,15 @@ All notable changes to Skrynja will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.4] - 2026-10-21
+Skrynja 0.4.4 — Debug build: added SSE/network logging to diagnose missing answers.
+
+### Added
+- **Debug logging** in `MistralAPI`: logs the POST URL and request body, raw SSE
+  chunks, each SSE line, parsed event names, HTTP status on finish, and network
+  errors. View with `journalctl -f` or run from terminal. To be removed or
+  reduced once the streaming issue is resolved.
+
 ## [0.4.3] - 2026-10-21
 Skrynja 0.4.3 — Hotfix: SSE event names did not match the current API (no answers arrived).
 
