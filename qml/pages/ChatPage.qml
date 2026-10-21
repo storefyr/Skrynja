@@ -1024,11 +1024,6 @@ Page {
     AudioRecorder {
         id: audioRecorder
         audioEncodingMode: AudioRecorder.ConstantBitRateEncoding
-        mediaObject {
-            // The actual audio input is provided by the system's default
-            // audio source. QtMultimedia on Sailfish picks up the microphone
-            // automatically when the app has the Microphone permission.
-        }
         onStopped: {
             // Recording finished: the file is ready for transcription.
             // The actual transcription is triggered by the mic button.
