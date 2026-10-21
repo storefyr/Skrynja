@@ -473,12 +473,11 @@ Page {
 
                         onClicked: {
                             if (chatPage.recording) {
-                                // Stop recording and transcribe
+                                // Stop recording. Transcription starts when
+                                // the recorder emits 'stopped' (file is flushed).
                                 chatPage.recording = false
                                 globalAudioRecorder.stop()
                                 chatPage.transcribing = true
-                                mistralApi.transcribeAudio(settingsManager.apiKey,
-                                                            chatPage.recordingPath)
                             } else if (!chatPage.transcribing) {
                                 // Start recording
                                 chatPage.recordingPath = mistralApi.tempAudioPath()
@@ -1098,8 +1097,12 @@ Page {
         }
 
         onStopped: {
-            // Recording stopped (either by user or by error).
-            // The actual transcription is triggered by the mic button click.
+            // Recording stopped and file is flushed to disk.
+            // Now it is safe to read the file and transcribe.
+            if (chatPage.transcribing && chatPage.recordingPath !== "") {
+                mistralApi.transcribeAudio(settingsManager.apiKey,
+                                            chatPage.recordingPath)
+            }
         }
     }
 

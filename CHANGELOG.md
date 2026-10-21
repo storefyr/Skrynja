@@ -5,6 +5,17 @@ All notable changes to Skrynja will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.8] - 2026-10-21
+Skrynja 0.8.8 — Fix: wait for file flush before transcribing.
+
+### Fixed
+- `QAudioRecorder::stop()` is asynchronous — the WAV file is not fully
+  written to disk the instant `stop()` returns. Previously, transcription
+  was triggered immediately after `stop()`, causing "Could not read the
+  recording file" because the file was empty or incomplete.
+- Now transcription is triggered from the `stopped` signal handler, which
+  fires after the recorder has flushed and closed the file.
+
 ## [0.8.7] - 2026-10-21
 Skrynja 0.8.7 — Improvement: descriptive transcription error messages.
 
