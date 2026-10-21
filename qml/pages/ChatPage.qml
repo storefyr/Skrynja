@@ -1077,9 +1077,9 @@ Page {
 
         onTranscriptionFailed: {
             chatPage.transcribing = false
-            console.warn("Transcription failed")
+            console.warn("Transcription failed: " + message)
             errorNotification.previewSummary = qsTr("Transcription failed")
-            errorNotification.previewBody = qsTr("Could not transcribe the recording. Check your API key and try again.")
+            errorNotification.previewBody = message
             errorNotification.publish()
         }
     }

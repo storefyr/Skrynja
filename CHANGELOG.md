@@ -5,6 +5,21 @@ All notable changes to Skrynja will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.7] - 2026-10-21
+Skrynja 0.8.7 — Improvement: descriptive transcription error messages.
+
+### Changed
+- `transcriptionFailed` signal now carries a `QString message` parameter
+  with a human-readable error description.
+- `onTranscriptionFinished()` parses the server's JSON error body
+  (`message` or `detail` field) and maps common HTTP status codes to
+  friendly messages: 401/403 → "Invalid API key", 429 → "Rate limit
+  reached", 402 → "Payment required".
+- The QML notification now displays the actual error message instead of
+  a generic "Check your API key" text.
+- Pre-flight errors (no API key, empty file, unreadable file) also emit
+  descriptive messages.
+
 ## [0.8.6] - 2026-10-21
 Skrynja 0.8.6 — Improvement: recording timer, error notifications, robustness.
 

@@ -131,7 +131,7 @@ signals:
     void imageUploadFailed();
     // F18: audio transcription result.
     void transcriptionReady(const QString &text);
-    void transcriptionFailed();
+    void transcriptionFailed(const QString &message);
     // The provider turned the request away (429/503) and it will be sent
     // again: the answer is still coming, so this is not an error yet.
     void rateLimited(int seconds, int attempt, int maxAttempts);

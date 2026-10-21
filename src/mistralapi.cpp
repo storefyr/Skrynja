@@ -864,7 +864,7 @@ QString MistralAPI::tempAudioPath() const
 void MistralAPI::transcribeAudio(const QString &apiKey, const QString &audioPath)
 {
     if ((apiKey.isEmpty() && m_keyRequired) || m_baseUrl.isEmpty()) {
-        emit transcriptionFailed();
+        emit transcriptionFailed(tr("No API key configured"));
         return;
     }
 
@@ -876,13 +876,13 @@ void MistralAPI::transcribeAudio(const QString &apiKey, const QString &audioPath
     QFile audioFile(localPath);
     if (!audioFile.open(QIODevice::ReadOnly)) {
         qWarning() << "Cannot open audio file for transcription:" << localPath;
-        emit transcriptionFailed();
+        emit transcriptionFailed(tr("Could not read the recording file"));
         return;
     }
     const QByteArray audioData = audioFile.readAll();
     audioFile.close();
     if (audioData.isEmpty()) {
-        emit transcriptionFailed();
+        emit transcriptionFailed(tr("The recording is empty"));
         return;
     }
 
@@ -927,12 +927,36 @@ void MistralAPI::onTranscriptionFinished()
     }
 
     const QByteArray body = reply->readAll();
+    const int httpStatus = reply->attribute(
+                QNetworkRequest::HttpStatusCodeAttribute).toInt();
     reply->deleteLater();
 
     if (reply->error() != QNetworkReply::NoError) {
-        qWarning() << "Transcription failed:" << reply->errorString()
-                   << "body:" << body.left(500);
-        emit transcriptionFailed();
+        // Parse the server's error message from the JSON body if available.
+        QString message;
+        const QJsonDocument doc = QJsonDocument::fromJson(body);
+        const QJsonObject obj = doc.object();
+        if (obj.contains("message")) {
+            message = obj["message"].toString();
+        } else if (obj.contains("detail")) {
+            message = obj["detail"].toString();
+        }
+
+        if (message.isEmpty()) {
+            if (httpStatus == 401 || httpStatus == 403) {
+                message = tr("Invalid API key");
+            } else if (httpStatus == 429) {
+                message = tr("Rate limit reached. Try again later.");
+            } else if (httpStatus == 402) {
+                message = tr("Payment required. Check your Mistral account balance.");
+            } else {
+                message = reply->errorString();
+            }
+        }
+
+        qWarning() << "Transcription failed: HTTP" << httpStatus
+                   << reply->errorString() << "body:" << body.left(500);
+        emit transcriptionFailed(message);
         return;
     }
 
@@ -940,7 +964,7 @@ void MistralAPI::onTranscriptionFinished()
     const QString text = doc.object()["text"].toString();
     if (text.isEmpty()) {
         qWarning() << "Transcription returned no text, body:" << body.left(500);
-        emit transcriptionFailed();
+        emit transcriptionFailed(tr("No speech detected in the recording"));
         return;
     }
 
