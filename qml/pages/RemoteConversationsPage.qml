@@ -45,9 +45,6 @@ Page {
             id: remoteItem
             contentHeight: contentColumn.height + 2 * Theme.paddingMedium
 
-            property string remoteId: modelData.id
-            property string remoteName: modelData.name
-            property string remoteModelName: modelData.model
             property bool alreadyAttached: conversationManager.hasRemoteConversation(remoteId)
 
             onClicked: {
@@ -83,14 +80,14 @@ Page {
                     spacing: Theme.paddingMedium
 
                     Label {
-                        text: remoteModelName || ""
+                        text: remoteModel || ""
                         visible: text !== ""
                         color: remoteItem.highlighted ? Theme.secondaryHighlightColor : Theme.secondaryColor
                         font.pixelSize: Theme.fontSizeExtraSmall
                     }
 
                     Label {
-                        text: remotePage.formatDate(modelData.updated_at || modelData.created_at)
+                        text: remotePage.formatDate(remoteUpdatedAt || remoteCreatedAt)
                         color: remoteItem.highlighted ? Theme.secondaryHighlightColor : Theme.secondaryColor
                         font.pixelSize: Theme.fontSizeExtraSmall
                     }
@@ -142,11 +139,11 @@ Page {
             for (var i = 0; i < conversations.length; ++i) {
                 var c = conversations[i]
                 remoteModel.append({
-                    id: c.id,
-                    name: c.name || "",
-                    model: c.model || "",
-                    created_at: c.created_at || "",
-                    updated_at: c.updated_at || ""
+                    remoteId: c.id,
+                    remoteName: c.name || "",
+                    remoteModel: c.model || "",
+                    remoteCreatedAt: c.created_at || "",
+                    remoteUpdatedAt: c.updated_at || ""
                 })
             }
         }
@@ -166,9 +163,9 @@ Page {
             var title = ""
             var model = ""
             for (var i = 0; i < remoteModel.count; ++i) {
-                if (remoteModel.get(i).id === remoteConversationId) {
-                    title = remoteModel.get(i).name
-                    model = remoteModel.get(i).model
+                if (remoteModel.get(i).remoteId === remoteConversationId) {
+                    title = remoteModel.get(i).remoteName
+                    model = remoteModel.get(i).remoteModel
                     break
                 }
             }

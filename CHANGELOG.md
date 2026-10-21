@@ -5,6 +5,17 @@ All notable changes to Skrynja will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.3] - 2026-10-21
+Skrynja 0.5.3 — Hotfix: rename ListModel roles to avoid QML name conflicts.
+
+### Fixed
+- **Remote Conversations page**: ListModel roles `id`, `name`, `model` collided
+  with QML reserved names/context (`id` attribute, `model` context property).
+  Roles are now named `remoteId`, `remoteName`, `remoteModel`,
+  `remoteCreatedAt`, `remoteUpdatedAt` and accessed directly (no `modelData.`
+  or `model.` prefix). In a QML `ListModel` delegate, roles are exposed as
+  direct properties of the delegate context.
+
 ## [0.5.2] - 2026-10-21
 Skrynja 0.5.2 — Hotfix: fix delegate model role access in RemoteConversationsPage.
 
