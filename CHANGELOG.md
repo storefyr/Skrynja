@@ -5,6 +5,16 @@ All notable changes to Skrynja will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.9] - 2026-10-21
+Skrynja 0.5.9 — Hotfix: dedupe remote conversations in the C++ parser.
+
+### Fixed
+- **Remote conversations list**: duplicate conversations are now removed
+  in `parseRemoteConversations()` (C++ layer) using a `QSet`, not just in
+  the QML layer. The previous QML-only dedup did not work because the
+  QVariantMap keys from C++ arrive as JavaScript objects where `seen[c.id]`
+  does not behave as expected.
+
 ## [0.5.8] - 2026-10-21
 Skrynja 0.5.8 — Hotfix: dedupe remote conversations and show count.
 

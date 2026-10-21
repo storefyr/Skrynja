@@ -889,6 +889,31 @@ private slots:
         QCOMPARE(result.at(0).toMap()["id"].toString(), QString("valid"));
     }
 
+    // F17: parseRemoteConversations deduplicates entries with the same id
+    // (the API can return duplicates when pagination overlaps).
+    void parseRemoteConversationsDeduplicates()
+    {
+        const QJsonObject doc = QJsonDocument::fromJson(
+                    "{\"data\":["
+                    "{\"id\":\"conv-a\",\"name\":\"First\","
+                    "\"model\":\"m1\",\"created_at\":\"2026-01-01T10:00:00Z\"},"
+                    "{\"id\":\"conv-b\",\"name\":\"Second\","
+                    "\"model\":\"m2\",\"created_at\":\"2026-01-02T10:00:00Z\"},"
+                    "{\"id\":\"conv-a\",\"name\":\"First dup\","
+                    "\"model\":\"m1\",\"created_at\":\"2026-01-01T10:00:00Z\"},"
+                    "{\"id\":\"conv-a\",\"name\":\"First dup2\","
+                    "\"model\":\"m1\",\"created_at\":\"2026-01-01T10:00:00Z\"}"
+                    "]}"
+                    ).object();
+
+        const QVariantList result = MistralAPI::parseRemoteConversations(doc);
+        QCOMPARE(result.count(), 2);
+        QCOMPARE(result.at(0).toMap()["id"].toString(), QString("conv-a"));
+        QCOMPARE(result.at(0).toMap()["name"].toString(), QString("First"));
+        QCOMPARE(result.at(1).toMap()["id"].toString(), QString("conv-b"));
+        QCOMPARE(result.at(1).toMap()["name"].toString(), QString("Second"));
+    }
+
     // F17: parseRemoteMessages extracts role, content and timestamp from
     // a GET /v1/conversations/{id}/messages response.
     void parseRemoteMessagesExtractsFields()

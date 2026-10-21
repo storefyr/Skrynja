@@ -10,6 +10,7 @@
 #include <QJsonObject>
 #include <QNetworkRequest>
 #include <QRegularExpression>
+#include <QSet>
 #include <QSslConfiguration>
 #include <QSslSocket>
 #include <QDebug>
@@ -592,19 +593,26 @@ QVariantList MistralAPI::parseRemoteConversations(const QJsonObject &doc)
     }
 
     QVariantList result;
+    QSet<QString> seenIds;
     for (const QJsonValue &value : items) {
         const QJsonObject obj = value.toObject();
+        const QString id = obj["id"].toString();
+        // The API can return the same conversation more than once (e.g.
+        // when pagination overlaps); dedupe by id so the UI shows each
+        // conversation exactly once.
+        if (id.isEmpty() || seenIds.contains(id)) {
+            continue;
+        }
+        seenIds.insert(id);
         QVariantMap entry;
-        entry["id"] = obj["id"].toString();
+        entry["id"] = id;
         entry["name"] = obj["name"].toString();
         entry["model"] = obj["model"].toString();
         // Timestamps come as ISO 8601 strings; pass them through as-is so
         // the QML layer can format them.
         entry["created_at"] = obj["created_at"].toString();
         entry["updated_at"] = obj["updated_at"].toString();
-        if (!entry["id"].toString().isEmpty()) {
-            result.append(entry);
-        }
+        result.append(entry);
     }
     return result;
 }

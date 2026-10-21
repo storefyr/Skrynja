@@ -152,14 +152,8 @@ Page {
             remotePage.loading = false
             remotePage.errorMessage = ""
             remoteModel.clear()
-            var seen = {}
-            var added = 0
             for (var i = 0; i < conversations.length; ++i) {
                 var c = conversations[i]
-                if (!c.id || seen[c.id]) {
-                    continue
-                }
-                seen[c.id] = true
                 remoteModel.append({
                     remoteId: c.id,
                     remoteName: c.name || "",
@@ -167,7 +161,6 @@ Page {
                     remoteCreatedAt: c.created_at || "",
                     remoteUpdatedAt: c.updated_at || ""
                 })
-                added++
             }
         }
 
