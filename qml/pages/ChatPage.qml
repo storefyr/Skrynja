@@ -432,51 +432,78 @@ Page {
                 }
 
                 // F18: Voice input - record, transcribe, fill the input.
-                IconButton {
+                Item {
                     id: micButton
                     anchors.verticalCenter: parent.verticalCenter
                     visible: chatPage.providerReady
-                    icon.source: chatPage.recording
-                        ? "image://theme/icon-m-mic-mute"
-                        : "image://theme/icon-m-mic"
-                    icon.highlighted: chatPage.recording || chatPage.transcribing
-                    enabled: !mistralApi.isBusy && !chatPage.uploadingImage
-                             && !chatPage.transcribing
-                    opacity: chatPage.recording ? 1.0 : (chatPage.transcribing ? 0.5 : 1.0)
+                    width: Theme.iconSizeMedium
+                    height: Theme.iconSizeMedium
 
-                    // Pulsing ring while recording
-                    Rectangle {
-                        anchors.centerIn: parent
-                        width: parent.width * 1.6
-                        height: width
-                        radius: width / 2
-                        color: "transparent"
-                        border.color: Theme.errorColor
-                        border.width: 2
-                        visible: chatPage.recording
-                        z: -1
-                        SequentialAnimation on opacity {
-                            running: chatPage.recording
-                            loops: Animation.Infinite
-                            NumberAnimation { from: 1.0; to: 0.2; duration: 600 }
-                            NumberAnimation { from: 0.2; to: 1.0; duration: 600 }
+                    property bool recording: chatPage.recording
+                    property bool transcribing: chatPage.transcribing
+
+                    IconButton {
+                        anchors.fill: parent
+                        icon.source: micButton.recording
+                            ? "image://theme/icon-m-mic-mute"
+                            : "image://theme/icon-m-mic"
+                        icon.highlighted: micButton.recording || micButton.transcribing
+                        enabled: !mistralApi.isBusy && !chatPage.uploadingImage
+                                 && !micButton.transcribing
+                        opacity: micButton.recording ? 1.0 : (micButton.transcribing ? 0.5 : 1.0)
+
+                        // Pulsing ring while recording
+                        Rectangle {
+                            anchors.centerIn: parent
+                            width: parent.width * 1.6
+                            height: width
+                            radius: width / 2
+                            color: "transparent"
+                            border.color: Theme.errorColor
+                            border.width: 2
+                            visible: micButton.recording
+                            z: -1
+                            SequentialAnimation on opacity {
+                                running: micButton.recording
+                                loops: Animation.Infinite
+                                NumberAnimation { from: 1.0; to: 0.2; duration: 600 }
+                                NumberAnimation { from: 0.2; to: 1.0; duration: 600 }
+                            }
+                        }
+
+                        onClicked: {
+                            if (chatPage.recording) {
+                                // Stop recording and transcribe
+                                chatPage.recording = false
+                                globalAudioRecorder.stop()
+                                chatPage.transcribing = true
+                                mistralApi.transcribeAudio(settingsManager.apiKey,
+                                                            chatPage.recordingPath)
+                            } else if (!chatPage.transcribing) {
+                                // Start recording
+                                chatPage.recordingPath = mistralApi.tempAudioPath()
+                                globalAudioRecorder.outputLocation = chatPage.recordingPath
+                                globalAudioRecorder.record()
+                                chatPage.recording = true
+                            }
                         }
                     }
 
-                    onClicked: {
-                        if (chatPage.recording) {
-                            // Stop recording and transcribe
-                            chatPage.recording = false
-                            globalAudioRecorder.stop()
-                            chatPage.transcribing = true
-                            mistralApi.transcribeAudio(settingsManager.apiKey,
-                                                        chatPage.recordingPath)
-                        } else if (!chatPage.transcribing) {
-                            // Start recording
-                            chatPage.recordingPath = mistralApi.tempAudioPath()
-                            globalAudioRecorder.outputLocation = chatPage.recordingPath
-                            globalAudioRecorder.record()
-                            chatPage.recording = true
+                    // Recording duration label
+                    Label {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        anchors.top: parent.bottom
+                        anchors.topMargin: Theme.paddingSmall
+                        visible: micButton.recording
+                        font.pixelSize: Theme.fontSizeExtraSmall
+                        color: Theme.errorColor
+                        text: {
+                            if (!micButton.recording) return ""
+                            var ms = globalAudioRecorder.duration
+                            var totalSec = Math.floor(ms / 1000)
+                            var min = Math.floor(totalSec / 60)
+                            var sec = totalSec % 60
+                            return min + ":" + (sec < 10 ? "0" + sec : sec)
                         }
                     }
                 }
@@ -654,6 +681,11 @@ Page {
 
     Notification {
         id: exportNotification
+        appName: "Skrynja"
+    }
+
+    Notification {
+        id: errorNotification
         appName: "Skrynja"
     }
 
@@ -1046,6 +1078,28 @@ Page {
         onTranscriptionFailed: {
             chatPage.transcribing = false
             console.warn("Transcription failed")
+            errorNotification.previewSummary = qsTr("Transcription failed")
+            errorNotification.previewBody = qsTr("Could not transcribe the recording. Check your API key and try again.")
+            errorNotification.publish()
+        }
+    }
+
+    // F18: Audio recorder error handler.
+    Connections {
+        target: globalAudioRecorder
+
+        onErrorOccurred: {
+            chatPage.recording = false
+            chatPage.transcribing = false
+            console.warn("AudioRecorder error: " + globalAudioRecorder.errorString)
+            errorNotification.previewSummary = qsTr("Recording failed")
+            errorNotification.previewBody = globalAudioRecorder.errorString
+            errorNotification.publish()
+        }
+
+        onStopped: {
+            // Recording stopped (either by user or by error).
+            // The actual transcription is triggered by the mic button click.
         }
     }
 

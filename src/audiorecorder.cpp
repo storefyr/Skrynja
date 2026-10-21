@@ -10,6 +10,8 @@ AudioRecorder::AudioRecorder(QObject *parent)
 {
     connect(m_recorder, SIGNAL(stateChanged(QAudioRecorder::State)),
             this, SLOT(onStateChanged(QAudioRecorder::State)));
+    connect(m_recorder, SIGNAL(durationChanged(qint64)),
+            this, SIGNAL(durationChanged(qint64)));
     connect(m_recorder, SIGNAL(error(QAudioRecorder::Error)),
             this, SLOT(onError(QAudioRecorder::Error)));
 
@@ -75,6 +77,11 @@ void AudioRecorder::stop()
 void AudioRecorder::pause()
 {
     m_recorder->pause();
+}
+
+qint64 AudioRecorder::duration() const
+{
+    return m_recorder->duration();
 }
 
 void AudioRecorder::onStateChanged(QAudioRecorder::State state)

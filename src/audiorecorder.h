@@ -9,9 +9,10 @@ class AudioRecorder : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(bool recording READ recording NOTIFY recordingChanged)
-    Q_PROPERTY(bool available READ available NOTIFY availableChanged)
+    Q_PROPERTY(bool available READ available CONSTANT)
     Q_PROPERTY(QString errorString READ errorString NOTIFY errorChanged)
     Q_PROPERTY(QString outputLocation READ outputLocation WRITE setOutputLocation NOTIFY outputLocationChanged)
+    Q_PROPERTY(qint64 duration READ duration NOTIFY durationChanged)
 
 public:
     explicit AudioRecorder(QObject *parent = 0);
@@ -21,6 +22,7 @@ public:
     bool available() const;
     QString errorString() const;
     QString outputLocation() const;
+    qint64 duration() const;
 
     void setOutputLocation(const QString &location);
 
@@ -34,6 +36,7 @@ signals:
     void errorChanged();
     void outputLocationChanged();
     void stopped();
+    void durationChanged();
     void errorOccurred(QAudioRecorder::Error error);
 
 private slots:

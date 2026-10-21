@@ -2,6 +2,7 @@
 #include "categories.h"
 #include <QBuffer>
 #include <QDateTime>
+#include <QDir>
 #include <QFile>
 #include <QHttpMultiPart>
 #include <QImage>
@@ -853,8 +854,10 @@ void MistralAPI::onImageUploadFinished()
 QString MistralAPI::tempAudioPath() const
 {
     // A unique path inside the app's cache directory for the next recording.
-    return QStandardPaths::writableLocation(QStandardPaths::CacheLocation)
-            + "/skrynja-recording-"
+    // Ensure the directory exists (SailJail sandbox may not have created it).
+    const QString cacheDir = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
+    QDir().mkpath(cacheDir);
+    return cacheDir + "/skrynja-recording-"
             + QString::number(QDateTime::currentMSecsSinceEpoch()) + ".wav";
 }
 

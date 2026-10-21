@@ -5,6 +5,21 @@ All notable changes to Skrynja will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.6] - 2026-10-21
+Skrynja 0.8.6 — Improvement: recording timer, error notifications, robustness.
+
+### Added
+- **Recording timer**: a live `M:SS` counter appears below the mic button
+  while recording, showing elapsed time via `QAudioRecorder::duration()`.
+- **Error notifications**: recording errors and transcription failures now
+  show a Sailfish notification with a descriptive message, instead of only
+  a silent `console.warn`.
+- **Cache directory**: `tempAudioPath()` now ensures the cache directory
+  exists (`QDir::mkpath`) before returning a path — important under SailJail
+  where the sandbox directory may not have been created yet.
+- `available` property on `AudioRecorder` is now `CONSTANT` (it does not
+  change at runtime).
+
 ## [0.8.5] - 2026-10-21
 Skrynja 0.8.5 — Fix: microphone button could not be tapped to stop recording.
 
