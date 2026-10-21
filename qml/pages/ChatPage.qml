@@ -441,7 +441,7 @@ Page {
                         : "image://theme/icon-m-mic"
                     icon.highlighted: chatPage.recording || chatPage.transcribing
                     enabled: !mistralApi.isBusy && !chatPage.uploadingImage
-                             && !chatPage.recording && !chatPage.transcribing
+                             && !chatPage.transcribing
                     opacity: chatPage.recording ? 1.0 : (chatPage.transcribing ? 0.5 : 1.0)
 
                     // Pulsing ring while recording

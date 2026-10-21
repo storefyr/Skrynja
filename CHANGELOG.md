@@ -5,6 +5,15 @@ All notable changes to Skrynja will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.5] - 2026-10-21
+Skrynja 0.8.5 — Fix: microphone button could not be tapped to stop recording.
+
+### Fixed
+- Removed `!chatPage.recording` from the mic button's `enabled` condition.
+  Previously, when recording started the button became disabled, making it
+  impossible to tap it again to stop. Now the button stays enabled while
+  recording (only disabled during transcription or when the API is busy).
+
 ## [0.8.4] - 2026-10-21
 Skrynja 0.8.4 — Fix: use correct Sailfish theme icon names for microphone.
 
