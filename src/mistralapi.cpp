@@ -1,9 +1,11 @@
 #include "mistralapi.h"
 #include "categories.h"
 #include <QBuffer>
+#include <QDateTime>
 #include <QFile>
 #include <QHttpMultiPart>
 #include <QImage>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QNetworkRequest>
@@ -456,6 +458,219 @@ void MistralAPI::fetchModels(const QString &apiKey)
 
     connect(reply, &QNetworkReply::finished,
             this, &MistralAPI::onModelsFetchFinished);
+}
+
+// ------------------------------------------------------- remote conversations
+
+void MistralAPI::fetchRemoteConversations(const QString &apiKey)
+{
+    if (apiKey.isEmpty() && m_keyRequired) {
+        emit remoteConversationsFetchFailed();
+        return;
+    }
+    if (m_baseUrl.isEmpty()) {
+        emit remoteConversationsFetchFailed();
+        return;
+    }
+
+    QNetworkRequest request(endpoint("/conversations"));
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    prepareRequest(request, apiKey);
+
+    noteRequestSent();
+    QNetworkReply *reply = m_networkManager->get(request);
+
+    connect(reply, &QNetworkReply::finished,
+            this, &MistralAPI::onRemoteConversationsFinished);
+}
+
+void MistralAPI::fetchRemoteMessages(const QString &apiKey,
+                                     const QString &remoteConversationId)
+{
+    if (apiKey.isEmpty() && m_keyRequired) {
+        emit remoteMessagesFetchFailed(remoteConversationId);
+        return;
+    }
+    if (m_baseUrl.isEmpty() || remoteConversationId.isEmpty()) {
+        emit remoteMessagesFetchFailed(remoteConversationId);
+        return;
+    }
+
+    QNetworkRequest request(endpoint(
+                QString("/conversations/%1/messages").arg(remoteConversationId)));
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    prepareRequest(request, apiKey);
+
+    noteRequestSent();
+    QNetworkReply *reply = m_networkManager->get(request);
+    reply->setProperty("remoteConversationId", remoteConversationId);
+
+    connect(reply, &QNetworkReply::finished,
+            this, &MistralAPI::onRemoteMessagesFinished);
+}
+
+void MistralAPI::onRemoteConversationsFinished()
+{
+    QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
+    if (!reply)
+        return;
+
+    reply->deleteLater();
+
+    if (reply->error() != QNetworkReply::NoError) {
+        qWarning() << "Remote conversations fetch failed:" << reply->errorString();
+        emit remoteConversationsFetchFailed();
+        return;
+    }
+
+    const QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
+    if (!doc.isObject()) {
+        emit remoteConversationsFetchFailed();
+        return;
+    }
+
+    const QVariantList conversations = parseRemoteConversations(doc.object());
+    emit remoteConversationsFetched(conversations);
+}
+
+void MistralAPI::onRemoteMessagesFinished()
+{
+    QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
+    if (!reply)
+        return;
+
+    const QString remoteId = reply->property("remoteConversationId").toString();
+    reply->deleteLater();
+
+    if (reply->error() != QNetworkReply::NoError) {
+        qWarning() << "Remote messages fetch failed:" << reply->errorString();
+        emit remoteMessagesFetchFailed(remoteId);
+        return;
+    }
+
+    const QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
+    if (!doc.isObject()) {
+        emit remoteMessagesFetchFailed(remoteId);
+        return;
+    }
+
+    const QVariantList messages = parseRemoteMessages(doc.object());
+    emit remoteMessagesFetched(remoteId, messages);
+}
+
+QVariantList MistralAPI::parseRemoteConversations(const QJsonObject &doc)
+{
+    // GET /v1/conversations returns {"data": [...], "has_more": bool, ...}.
+    // Older API versions returned a bare array; accept both.
+    QJsonArray items;
+    if (doc.contains("data") && doc["data"].isArray()) {
+        items = doc["data"].toArray();
+    } else if (doc.contains("conversations") && doc["conversations"].isArray()) {
+        items = doc["conversations"].toArray();
+    }
+
+    QVariantList result;
+    for (const QJsonValue &value : items) {
+        const QJsonObject obj = value.toObject();
+        QVariantMap entry;
+        entry["id"] = obj["id"].toString();
+        entry["name"] = obj["name"].toString();
+        entry["model"] = obj["model"].toString();
+        // Timestamps come as ISO 8601 strings; pass them through as-is so
+        // the QML layer can format them.
+        entry["created_at"] = obj["created_at"].toString();
+        entry["updated_at"] = obj["updated_at"].toString();
+        if (!entry["id"].toString().isEmpty()) {
+            result.append(entry);
+        }
+    }
+    return result;
+}
+
+QVariantList MistralAPI::parseRemoteMessages(const QJsonObject &doc)
+{
+    // GET /v1/conversations/{id}/messages returns {"object": "list",
+    // "data": [...], "has_more": bool, ...}. Each message has role, content
+    // (string or chunk list), created_at and possibly outputs.
+    QJsonArray items;
+    if (doc.contains("data") && doc["data"].isArray()) {
+        items = doc["data"].toArray();
+    } else if (doc.contains("messages") && doc["messages"].isArray()) {
+        items = doc["messages"].toArray();
+    }
+
+    QVariantList result;
+    for (const QJsonValue &value : items) {
+        const QJsonObject obj = value.toObject();
+        const QString role = obj["role"].toString();
+        if (role != "user" && role != "assistant") {
+            continue;
+        }
+
+        QVariantMap entry;
+        entry["role"] = role;
+        entry["content"] = messageContentToText(obj["content"]);
+
+        // created_at is ISO 8601; parse to epoch ms for local storage.
+        const QString createdAt = obj["created_at"].toString();
+        const QDateTime dt = QDateTime::fromString(createdAt, Qt::ISODate);
+        entry["timestamp"] = dt.isValid()
+                ? dt.toMSecsSinceEpoch()
+                : QDateTime::currentMSecsSinceEpoch();
+
+        // Assistant messages may carry outputs (the actual generated content)
+        // when the message is an entry wrapper. Prefer outputs text.
+        if (role == "assistant" && obj.contains("outputs")) {
+            const QString outputsText = outputsToText(obj["outputs"].toArray());
+            if (!outputsText.isEmpty()) {
+                entry["content"] = outputsText;
+            }
+        }
+
+        // Collect sources from tool executions if present.
+        QStringList sources;
+        const QJsonArray outputs = obj["outputs"].toArray();
+        for (const QJsonValue &outVal : outputs) {
+            const QJsonObject outObj = outVal.toObject();
+            if (outObj["type"].toString() == "tool.execution") {
+                const QJsonObject data = outObj["data"].toObject();
+                const QJsonArray results = data["output"].toArray();
+                for (const QJsonValue &r : results) {
+                    const QString url = r.toObject()["url"].toString();
+                    if (!url.isEmpty() && !sources.contains(url)) {
+                        sources.append(url);
+                    }
+                }
+            }
+        }
+        if (!sources.isEmpty()) {
+            entry["sources"] = sources;
+        }
+
+        result.append(entry);
+    }
+    return result;
+}
+
+QString MistralAPI::messageContentToText(const QJsonValue &content)
+{
+    // User message content: a plain string, or a chunk list when the turn
+    // carried an image (text + image_url/file chunks).
+    if (content.isString()) {
+        return content.toString();
+    }
+    if (content.isArray()) {
+        QString text;
+        const QJsonArray chunks = content.toArray();
+        for (const QJsonValue &chunk : chunks) {
+            const QJsonObject obj = chunk.toObject();
+            if (obj["type"].toString() == "text") {
+                text += obj["text"].toString();
+            }
+        }
+        return text;
+    }
+    return QString();
 }
 
 // ---------------------------------------------------------------- image upload

@@ -56,6 +56,17 @@ public:
                                      const QString &conversationText,
                                      const QString &targetId = QString());
     Q_INVOKABLE void fetchModels(const QString &apiKey);
+    // Lists the conversations stored on Mistral's servers for this API key
+    // (GET /v1/conversations). Emits remoteConversationsFetched(list) with
+    // entries {id, name, created_at, updated_at, model} or
+    // remoteConversationsFetchFailed().
+    Q_INVOKABLE void fetchRemoteConversations(const QString &apiKey);
+    // Fetches the full message history of a remote conversation
+    // (GET /v1/conversations/{id}/messages). Emits remoteMessagesFetched(id,
+    // messages) with messages as a QVariantList of {role, content, timestamp}
+    // or remoteMessagesFetchFailed(id).
+    Q_INVOKABLE void fetchRemoteMessages(const QString &apiKey,
+                                         const QString &remoteConversationId);
     // Uploads an image to Mistral's Files API (POST /v1/files, multipart)
     // so the turn can reference it by file id instead of carrying base64.
     // Emits imageUploaded(fileId) or imageUploadFailed().
@@ -93,6 +104,13 @@ signals:
     void titleGenerationFailed(const QString &targetId);
     void modelsFetched(const QVariantList &models);
     void modelsFetchFailed();
+    // Remote conversation listing for the "attach" feature (F17).
+    void remoteConversationsFetched(const QVariantList &conversations);
+    void remoteConversationsFetchFailed();
+    // Remote message history for one conversation (F17).
+    void remoteMessagesFetched(const QString &remoteConversationId,
+                               const QVariantList &messages);
+    void remoteMessagesFetchFailed(const QString &remoteConversationId);
     // A file upload finished: the id to reference in the next turn.
     void imageUploaded(const QString &fileId);
     void imageUploadFailed();
@@ -108,6 +126,8 @@ private slots:
     void onModelsFetchFinished();
     void onReconcileFinished();
     void onImageUploadFinished();
+    void onRemoteConversationsFinished();
+    void onRemoteMessagesFinished();
     void onTimeout();
     void sendPendingChatRequest();
 
@@ -199,6 +219,13 @@ private:
                                      const QString &userContent);
     // Extracts the assistant text from a non-streaming outputs array.
     static QString outputsToText(const QJsonArray &outputs);
+    // Parses a GET /v1/conversations response into a QVariantList.
+    static QVariantList parseRemoteConversations(const QJsonObject &doc);
+    // Parses a GET /v1/conversations/{id}/messages response into a
+    // QVariantList of {role, content, timestamp}.
+    static QVariantList parseRemoteMessages(const QJsonObject &doc);
+    // Extracts text from a message content field (string or chunk list).
+    static QString messageContentToText(const QJsonValue &content);
 };
 
 #endif // MISTRALAPI_H

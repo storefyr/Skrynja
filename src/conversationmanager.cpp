@@ -576,6 +576,93 @@ void ConversationManager::createNewConversation(const QString &model)
     emit conversationCountChanged();
 }
 
+QString ConversationManager::attachRemoteConversation(const QString &remoteId,
+                                                      const QString &title,
+                                                      const QString &model,
+                                                      const QVariantList &messages)
+{
+    if (remoteId.isEmpty() || hasRemoteConversation(remoteId)) {
+        return QString();
+    }
+
+    if (!m_currentConversationId.isEmpty()) {
+        saveCurrentConversation();
+    }
+
+    Conversation conv;
+    conv.id = generateConversationId();
+    conv.title = title.trimmed().isEmpty() ? tr("Imported conversation") : title.trimmed();
+    conv.provider = Providers::ID;
+    conv.model = model.trimmed();
+    conv.remoteConversationId = remoteId;
+    conv.createdAt = QDateTime::currentMSecsSinceEpoch();
+    conv.updatedAt = conv.createdAt;
+
+    for (const QVariant &v : messages) {
+        const QVariantMap entry = v.toMap();
+        const QString role = entry["role"].toString();
+        if (role != "user" && role != "assistant") {
+            continue;
+        }
+        Message msg;
+        msg.role = role;
+        msg.content = entry["content"].toString();
+        msg.timestamp = entry["timestamp"].toLongLong();
+        if (msg.timestamp <= 0) {
+            msg.timestamp = QDateTime::currentMSecsSinceEpoch();
+        }
+        msg.model = role == "assistant" ? conv.model : QString();
+        msg.provider = Providers::ID;
+        const QVariant sourcesVar = entry["sources"];
+        if (sourcesVar.isValid()) {
+            msg.sources = sourcesVar.toStringList();
+        }
+        conv.messages.append(msg);
+    }
+
+    if (conv.messages.isEmpty()) {
+        return QString();
+    }
+
+    conv.updatedAt = conv.messages.last().timestamp;
+    // Derive a title from the first user message when the remote name is empty.
+    if (conv.title == tr("Imported conversation")) {
+        conv.title = generateConversationTitle(conv.messages);
+    }
+
+    m_conversations.prepend(conv);
+    m_currentConversationId = conv.id;
+
+    m_currentConversation->clearConversation();
+    for (const Message &msg : conv.messages) {
+        m_currentConversation->addMessage(msg.role, msg.content, msg.timestamp,
+                                          msg.pinned, msg.imagePath,
+                                          msg.model, msg.provider, msg.sources,
+                                          msg.thinking, msg.imageFileId);
+    }
+
+    markDirty(conv.id);
+    saveDirtyConversations();
+
+    m_settings.setValue("lastConversationId", m_currentConversationId);
+    m_settings.sync();
+
+    emit currentConversationChanged();
+    emit conversationCountChanged();
+
+    return conv.id;
+}
+
+bool ConversationManager::hasRemoteConversation(const QString &remoteId) const
+{
+    for (const Conversation &conv : m_conversations) {
+        if (conv.remoteConversationId == remoteId) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void ConversationManager::loadConversation(const QString &conversationId)
 {
     if (!m_currentConversationId.isEmpty() && m_currentConversationId != conversationId) {

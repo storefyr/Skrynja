@@ -129,6 +129,18 @@ public:
     // Model the in-flight request is using, recorded for the token statistics.
     Q_INVOKABLE void setActiveModel(const QString &model);
 
+    // F17: Creates a local conversation from a remote one (already on
+    // Mistral's servers). The remote id is kept so the next turn appends to
+    // it. Returns the new local conversation id, or empty on failure.
+    // messages is a QVariantList of {role, content, timestamp, sources?}.
+    Q_INVOKABLE QString attachRemoteConversation(const QString &remoteId,
+                                                 const QString &title,
+                                                 const QString &model,
+                                                 const QVariantList &messages);
+
+    // True when a local conversation already references this remote id.
+    Q_INVOKABLE bool hasRemoteConversation(const QString &remoteId) const;
+
     void loadAllConversations();
 
 signals:

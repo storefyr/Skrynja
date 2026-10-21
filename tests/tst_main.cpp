@@ -801,6 +801,140 @@ private slots:
         api.noteRequestSent();
         QVERIFY(api.throttleDelayMs() > 0);
     }
+
+    // F17: parseRemoteConversations extracts id, name, model, timestamps
+    // from a GET /v1/conversations response.
+    void parseRemoteConversationsExtractsFields()
+    {
+        const QJsonObject doc = QJsonDocument::fromJson(
+                    "{\"data\":[{\"id\":\"conv-1\",\"name\":\"My chat\","
+                    "\"model\":\"mistral-small-latest\","
+                    "\"created_at\":\"2026-01-01T10:00:00Z\","
+                    "\"updated_at\":\"2026-01-02T11:00:00Z\"},"
+                    "{\"id\":\"conv-2\",\"name\":\"\","
+                    "\"model\":\"mistral-large-latest\","
+                    "\"created_at\":\"2026-01-03T12:00:00Z\","
+                    "\"updated_at\":\"2026-01-03T12:00:00Z\"}]}"
+                    ).object();
+
+        const QVariantList result = MistralAPI::parseRemoteConversations(doc);
+        QCOMPARE(result.count(), 2);
+
+        const QVariantMap first = result.at(0).toMap();
+        QCOMPARE(first["id"].toString(), QString("conv-1"));
+        QCOMPARE(first["name"].toString(), QString("My chat"));
+        QCOMPARE(first["model"].toString(), QString("mistral-small-latest"));
+        QCOMPARE(first["created_at"].toString(), QString("2026-01-01T10:00:00Z"));
+
+        const QVariantMap second = result.at(1).toMap();
+        QCOMPARE(second["id"].toString(), QString("conv-2"));
+        QCOMPARE(second["name"].toString(), QString());
+    }
+
+    // F17: parseRemoteConversations skips entries without an id.
+    void parseRemoteConversationsSkipsEmptyIds()
+    {
+        const QJsonObject doc = QJsonDocument::fromJson(
+                    "{\"data\":[{\"name\":\"no id\"},"
+                    "{\"id\":\"valid\",\"name\":\"ok\"}]}"
+                    ).object();
+
+        const QVariantList result = MistralAPI::parseRemoteConversations(doc);
+        QCOMPARE(result.count(), 1);
+        QCOMPARE(result.at(0).toMap()["id"].toString(), QString("valid"));
+    }
+
+    // F17: parseRemoteMessages extracts role, content and timestamp from
+    // a GET /v1/conversations/{id}/messages response.
+    void parseRemoteMessagesExtractsFields()
+    {
+        const QJsonObject doc = QJsonDocument::fromJson(
+                    "{\"object\":\"list\",\"data\":["
+                    "{\"role\":\"user\",\"content\":\"Hello\","
+                    "\"created_at\":\"2026-01-01T10:00:00Z\"},"
+                    "{\"role\":\"assistant\",\"content\":\"Hi there\","
+                    "\"created_at\":\"2026-01-01T10:00:05Z\"}]}"
+                    ).object();
+
+        const QVariantList result = MistralAPI::parseRemoteMessages(doc);
+        QCOMPARE(result.count(), 2);
+
+        const QVariantMap user = result.at(0).toMap();
+        QCOMPARE(user["role"].toString(), QString("user"));
+        QCOMPARE(user["content"].toString(), QString("Hello"));
+        QVERIFY(user["timestamp"].toLongLong() > 0);
+
+        const QVariantMap assistant = result.at(1).toMap();
+        QCOMPARE(assistant["role"].toString(), QString("assistant"));
+        QCOMPARE(assistant["content"].toString(), QString("Hi there"));
+    }
+
+    // F17: parseRemoteMessages handles content as a chunk list (image turns).
+    void parseRemoteMessagesHandlesChunkList()
+    {
+        const QJsonObject doc = QJsonDocument::fromJson(
+                    "{\"data\":["
+                    "{\"role\":\"user\","
+                    "\"content\":[{\"type\":\"text\",\"text\":\"describe this\"},"
+                    "{\"type\":\"image_url\",\"image_url\":\"...\"}],"
+                    "\"created_at\":\"2026-01-01T10:00:00Z\"}]}"
+                    ).object();
+
+        const QVariantList result = MistralAPI::parseRemoteMessages(doc);
+        QCOMPARE(result.count(), 1);
+        QCOMPARE(result.at(0).toMap()["content"].toString(),
+                 QString("describe this"));
+    }
+
+    // F17: parseRemoteMessages skips non-user/assistant roles (tool, system).
+    void parseRemoteMessagesSkipsNonChatRoles()
+    {
+        const QJsonObject doc = QJsonDocument::fromJson(
+                    "{\"data\":["
+                    "{\"role\":\"tool\",\"content\":\"result\"},"
+                    "{\"role\":\"system\",\"content\":\"prompt\"},"
+                    "{\"role\":\"user\",\"content\":\"hello\"}]}"
+                    ).object();
+
+        const QVariantList result = MistralAPI::parseRemoteMessages(doc);
+        QCOMPARE(result.count(), 1);
+        QCOMPARE(result.at(0).toMap()["role"].toString(), QString("user"));
+    }
+
+    // F17: parseRemoteMessages prefers outputs text over content for
+    // assistant messages (entry wrapper shape).
+    void parseRemoteMessagesPrefersOutputs()
+    {
+        const QJsonObject doc = QJsonDocument::fromJson(
+                    "{\"data\":["
+                    "{\"role\":\"assistant\",\"content\":\"\","
+                    "\"outputs\":[{\"type\":\"message.output\","
+                    "\"content\":\"The answer is 42.\"}]}]}"
+                    ).object();
+
+        const QVariantList result = MistralAPI::parseRemoteMessages(doc);
+        QCOMPARE(result.count(), 1);
+        QCOMPARE(result.at(0).toMap()["content"].toString(),
+                 QString("The answer is 42."));
+    }
+
+    // F17: messageContentToText handles both string and chunk-list content.
+    void messageContentToTextHandlesBothShapes()
+    {
+        QCOMPARE(MistralAPI::messageContentToText(QJsonValue("plain string")),
+                 QString("plain string"));
+
+        const QJsonArray chunks = QJsonDocument::fromJson(
+                    "[{\"type\":\"text\",\"text\":\"part one\"},"
+                    "{\"type\":\"image_url\",\"image_url\":\"...\"},"
+                    "{\"type\":\"text\",\"text\":\" part two\"}]"
+                    ).array();
+        QCOMPARE(MistralAPI::messageContentToText(QJsonValue(chunks)),
+                 QString("part one part two"));
+
+        QCOMPARE(MistralAPI::messageContentToText(QJsonValue()),
+                 QString());
+    }
 };
 
 class TestConversationManager : public QObject
@@ -1490,6 +1624,152 @@ private slots:
         manager.deleteConversation(manager.getConversationsList()
                                    .at(before - 1).toObject()["id"].toString());
         QCOMPARE(manager.conversationCount(), before - 1);
+    }
+
+    // F17: attaching a remote conversation creates a local one that keeps
+    // the remote id, so the next turn appends to it.
+    void attachRemoteConversationKeepsRemoteId()
+    {
+        ConversationManager manager;
+        manager.purgeAllConversations();
+
+        QVERIFY(!manager.hasRemoteConversation("remote-abc"));
+
+        QVariantList messages;
+        QVariantMap m1;
+        m1["role"] = "user";
+        m1["content"] = "Hvad er hovedstaden i Danmark?";
+        m1["timestamp"] = 1000LL;
+        messages.append(m1);
+        QVariantMap m2;
+        m2["role"] = "assistant";
+        m2["content"] = "København.";
+        m2["timestamp"] = 2000LL;
+        messages.append(m2);
+
+        const QString localId = manager.attachRemoteConversation(
+                    "remote-abc", "Hovedstad", "mistral-small-latest", messages);
+        QVERIFY(!localId.isEmpty());
+        QVERIFY(manager.hasRemoteConversation("remote-abc"));
+        QCOMPARE(manager.remoteConversationId(), QString("remote-abc"));
+        // The manager starts with one empty conversation; attaching adds one.
+        QCOMPARE(manager.conversationCount(), 2);
+
+        // The messages landed in the model.
+        QCOMPARE(manager.currentConversation()->rowCount(), 2);
+
+        // The title comes from the argument.
+        QCOMPARE(manager.getConversationsList().at(0).toObject()["title"].toString(),
+                 QString("Hovedstad"));
+
+        // The model is recorded on the assistant message.
+        QCOMPARE(manager.currentConversation()->data(
+                    manager.currentConversation()->index(1, 0),
+                    ConversationModel::ModelRole).toString(),
+                 QString("mistral-small-latest"));
+    }
+
+    // F17: attaching the same remote id twice is rejected.
+    void attachRemoteConversationRejectsDuplicate()
+    {
+        ConversationManager manager;
+        manager.purgeAllConversations();
+
+        QVariantList messages;
+        QVariantMap m1;
+        m1["role"] = "user";
+        m1["content"] = "hello";
+        m1["timestamp"] = 1000LL;
+        messages.append(m1);
+
+        QVERIFY(!manager.attachRemoteConversation(
+                    "remote-dup", "First", "model", messages).isEmpty());
+        const int afterFirst = manager.conversationCount();
+        QCOMPARE(manager.attachRemoteConversation(
+                    "remote-dup", "Second", "model", messages), QString());
+        QCOMPARE(manager.conversationCount(), afterFirst);
+    }
+
+    // F17: attaching with an empty remote id or no messages fails.
+    void attachRemoteConversationRejectsEmpty()
+    {
+        ConversationManager manager;
+        manager.purgeAllConversations();
+
+        QVariantList messages;
+        QVariantMap m1;
+        m1["role"] = "user";
+        m1["content"] = "hello";
+        m1["timestamp"] = 1000LL;
+        messages.append(m1);
+
+        QCOMPARE(manager.attachRemoteConversation(
+                    "", "No id", "model", messages), QString());
+        QCOMPARE(manager.attachRemoteConversation(
+                    "remote-empty", "No messages", "model", QVariantList()),
+                 QString());
+    }
+
+    // F17: after attaching, the conversation survives a reload and the
+    // remote id is still there for the next append.
+    void attachRemoteConversationSurvivesReload()
+    {
+        ConversationManager manager;
+        manager.purgeAllConversations();
+
+        QVariantList messages;
+        QVariantMap m1;
+        m1["role"] = "user";
+        m1["content"] = "first question";
+        m1["timestamp"] = 1000LL;
+        messages.append(m1);
+        QVariantMap m2;
+        m2["role"] = "assistant";
+        m2["content"] = "first answer";
+        m2["timestamp"] = 2000LL;
+        messages.append(m2);
+
+        const QString localId = manager.attachRemoteConversation(
+                    "remote-persist", "Persisted", "mistral-small-latest", messages);
+        QVERIFY(!localId.isEmpty());
+
+        // Simulate app restart: a fresh manager loads from disk.
+        ConversationManager reopened;
+        QVERIFY(reopened.hasRemoteConversation("remote-persist"));
+        reopened.loadConversation(localId);
+        QCOMPARE(reopened.remoteConversationId(), QString("remote-persist"));
+        QCOMPARE(reopened.currentConversation()->rowCount(), 2);
+    }
+
+    // F17: sources from tool executions in the remote history are preserved.
+    void attachRemoteConversationKeepsSources()
+    {
+        ConversationManager manager;
+        manager.purgeAllConversations();
+
+        QVariantList messages;
+        QVariantMap m1;
+        m1["role"] = "user";
+        m1["content"] = "search for news";
+        m1["timestamp"] = 1000LL;
+        messages.append(m1);
+        QVariantMap m2;
+        m2["role"] = "assistant";
+        m2["content"] = "Here are the news.";
+        m2["timestamp"] = 2000LL;
+        m2["sources"] = QStringList() << "https://example.com/a"
+                                      << "https://example.com/b";
+        messages.append(m2);
+
+        const QString localId = manager.attachRemoteConversation(
+                    "remote-sources", "With sources", "model", messages);
+        QVERIFY(!localId.isEmpty());
+
+        const QStringList sources = manager.currentConversation()->data(
+                    manager.currentConversation()->index(1, 0),
+                    ConversationModel::SourcesRole).toStringList();
+        QCOMPARE(sources.count(), 2);
+        QCOMPARE(sources.at(0), QString("https://example.com/a"));
     }
 };
 

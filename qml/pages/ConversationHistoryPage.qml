@@ -315,6 +315,10 @@ Page {
                     refreshList()
                 }
             }
+            MenuItem {
+                text: qsTr("Attach remote conversation")
+                onClicked: pageStack.push(Qt.resolvedUrl("RemoteConversationsPage.qml"))
+            }
             // This page is the root: without an entry here the settings are
             // only reachable from inside a conversation.
             MenuItem {

@@ -5,6 +5,21 @@ All notable changes to Skrynja will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-10-21
+Skrynja 0.5.0 — New feature: attach remote conversations from Mistral's servers.
+
+### Added
+- **Attach remote conversation (F17).** A new page lists the conversations
+  stored on Mistral's servers for the configured API key
+  (`GET /v1/conversations`). Tapping one fetches its full message history
+  (`GET /v1/conversations/{id}/messages`) and creates a local conversation
+  that keeps the remote id, so the next message appends to the existing
+  remote conversation. Sources from web_search tool executions are preserved.
+- Accessible from the conversation history pull-down menu:
+  "Attach remote conversation".
+- Already-attached remote conversations are marked and cannot be attached
+  twice.
+
 ## [0.4.6] - 2026-10-21
 Skrynja 0.4.6 — Cleanup: removed debug logging now that streaming works.
 

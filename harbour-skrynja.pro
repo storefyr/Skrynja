@@ -6,7 +6,7 @@ QT += network
 
 # Version is passed by the spec file (%qmake5 VERSION=%{version})
 isEmpty(VERSION) {
-    VERSION = 0.4.6
+    VERSION = 0.5.0
 }
 DEFINES += APP_VERSION=\\\"$$VERSION\\\"
 
@@ -35,6 +35,7 @@ DISTFILES += qml/harbour-skrynja.qml \
     qml/pages/ConversationSettingsPage.qml \
     qml/pages/PinnedMessagesPage.qml \
     qml/pages/PromptLibraryPage.qml \
+    qml/pages/RemoteConversationsPage.qml \
     qml/pages/SettingsPage.qml \
     qml/pages/StatsPage.qml \
     qml/components/MessageBubble.qml \
