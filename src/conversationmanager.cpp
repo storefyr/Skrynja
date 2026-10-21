@@ -74,6 +74,7 @@ ConversationManager::ConversationManager(QObject *parent)
     , m_api(nullptr)
     , m_autoSyncing(false)
     , m_autoSyncAttached(0)
+    , m_streamIncomplete(false)
 {
     // Repainting the whole message on every SSE delta is what makes long
     // answers stutter: coalesce them and write at a fixed cadence.
@@ -122,6 +123,8 @@ void ConversationManager::bindApi(MistralAPI *api)
             this, &ConversationManager::onSideRequestUsage);
     connect(api, &MistralAPI::conversationCreated,
             this, &ConversationManager::onConversationCreated);
+    connect(api, &MistralAPI::responseIncomplete,
+            this, &ConversationManager::onResponseIncomplete);
     connect(api, &MistralAPI::remoteConversationsFetched,
             this, &ConversationManager::onAutoSyncConversationsFetched);
     connect(api, &MistralAPI::remoteConversationsFetchFailed,
@@ -155,6 +158,7 @@ void ConversationManager::onMessageSent()
 {
     m_streamBuffer.clear();
     m_streamDirty = false;
+    m_streamIncomplete = false;
     m_pendingSources.clear();
     m_pendingThinking.clear();
 
@@ -168,6 +172,14 @@ void ConversationManager::onMessageSent()
     m_currentConversation->addAssistantMessage(QString(), m_activeModel,
                                                Providers::ID);
     m_streamTimer->start();
+}
+
+void ConversationManager::onResponseIncomplete()
+{
+    // The stream ended without a done event (cancel, timeout, network drop).
+    // Remember it so the partial answer gets flagged as interrupted when the
+    // response completes.
+    m_streamIncomplete = true;
 }
 
 void ConversationManager::onStreamingResponse(const QString &content)
@@ -237,6 +249,7 @@ void ConversationManager::finishBackgroundResponse()
         conv->messages.last().content = m_streamBuffer;
         conv->messages.last().sources = m_pendingSources;
         conv->messages.last().thinking = m_pendingThinking;
+        conv->messages.last().interrupted = m_streamIncomplete;
     } else {
         Message msg;
         msg.role = "assistant";
@@ -246,6 +259,7 @@ void ConversationManager::finishBackgroundResponse()
         msg.provider = Providers::ID;
         msg.sources = m_pendingSources;
         msg.thinking = m_pendingThinking;
+        msg.interrupted = m_streamIncomplete;
         conv->messages.append(msg);
     }
 
@@ -266,6 +280,10 @@ void ConversationManager::onResponseCompleted()
         flushStream();
         // Drop the empty assistant bubble left behind by an error or a cancel
         m_currentConversation->removeLastMessageIfEmpty();
+        // Flag a partial answer as interrupted so the UI can mark it.
+        if (m_streamIncomplete) {
+            m_currentConversation->markLastAssistantInterrupted();
+        }
         // Save first: the flag below looks at the stored message list, which
         // only catches up with the model here.
         saveCurrentConversation();
@@ -275,6 +293,7 @@ void ConversationManager::onResponseCompleted()
 
     m_streamBuffer.clear();
     m_streamDirty = false;
+    m_streamIncomplete = false;
 
     // Flag the answer as unread. A chat page showing this conversation clears
     // it straight away; if the user walked off to the history, the badge stays.
@@ -388,6 +407,9 @@ QJsonObject ConversationManager::conversationToJson(const Conversation &conv) co
         if (!msg.thinking.isEmpty()) {
             msgObj["thinking"] = msg.thinking;
         }
+        if (msg.interrupted) {
+            msgObj["interrupted"] = true;
+        }
         messagesArray.append(msgObj);
     }
     obj["messages"] = messagesArray;
@@ -432,6 +454,7 @@ Conversation ConversationManager::conversationFromJson(const QJsonObject &obj)
             msg.sources.append(s.toString());
         }
         msg.thinking = msgObj["thinking"].toString();
+        msg.interrupted = msgObj["interrupted"].toBool();
         msg.model = msgObj["model"].toString();
         msg.provider = msgObj["provider"].toString();
         // Retroactive stamp. An answer written before 2.3 carries neither
@@ -657,7 +680,8 @@ QString ConversationManager::attachRemoteConversation(const QString &remoteId,
         m_currentConversation->addMessage(msg.role, msg.content, msg.timestamp,
                                           msg.pinned, msg.imagePath,
                                           msg.model, msg.provider, msg.sources,
-                                          msg.thinking, msg.imageFileId);
+                                          msg.thinking, msg.imageFileId,
+                                          msg.interrupted);
     }
 
     markDirty(conv.id);
@@ -702,7 +726,8 @@ void ConversationManager::loadConversation(const QString &conversationId)
         m_currentConversation->addMessage(msg.role, msg.content, msg.timestamp,
                                           msg.pinned, msg.imagePath,
                                           msg.model, msg.provider, msg.sources,
-                                          msg.thinking, msg.imageFileId);
+                                          msg.thinking, msg.imageFileId,
+                                          msg.interrupted);
     }
 
     // Coming back to a conversation that is still receiving an answer: the

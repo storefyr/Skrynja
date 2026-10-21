@@ -184,6 +184,7 @@ private slots:
     void onUsageReceived(int promptTokens, int completionTokens);
     void onSideRequestUsage(int promptTokens, int completionTokens);
     void onConversationCreated(const QString &remoteId);
+    void onResponseIncomplete();
     void flushStream();
     void finishBackgroundResponse();
     // F17b: auto-sync slots
@@ -215,6 +216,10 @@ private:
     QVariantMap m_autoSyncNameModel;   // remoteId → {name, model}
     bool m_autoSyncing;
     int m_autoSyncAttached;
+    // True when the current stream ended without a done event (cancel,
+    // timeout, network drop). Applied as interrupted=true on the message
+    // when the response completes.
+    bool m_streamIncomplete;
 
     QString generateConversationId() const;
     QString generateConversationTitle(const QList<Message> &messages) const;

@@ -20,7 +20,7 @@ specs in `docs/features/` remain as historical reference; the ones marked **remo
 | F3 | Web search: `tools: [{"type": "web_search"}]` at creation, toggle in Settings, "Searching the web…" indicator, source chips in `MessageBubble` | — | done |
 | F4 | `conversationmanager.cpp`: persistent `remoteConversationId` + `dirty` fields, migration of the JSON format | — | done (unreleased) |
 | F5 | Reconcile-before-retry: `GET /v1/conversations/{id}/messages` after an ambiguous failure | — | done (unreleased) |
-| F6 | Cancel = dirty; next message via `POST /v1/conversations/{id}/restart#stream` (new id, delete old) | — | todo |
+| F6 | Interrupted answers are marked in the UI ("Interrupted" label). Cancel keeps the partial answer; no server restart | — | done (v0.7.1) |
 | F7 | Remote deletion: `DELETE /v1/conversations/{id}` on conversation delete / purge | — | done (v0.7.0) |
 | F8 | Remove multi-provider: `providers.cpp` trimmed to Mistral, provider picker and per-provider keys removed from Settings/UI | — | done |
 | F9 | Remove context-limit trimming (`buildApiMessages`, `trimmedMessageCount`, trim indicator) | — | done (unreleased) |

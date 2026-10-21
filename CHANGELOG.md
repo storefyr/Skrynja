@@ -5,6 +5,16 @@ All notable changes to Skrynja will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.1] - 2026-10-21
+Skrynja 0.7.1 — Feature: mark interrupted answers in the UI.
+
+### Added
+- **Interrupted marker**: when an answer is cut off (cancelled, timeout,
+  network drop), it is now flagged with a subtle italic "Interrupted"
+  label under the text. The flag persists across app restarts.
+- This is the simple version of F6: the partial answer stays visible and
+  is clearly marked, without restarting the server-side conversation.
+
 ## [0.7.0] - 2026-10-21
 Skrynja 0.7.0 — Feature (F7): delete conversations on the server too.
 

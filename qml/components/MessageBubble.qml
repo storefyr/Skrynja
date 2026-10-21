@@ -20,6 +20,8 @@ ListItem {
     // Reasoning trace from a reasoning model, shown collapsed
     property string messageThinking: ""
     property bool thinkingExpanded: false
+    // True when the answer was interrupted (cancelled, timeout, network drop)
+    property bool messageInterrupted: false
 
     signal pinToggled()
 
@@ -193,6 +195,20 @@ ListItem {
             font.pixelSize: Theme.fontSizeTiny
             color: Theme.secondaryColor
             truncationMode: TruncationMode.Fade
+        }
+
+        // Interrupted answer marker: subtle, only on assistant turns that
+        // were cut off before completing.
+        Label {
+            width: parent.width
+            text: qsTr("Interrupted")
+            visible: !messageItem.isUser && messageItem.messageInterrupted
+                     && messageItem.content !== ""
+            horizontalAlignment: messageItem.textAlignment
+            font.pixelSize: Theme.fontSizeTiny
+            font.italic: true
+            color: Theme.secondaryColor
+            opacity: 0.7
         }
 
         // Reasoning trace, collapsed by default. Tap to expand.

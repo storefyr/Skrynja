@@ -25,6 +25,9 @@ struct Message {
     // Reasoning trace from a reasoning model (type "thinking" chunks).
     // Empty for non-reasoning models and user messages.
     QString thinking;
+    // True when the answer was interrupted (cancelled, timeout, network
+    // drop) before it completed. Shown as a subtle marker in the UI.
+    bool interrupted = false;
     qint64 timestamp;
     bool pinned = false;
 };
@@ -45,7 +48,8 @@ public:
         ProviderRole,
         SourcesRole,
         ThinkingRole,
-        ImageFileIdRole
+        ImageFileIdRole,
+        InterruptedRole
     };
 
     explicit ConversationModel(QObject *parent = nullptr);
@@ -86,7 +90,10 @@ public:
                     const QString &model = QString(), const QString &provider = QString(),
                     const QStringList &sources = QStringList(),
                     const QString &thinking = QString(),
-                    const QString &imageFileId = QString());
+                    const QString &imageFileId = QString(),
+                    bool interrupted = false);
+    // Marks the last assistant message as interrupted (cancelled/aborted).
+    void markLastAssistantInterrupted();
     QJsonArray toJsonArray() const;
 
     // Read-only view used by ConversationManager to build the API payload.

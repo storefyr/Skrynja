@@ -148,6 +148,7 @@ Page {
             messageModel: model.messageModel
             messageSources: model.sources || []
             messageThinking: model.thinking || ""
+            messageInterrupted: model.interrupted || false
 
             onPinToggled: {
                 conversationModel.togglePinned(index)

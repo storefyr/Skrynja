@@ -40,6 +40,8 @@ QVariant ConversationModel::data(const QModelIndex &index, int role) const
         return message.thinking;
     case ImageFileIdRole:
         return message.imageFileId;
+    case InterruptedRole:
+        return message.interrupted;
     default:
         return QVariant();
     }
@@ -60,14 +62,29 @@ QHash<int, QByteArray> ConversationModel::roleNames() const
     roles[SourcesRole] = "sources";
     roles[ThinkingRole] = "thinking";
     roles[ImageFileIdRole] = "imageFileId";
+    roles[InterruptedRole] = "interrupted";
     return roles;
+}
+
+void ConversationModel::markLastAssistantInterrupted()
+{
+    if (m_messages.isEmpty()) {
+        return;
+    }
+    Message &msg = m_messages.last();
+    if (msg.role != "assistant" || msg.interrupted) {
+        return;
+    }
+    msg.interrupted = true;
+    const QModelIndex idx = index(m_messages.count() - 1, 0);
+    emit dataChanged(idx, idx, {InterruptedRole});
 }
 
 void ConversationModel::addMessage(const QString &role, const QString &content, qint64 timestamp,
                                    bool pinned, const QString &imagePath,
                                    const QString &model, const QString &provider,
                                    const QStringList &sources, const QString &thinking,
-                                   const QString &imageFileId)
+                                   const QString &imageFileId, bool interrupted)
 {
     Message msg;
     msg.role = role;
@@ -80,6 +97,7 @@ void ConversationModel::addMessage(const QString &role, const QString &content, 
     msg.provider = provider;
     msg.sources = sources;
     msg.thinking = thinking;
+    msg.interrupted = interrupted;
 
     beginInsertRows(QModelIndex(), m_messages.count(), m_messages.count());
     m_messages.append(msg);
@@ -303,6 +321,9 @@ QJsonArray ConversationModel::toJsonArray() const
         }
         if (!msg.provider.isEmpty()) {
             msgObj["provider"] = msg.provider;
+        }
+        if (msg.interrupted) {
+            msgObj["interrupted"] = true;
         }
         messages.append(msgObj);
     }
