@@ -5,7 +5,7 @@
 
 set -e
 
-VERSION="${1:-0.8.2}"
+VERSION="${1:-0.8.3}"
 ARCH="aarch64"
 RPM_NAME="harbour-skrynja-${VERSION}-1.${ARCH}.rpm"
 DOWNLOAD_URL="https://github.com/storefyr/Skrynja/releases/download/v${VERSION}/${RPM_NAME}"
