@@ -60,6 +60,9 @@ signals:
     void isBusyChanged();
     void errorChanged();
     void streamingResponse(const QString &content);
+    // Reasoning models send a "thinking" chunk alongside the text. Emitted
+    // separately so the UI can show it collapsed, not as part of the answer.
+    void thinkingResponse(const QString &thinking);
     void usageReceived(int promptTokens, int completionTokens);
     // Tokens spent by an auxiliary call (title generation): billed, but not
     // part of the conversation the token banner reports on.
@@ -139,6 +142,9 @@ private:
     // URLs cited by web_search during this response, deduplicated, in order
     // of first appearance. Emitted once when the response completes.
     QStringList m_pendingSources;
+    // Accumulated "thinking" chunks from a reasoning model, emitted at the
+    // end so the UI can show the reasoning collapsed under the answer.
+    QString m_pendingThinking;
 
     void setIsBusy(bool busy);
     void setError(const QString &error);

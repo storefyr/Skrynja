@@ -293,6 +293,7 @@ void MistralAPI::sendMessage(const QString &apiKey,
     m_streamStarted = false;
     m_streamDone = false;
     m_pendingSources.clear();
+    m_pendingThinking.clear();
 
     // Kept whole: a rate-limited request has to go out again byte for byte,
     // and the caller must not have to know that it ever came back.
@@ -976,11 +977,19 @@ void MistralAPI::parseStreamLine(const QString &event, const QString &jsonData)
             const QJsonArray chunks = content.toArray();
             for (const QJsonValue &chunk : chunks) {
                 const QJsonObject obj = chunk.toObject();
-                if (obj["type"].toString() == "text") {
+                const QString type = obj["type"].toString();
+                if (type == "text") {
                     const QString text = obj["text"].toString();
                     if (!text.isEmpty()) {
                         m_streamStarted = true;
                         emit streamingResponse(text);
+                    }
+                } else if (type == "thinking") {
+                    // Buffered, not streamed: the reasoning is shown
+                    // collapsed under the answer once it is complete.
+                    const QString thinking = obj["thinking"].toString();
+                    if (!thinking.isEmpty()) {
+                        m_pendingThinking += thinking;
                     }
                 }
             }
@@ -990,6 +999,11 @@ void MistralAPI::parseStreamLine(const QString &event, const QString &jsonData)
 
     if (event == "conversation.response.done") {
         m_streamDone = true;
+        // Thinking is emitted first: it belongs to the same answer and the
+        // manager attaches it alongside the sources.
+        if (!m_pendingThinking.isEmpty()) {
+            emit thinkingResponse(m_pendingThinking);
+        }
         // Sources are emitted before usage so the manager can attach them to
         // the assistant message before the response is finalised.
         if (!m_pendingSources.isEmpty()) {

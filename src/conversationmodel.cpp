@@ -36,6 +36,8 @@ QVariant ConversationModel::data(const QModelIndex &index, int role) const
         return message.provider;
     case SourcesRole:
         return message.sources;
+    case ThinkingRole:
+        return message.thinking;
     default:
         return QVariant();
     }
@@ -54,13 +56,14 @@ QHash<int, QByteArray> ConversationModel::roleNames() const
     roles[ModelRole] = "messageModel";
     roles[ProviderRole] = "provider";
     roles[SourcesRole] = "sources";
+    roles[ThinkingRole] = "thinking";
     return roles;
 }
 
 void ConversationModel::addMessage(const QString &role, const QString &content, qint64 timestamp,
                                    bool pinned, const QString &imagePath,
                                    const QString &model, const QString &provider,
-                                   const QStringList &sources)
+                                   const QStringList &sources, const QString &thinking)
 {
     Message msg;
     msg.role = role;
@@ -71,6 +74,7 @@ void ConversationModel::addMessage(const QString &role, const QString &content, 
     msg.model = model;
     msg.provider = provider;
     msg.sources = sources;
+    msg.thinking = thinking;
 
     beginInsertRows(QModelIndex(), m_messages.count(), m_messages.count());
     m_messages.append(msg);
@@ -87,10 +91,11 @@ void ConversationModel::addUserMessage(const QString &content, const QString &im
 void ConversationModel::addAssistantMessage(const QString &content,
                                             const QString &model,
                                             const QString &provider,
-                                            const QStringList &sources)
+                                            const QStringList &sources,
+                                            const QString &thinking)
 {
     addMessage("assistant", content, QDateTime::currentMSecsSinceEpoch(),
-               false, QString(), model, provider, sources);
+               false, QString(), model, provider, sources, thinking);
 }
 
 void ConversationModel::setLastAssistantSources(const QStringList &sources)
@@ -105,6 +110,20 @@ void ConversationModel::setLastAssistantSources(const QStringList &sources)
     m_messages[lastIndex].sources = sources;
     QModelIndex index = createIndex(lastIndex, 0);
     emit dataChanged(index, index, {SourcesRole});
+}
+
+void ConversationModel::setLastAssistantThinking(const QString &thinking)
+{
+    if (m_messages.isEmpty())
+        return;
+
+    int lastIndex = m_messages.count() - 1;
+    if (m_messages.at(lastIndex).role != "assistant")
+        return;
+
+    m_messages[lastIndex].thinking = thinking;
+    QModelIndex index = createIndex(lastIndex, 0);
+    emit dataChanged(index, index, {ThinkingRole});
 }
 
 void ConversationModel::updateLastAssistantMessage(const QString &content)

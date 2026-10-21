@@ -29,7 +29,7 @@ specs in `docs/features/` remain as historical reference; the ones marked **remo
 | F12 | Privacy notice in UI + docs (history lives on Mistral's servers) | — | todo |
 | F13 | Unit tests: `%23stream` URL building, SSE event parser, reconcile, dirty/restart | — | done (unreleased) |
 | F14 | Vision via `MessageInputEntry` chunks (text + image_url), image stored once server-side | — | todo |
-| F15 | Reasoning models: `content` arrives as a chunk list (thinking + text) — parse and render both | — | todo |
+| F15 | Reasoning models: `content` arrives as a chunk list (thinking + text) — parse and render both | — | done |
 
 ## Removed in the fork
 

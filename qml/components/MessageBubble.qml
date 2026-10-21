@@ -17,6 +17,9 @@ ListItem {
     property string messageModel: ""
     // URLs cited by web_search for this answer
     property var messageSources: []
+    // Reasoning trace from a reasoning model, shown collapsed
+    property string messageThinking: ""
+    property bool thinkingExpanded: false
 
     signal pinToggled()
 
@@ -190,6 +193,69 @@ ListItem {
             font.pixelSize: Theme.fontSizeTiny
             color: Theme.secondaryColor
             truncationMode: TruncationMode.Fade
+        }
+
+        // Reasoning trace, collapsed by default. Tap to expand.
+        Column {
+            width: parent.width
+            spacing: Theme.paddingSmall
+            visible: !messageItem.isUser && messageItem.messageThinking !== ""
+
+            Row {
+                width: parent.width
+                spacing: Theme.paddingSmall
+
+                Label {
+                    text: messageItem.thinkingExpanded
+                          ? qsTr("Hide reasoning")
+                        : qsTr("Show reasoning")
+                    font.pixelSize: Theme.fontSizeTiny
+                    color: Theme.highlightColor
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                Label {
+                    text: qsTr("(%1 characters)").arg(messageItem.messageThinking.length)
+                    font.pixelSize: Theme.fontSizeTiny
+                    color: Theme.secondaryColor
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                Item { width: 1; height: 1 }
+            }
+
+            MouseArea {
+                width: parent.width
+                height: reasoningHeader.height
+                onClicked: messageItem.thinkingExpanded = !messageItem.thinkingExpanded
+            }
+
+            Label {
+                id: reasoningHeader
+                width: parent.width
+                visible: false
+            }
+
+            Rectangle {
+                width: parent.width
+                height: reasoningText.height + 2 * Theme.paddingSmall
+                visible: messageItem.thinkingExpanded
+                color: Theme.rgba(Theme.secondaryColor, 0.08)
+                radius: Theme.paddingSmall
+
+                Label {
+                    id: reasoningText
+                    anchors {
+                        left: parent.left
+                        right: parent.right
+                        top: parent.top
+                        margins: Theme.paddingSmall
+                    }
+                    text: messageItem.messageThinking
+                    font.pixelSize: Theme.fontSizeExtraSmall
+                    color: Theme.secondaryColor
+                    wrapMode: Text.WordWrap
+                    textFormat: Text.PlainText
+                }
+            }
         }
 
         // Sources cited by web_search. Tapping a chip opens the URL.

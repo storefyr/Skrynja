@@ -5,7 +5,42 @@ All notable changes to Skrynja will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]### Changed- **Web search sources are shown and persisted.** `tool.execution.finished`  events are parsed for `web_search` result URLs, deduplicated, attached to  the assistant message and rendered as tappable source chips in  `MessageBubble`. Sources survive save/reload via a new `sources` field on  each message.- **Settings: "Web search" toggle replaces "Limit conversation context".** The  context limit is gone (server-side history); web search is a create-time  option, so the description says so.
+## [0.2.0] - 2026-10-21
+Skrynja 0.2.0 — Phase 0 feature batch: web search sources, Mistral-only,
+model fixed per conversation, reasoning model support.
+
+### Added
+- **Web search source chips.** `web_search` results are collected from
+  `tool.execution.finished` events, deduplicated, and shown as tappable
+  chips under the answer in `MessageBubble`. Persisted in the conversation
+  JSON (`sources` field on each message).
+- **Reasoning model support.** `type: "thinking"` chunks are accumulated
+  and shown collapsed under the answer ("Show reasoning" to expand).
+  Persisted in the conversation JSON (`thinking` field).
+
+### Changed (breaking)
+- **Mistral AI only.** The multi-provider registry (`Providers::all()`,
+  `byId()`, `isValid()`, `defaultId()`, `Provider` struct) is gone. Only
+  Mistral serves `/v1/conversations`. Per-provider keys, base URLs and
+  model caches removed from `SettingsManager`.
+- **Model fixed per conversation.** `nextMessageModel` and the per-message
+  model override are removed. The model is chosen at creation
+  (`createNewConversation(model)`) and locked server-side. The ChatPage
+  quick model switcher and `ModelSelector.qml` are gone.
+
+### Removed
+- `ProviderBadge.qml`, `ProvidersUi.js`, `ModelSelector.qml` deleted.
+- `SettingsManager::nextMessageModel` and its QSettings key removed.
+- `SettingsManager::contextMessageLimit` and its Settings UI (server-side
+  history; nothing to trim locally).
+
+### Fixed
+- `SettingsManager::migrateToSingleProvider()` no longer deletes the
+  migrated `apiKeyEnc`/`modelName`/`models` keys it just wrote.
+- `StatsPage.qml`: restored the `Column` wrapper around the per-model
+  answers section.
+
+## [Unreleased]### Changed- **Reasoning models show their thinking.** `type: "thinking"` chunks  are accumulated during streaming and attached to the assistant message  as a `thinking` field, rendered collapsed under the answer in  `MessageBubble` (tap "Show reasoning" to expand). Persisted in the  conversation JSON alongside `sources`.- **Web search sources are shown and persisted.** `tool.execution.finished`  events are parsed for `web_search` result URLs, deduplicated, attached to  the assistant message and rendered as tappable source chips in  `MessageBubble`. Sources survive save/reload via a new `sources` field on  each message.- **Settings: "Web search" toggle replaces "Limit conversation context".** The  context limit is gone (server-side history); web search is a create-time  option, so the description says so.
 - **System prompt description** now says "when a conversation is created" instead  of "before every conversation".
 
 ### Removed- `SettingsManager::contextMessageLimit` and its Settings UI. The Conversations  API keeps the history server-side; there is nothing to trim locally.- **Per-message and per-conversation model override.** `nextMessageModel`,  the ChatPage quick model switcher, `ModelSelector.qml` and the model  ComboBox in `ConversationSettingsPage` are gone. The model is chosen  when a conversation is created (`createNewConversation(model)`) and  fixed for its life — the Conversations API locks it server-side.  `SettingsManager::nextMessageModel` and its QSettings key are removed.- **Multi-provider registry.** `Providers::all()/byId()/isValid()/defaultId()`  and the `Provider` struct are gone; `providers.cpp` now only holds the  Mistral constants and the catalogue filters (`isChatModelId`,  `looksLikeVisionModel`). Per-provider keys, base URLs and model caches are  removed from `SettingsManager` and the Settings UI — the Conversations API  exists only on Mistral.- `ProviderBadge.qml` and `ProvidersUi.js` deleted; `MessageBubble` and  `StatsPage` show the model name only.

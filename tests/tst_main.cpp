@@ -157,17 +157,81 @@ private slots:
     }
 
     // Reasoning models send content as a chunk list: only text chunks are
-    // shown, thinking chunks are dropped.
+    // streamed, thinking chunks are dropped from the answer.
     void reasoningChunksKeepOnlyText()
     {
         MistralAPI api;
         QSignalSpy spy(&api, SIGNAL(streamingResponse(QString)));
+        QSignalSpy thinkSpy(&api, SIGNAL(thinkingResponse(QString)));
 
         api.processStreamData("event: message.output.delta\n"
                               "data: {\"content\":[{\"type\":\"thinking\",\"thinking\":\"hmm\"},"
                               "{\"type\":\"text\",\"text\":\"answer\"}]}\n");
         QCOMPARE(spy.count(), 1);
         QCOMPARE(spy.at(0).at(0).toString(), QString("answer"));
+        // Thinking is not emitted during streaming, only at the end
+        QCOMPARE(thinkSpy.count(), 0);
+    }
+
+    // Thinking chunks are accumulated across deltas and emitted once when
+    // the response completes, before sources and usage.
+    void thinkingIsBufferedAndEmittedAtEnd()
+    {
+        MistralAPI api;
+        QSignalSpy thinkSpy(&api, SIGNAL(thinkingResponse(QString)));
+        QSignalSpy textSpy(&api, SIGNAL(streamingResponse(QString)));
+
+        api.processStreamData("event: message.output.delta\n"
+                              "data: {\"content\":[{\"type\":\"thinking\",\"thinking\":\"step 1 \"},"
+                              "{\"type\":\"text\",\"text\":\"Hello\"}]}\n");
+        api.processStreamData("event: message.output.delta\n"
+                              "data: {\"content\":[{\"type\":\"thinking\",\"thinking\":\"step 2\"},"
+                              "{\"type\":\"text\",\"text\":\" world\"}]}\n");
+        QCOMPARE(thinkSpy.count(), 0);
+        QCOMPARE(textSpy.count(), 2);
+
+        api.processStreamData("event: conversation.response.done\n"
+                              "data: {\"usage\":{}}\n");
+        QCOMPARE(thinkSpy.count(), 1);
+        QCOMPARE(thinkSpy.at(0).at(0).toString(), QString("step 1 step 2"));
+    }
+
+    // No thinking chunks means no thinkingResponse signal.
+    void noThinkingNoSignal()
+    {
+        MistralAPI api;
+        QSignalSpy thinkSpy(&api, SIGNAL(thinkingResponse(QString)));
+
+        api.processStreamData("event: message.output.delta\n"
+                              "data: {\"content\":\"plain answer\"}\n");
+        api.processStreamData("event: conversation.response.done\n"
+                              "data: {\"usage\":{}}\n");
+        QCOMPARE(thinkSpy.count(), 0);
+    }
+
+    // Thinking survives a save/load cycle on the conversation file.
+    void thinkingSurvivesPersistence()
+    {
+        ConversationManager manager;
+        manager.purgeAllConversations();
+
+        const QString id = manager.currentConversationId();
+        manager.currentConversation()->addUserMessage("why is the sky blue?");
+        manager.currentConversation()->addAssistantMessage(
+                    "Because of Rayleigh scattering.",
+                    "magistral-medium-latest", "mistral",
+                    QStringList(), "Light scatters more at shorter wavelengths.");
+        manager.saveCurrentConversation();
+
+        manager.createNewConversation("mistral-small-latest");
+        manager.loadConversation(id);
+
+        const QList<Message> &msgs = manager.currentConversation()->messages();
+        QCOMPARE(msgs.count(), 2);
+        QCOMPARE(msgs.at(1).role, QString("assistant"));
+        QCOMPARE(msgs.at(1).content, QString("Because of Rayleigh scattering."));
+        QCOMPARE(msgs.at(1).thinking,
+                 QString("Light scatters more at shorter wavelengths."));
     }
 
     // The done event carries usage and marks the stream complete.

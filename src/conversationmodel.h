@@ -19,6 +19,9 @@ struct Message {
     // URLs cited by web_search, attached to the assistant message that
     // used them. Empty for answers that did not search.
     QStringList sources;
+    // Reasoning trace from a reasoning model (type "thinking" chunks).
+    // Empty for non-reasoning models and user messages.
+    QString thinking;
     qint64 timestamp;
     bool pinned = false;
 };
@@ -37,7 +40,8 @@ public:
         ImagePathRole,
         ModelRole,
         ProviderRole,
-        SourcesRole
+        SourcesRole,
+        ThinkingRole
     };
 
     explicit ConversationModel(QObject *parent = nullptr);
@@ -50,10 +54,13 @@ public:
     Q_INVOKABLE void addAssistantMessage(const QString &content,
                                         const QString &model = QString(),
                                         const QString &provider = QString(),
-                                        const QStringList &sources = QStringList());
+                                        const QStringList &sources = QStringList(),
+                                        const QString &thinking = QString());
     Q_INVOKABLE void updateLastAssistantMessage(const QString &content);
     // Attaches web_search source URLs to the last assistant message.
     void setLastAssistantSources(const QStringList &sources);
+    // Attaches a reasoning trace to the last assistant message.
+    void setLastAssistantThinking(const QString &thinking);
     Q_INVOKABLE void removeLastMessageIfEmpty();
     Q_INVOKABLE void removeLastAssistantMessage();
     Q_INVOKABLE void truncateFrom(int index);
@@ -67,7 +74,8 @@ public:
     void addMessage(const QString &role, const QString &content, qint64 timestamp,
                     bool pinned = false, const QString &imagePath = QString(),
                     const QString &model = QString(), const QString &provider = QString(),
-                    const QStringList &sources = QStringList());
+                    const QStringList &sources = QStringList(),
+                    const QString &thinking = QString());
     QJsonArray toJsonArray() const;
 
     // Read-only view used by ConversationManager to build the API payload.

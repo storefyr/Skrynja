@@ -144,6 +144,7 @@ Page {
             imagePath: model.imagePath
             messageModel: model.messageModel
             messageSources: model.sources || []
+            messageThinking: model.thinking || ""
 
             onPinToggled: {
                 conversationModel.togglePinned(index)

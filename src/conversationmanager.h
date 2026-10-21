@@ -134,6 +134,7 @@ private slots:
     void onMessageSent();
     void onStreamingResponse(const QString &content);
     void onSourcesReceived(const QStringList &sources);
+    void onThinkingReceived(const QString &thinking);
     void onResponseCompleted();
     void onUsageReceived(int promptTokens, int completionTokens);
     void onSideRequestUsage(int promptTokens, int completionTokens);
@@ -150,6 +151,7 @@ private:
     QTimer *m_streamTimer;
     QString m_streamBuffer;
     QStringList m_pendingSources;
+    QString m_pendingThinking;
     QString m_activeModel;
     QString m_streamingConversationId;
     bool m_streamDirty;
