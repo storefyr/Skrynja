@@ -591,7 +591,10 @@ QString ConversationManager::attachRemoteConversation(const QString &remoteId,
 
     Conversation conv;
     conv.id = generateConversationId();
-    conv.title = title.trimmed().isEmpty() ? tr("Imported conversation") : title.trimmed();
+    // An empty remote name is common for API-created conversations; the title
+    // is derived from the first user message below. Only fall back to a
+    // placeholder when there are no usable messages at all.
+    conv.title = title.trimmed();
     conv.provider = Providers::ID;
     conv.model = model.trimmed();
     conv.remoteConversationId = remoteId;
@@ -625,8 +628,9 @@ QString ConversationManager::attachRemoteConversation(const QString &remoteId,
     }
 
     conv.updatedAt = conv.messages.last().timestamp;
-    // Derive a title from the first user message when the remote name is empty.
-    if (conv.title == tr("Imported conversation")) {
+    // Derive a title from the first user message when the remote name is empty
+    // or when only the model name was passed as a fallback.
+    if (conv.title.isEmpty() || conv.title == conv.model) {
         conv.title = generateConversationTitle(conv.messages);
     }
 

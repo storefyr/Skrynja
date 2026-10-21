@@ -5,6 +5,16 @@ All notable changes to Skrynja will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.4] - 2026-10-21
+Skrynja 0.5.4 — Hotfix: derive titles for attached conversations without names.
+
+### Fixed
+- **Attach remote conversations**: when Mistral has no name for a conversation
+  (common for API-created ones), the attached conversation now gets its title
+  from the first user message instead of "Imported conversation" or the model
+  name. The remote list also shows the model name as a fallback when the
+  conversation name is empty.
+
 ## [0.5.3] - 2026-10-21
 Skrynja 0.5.3 — Hotfix: rename ListModel roles to avoid QML name conflicts.
 

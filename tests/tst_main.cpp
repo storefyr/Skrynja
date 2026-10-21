@@ -1820,6 +1820,56 @@ private slots:
         QCOMPARE(sources.count(), 2);
         QCOMPARE(sources.at(0), QString("https://example.com/a"));
     }
+
+    // F17: when the remote conversation has no name, the title is derived
+    // from the first user message.
+    void attachRemoteConversationDerivesTitleFromMessage()
+    {
+        ConversationManager manager;
+        manager.purgeAllConversations();
+
+        QVariantList messages;
+        QVariantMap m1;
+        m1["role"] = "user";
+        m1["content"] = "Hvordan laver jeg surdej?";
+        m1["timestamp"] = 1000LL;
+        messages.append(m1);
+        QVariantMap m2;
+        m2["role"] = "assistant";
+        m2["content"] = "Her er opskriften...";
+        m2["timestamp"] = 2000LL;
+        messages.append(m2);
+
+        const QString localId = manager.attachRemoteConversation(
+                    "remote-notitle", "", "mistral-small-latest", messages);
+        QVERIFY(!localId.isEmpty());
+
+        const QString title = manager.getConversationsList().at(0).toObject()["title"].toString();
+        QCOMPARE(title, QString("Hvordan laver jeg surdej?"));
+    }
+
+    // F17: when the title argument equals the model name (a UI fallback),
+    // it is replaced by the first user message.
+    void attachRemoteConversationIgnoresModelAsTitle()
+    {
+        ConversationManager manager;
+        manager.purgeAllConversations();
+
+        QVariantList messages;
+        QVariantMap m1;
+        m1["role"] = "user";
+        m1["content"] = "Fortæl mig om bier";
+        m1["timestamp"] = 1000LL;
+        messages.append(m1);
+
+        const QString localId = manager.attachRemoteConversation(
+                    "remote-modeltitle", "mistral-small-latest",
+                    "mistral-small-latest", messages);
+        QVERIFY(!localId.isEmpty());
+
+        const QString title = manager.getConversationsList().at(0).toObject()["title"].toString();
+        QCOMPARE(title, QString("Fortæl mig om bier"));
+    }
 };
 
 class TestCategories : public QObject

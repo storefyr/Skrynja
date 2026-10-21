@@ -69,7 +69,10 @@ Page {
 
                 Label {
                     width: parent.width
-                    text: remoteName !== "" ? remoteName : qsTr("Untitled")
+                    text: remoteName !== "" ? remoteName
+                                            : (remoteModel !== ""
+                                               ? remoteModel
+                                               : qsTr("Untitled conversation"))
                     color: remoteItem.highlighted ? Theme.highlightColor : Theme.primaryColor
                     font.pixelSize: Theme.fontSizeMedium
                     truncationMode: TruncationMode.Fade
