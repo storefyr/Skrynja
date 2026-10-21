@@ -478,6 +478,7 @@ Page {
                                 chatPage.recording = false
                                 globalAudioRecorder.stop()
                                 chatPage.transcribing = true
+                                transcribingWatchdog.restart()
                             } else if (!chatPage.transcribing) {
                                 // Start recording
                                 chatPage.recordingPath = mistralApi.tempAudioPath()
@@ -1055,6 +1056,7 @@ Page {
         target: mistralApi
 
         onTranscriptionReady: {
+            transcribingWatchdog.stop()
             chatPage.transcribing = false
             if (text.length > 0) {
                 // Fill the input field with the transcribed text. The user
@@ -1075,6 +1077,7 @@ Page {
         }
 
         onTranscriptionFailed: {
+            transcribingWatchdog.stop()
             chatPage.transcribing = false
             console.warn("Transcription failed: " + message)
             errorNotification.previewSummary = qsTr("Transcription failed")
@@ -1099,9 +1102,29 @@ Page {
         onStopped: {
             // Recording stopped and file is flushed to disk.
             // Now it is safe to read the file and transcribe.
+            transcribingWatchdog.stop()
             if (chatPage.transcribing && chatPage.recordingPath !== "") {
                 mistralApi.transcribeAudio(settingsManager.apiKey,
                                             chatPage.recordingPath)
+            }
+        }
+    }
+
+    // F18: Watchdog — if "Transcribing..." lasts too long, reset the UI.
+    // Covers cases where both the recorder 'stopped' signal and the HTTP
+    // timeout fail to fire (e.g. QAudioRecorder hangs before stop()).
+    Timer {
+        id: transcribingWatchdog
+        interval: 35000
+        repeat: false
+        onTriggered: {
+            if (chatPage.transcribing) {
+                console.warn("Transcribing watchdog triggered — resetting UI")
+                chatPage.transcribing = false
+                chatPage.recording = false
+                errorNotification.previewSummary = qsTr("Transcription failed")
+                errorNotification.previewBody = qsTr("The transcription took too long. Please try again.")
+                errorNotification.publish()
             }
         }
     }

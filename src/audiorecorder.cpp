@@ -77,11 +77,16 @@ void AudioRecorder::record()
 
 void AudioRecorder::stop()
 {
-    if (m_recorder->state() == QAudioRecorder::RecordingState) {
-        // Safety timer: if 'stopped' never arrives within 5 seconds,
-        // emit it anyway so the UI is not stuck.
-        m_stopTimer->start();
+    // Always start the safety timer, even if state is not RecordingState.
+    // If the recorder is stuck, the timer will force-emit 'stopped'.
+    m_stopTimer->start();
+    if (m_recorder->state() == QAudioRecorder::RecordingState
+            || m_recorder->state() == QAudioRecorder::PausedState) {
         m_recorder->stop();
+    } else {
+        // Already stopped or in an unknown state — emit immediately.
+        m_stopTimer->stop();
+        emit stopped();
     }
 }
 

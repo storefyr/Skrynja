@@ -5,6 +5,18 @@ All notable changes to Skrynja will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.10] - 2026-10-21
+Skrynja 0.8.10 — Fix: QML watchdog guarantees "Transcribing..." never hangs.
+
+### Fixed
+- Added a 35-second QML `Timer` watchdog (`transcribingWatchdog`) that
+  starts when the user taps stop. If neither the recorder's `stopped`
+  signal nor the HTTP timeout fires within 35 seconds, the watchdog
+  resets the UI and shows a "Transcription took too long" notification.
+- `AudioRecorder::stop()` now also handles `PausedState` and emits
+  `stopped` immediately if the recorder is not in `RecordingState`.
+- The watchdog is stopped when transcription succeeds or fails normally.
+
 ## [0.8.9] - 2026-10-21
 Skrynja 0.8.9 — Fix: timeouts prevent "Transcribing..." from hanging forever.
 
