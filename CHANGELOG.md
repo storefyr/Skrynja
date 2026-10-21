@@ -5,6 +5,18 @@ All notable changes to Skrynja will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.2] - 2026-10-21
+Skrynja 0.8.2 — Fix: added missing Qt Multimedia runtime dependencies.
+
+### Fixed
+- Added `qt5-qtmultimedia`, `qt5-qtdeclarative-import-multimedia`, and
+  `qt5-qtmultimedia-plugin-audio-pulseaudio` to `Requires` in both the spec
+  file and the yaml file. Without `qt5-qtdeclarative-import-multimedia`, the
+  `import QtMultimedia 5.0` statement in `ChatPage.qml` fails silently on
+  device, causing the entire page to fail loading with "Kunne ikke indlæse
+  siden". Also added `pkgconfig(Qt5Multimedia)` to PkgBR in yaml (it was
+  only in the spec file).
+
 ## [0.8.1] - 2026-10-21
 Skrynja 0.8.1 — Fix: ChatPage failed to load ("Kunne ikke indlæse siden").
 
