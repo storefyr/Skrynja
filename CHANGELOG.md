@@ -5,6 +5,14 @@ All notable changes to Skrynja will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.10] - 2026-10-21
+Skrynja 0.5.10 — Hotfix: show full conversation id for unnamed remotes.
+
+### Fixed
+- **Remote conversations list**: show the full conversation id instead of
+  a 13-character prefix. The prefix truncation made different conversations
+  with similar ids appear identical.
+
 ## [0.5.9] - 2026-10-21
 Skrynja 0.5.9 — Hotfix: dedupe remote conversations in the C++ parser.
 

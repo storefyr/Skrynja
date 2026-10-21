@@ -89,6 +89,7 @@ Page {
                     spacing: Theme.paddingMedium
 
                     Label {
+                        id: modelLabel
                         text: remoteModel || ""
                         visible: text !== ""
                         color: remoteItem.highlighted ? Theme.secondaryHighlightColor : Theme.secondaryColor
@@ -96,16 +97,21 @@ Page {
                     }
 
                     Label {
+                        id: dateLabel
                         text: remotePage.formatDate(remoteUpdatedAt || remoteCreatedAt)
                         color: remoteItem.highlighted ? Theme.secondaryHighlightColor : Theme.secondaryColor
                         font.pixelSize: Theme.fontSizeExtraSmall
                     }
 
                     Label {
-                        text: remoteId ? "· " + remoteId.substring(0, 13) : ""
+                        text: remoteId ? "· " + remoteId : ""
                         visible: remoteName === ""
                         color: remoteItem.highlighted ? Theme.secondaryHighlightColor : Theme.secondaryColor
                         font.pixelSize: Theme.fontSizeExtraSmall
+                        truncationMode: TruncationMode.Fade
+                        width: parent.width - parent.spacing * 2
+                               - (modelLabel.visible ? modelLabel.width : 0)
+                               - (dateLabel.visible ? dateLabel.width : 0)
                     }
                 }
 
