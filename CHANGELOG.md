@@ -5,6 +5,16 @@ All notable changes to Skrynja will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.1] - 2026-10-21
+Skrynja 0.6.1 — Feature: automatic remote conversation sync.
+
+### Added
+- **Auto-sync**: when Skrynja starts and an API key is configured, it
+  automatically fetches all remote conversations from Mistral's servers
+  and attaches any that are not yet attached locally. Also triggers when
+  a new API key is entered in Settings. Runs silently in the background;
+  the history list refreshes when new conversations arrive.
+
 ## [0.6.0] - 2026-10-21
 Skrynja 0.6.0 — New feature: bulk-attach all remote conversations.
 

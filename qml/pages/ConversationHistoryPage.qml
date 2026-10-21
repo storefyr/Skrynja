@@ -364,10 +364,31 @@ Page {
                 historyPage.refreshList()
             }
         }
+
+        // Auto-sync attached new conversations in the background.
+        onAutoSyncFinished: {
+            if (historyPage.searchQuery.length === 0) {
+                historyPage.refreshList()
+            }
+        }
+    }
+
+    Connections {
+        target: settingsManager
+
+        onApiKeyChanged: {
+            if (settingsManager.hasApiKey) {
+                conversationManager.autoSyncRemoteConversations(settingsManager.apiKey)
+            }
+        }
     }
 
     Component.onCompleted: {
         refreshList()
+        // Auto-sync on startup when an API key is already configured.
+        if (settingsManager.hasApiKey) {
+            conversationManager.autoSyncRemoteConversations(settingsManager.apiKey)
+        }
     }
 
     // This page is the root of the stack; the chat lives on top of it and is

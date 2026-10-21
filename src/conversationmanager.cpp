@@ -71,6 +71,9 @@ ConversationManager::ConversationManager(QObject *parent)
     , m_streamDirty(false)
     , m_totalPromptTokens(0)
     , m_totalCompletionTokens(0)
+    , m_api(nullptr)
+    , m_autoSyncing(false)
+    , m_autoSyncAttached(0)
 {
     // Repainting the whole message on every SSE delta is what makes long
     // answers stutter: coalesce them and write at a fixed cadence.
@@ -119,6 +122,15 @@ void ConversationManager::bindApi(MistralAPI *api)
             this, &ConversationManager::onSideRequestUsage);
     connect(api, &MistralAPI::conversationCreated,
             this, &ConversationManager::onConversationCreated);
+    connect(api, &MistralAPI::remoteConversationsFetched,
+            this, &ConversationManager::onAutoSyncConversationsFetched);
+    connect(api, &MistralAPI::remoteConversationsFetchFailed,
+            this, &ConversationManager::onAutoSyncConversationsFetchFailed);
+    connect(api, &MistralAPI::remoteMessagesFetched,
+            this, &ConversationManager::onAutoSyncMessagesFetched);
+    connect(api, &MistralAPI::remoteMessagesFetchFailed,
+            this, &ConversationManager::onAutoSyncMessagesFetchFailed);
+    m_api = api;
 }
 
 // The remote conversation was created: persist its id on the conversation
@@ -1712,4 +1724,108 @@ const Conversation* ConversationManager::findConversation(const QString &id) con
         }
     }
     return nullptr;
+}
+
+// ---------------------------------------------------------------- auto-sync (F17b)
+
+void ConversationManager::autoSyncRemoteConversations(const QString &apiKey)
+{
+    if (m_autoSyncing || !m_api || apiKey.isEmpty()) {
+        return;
+    }
+    m_autoSyncing = true;
+    m_autoSyncAttached = 0;
+    m_autoSyncApiKey = apiKey;
+    m_autoSyncPending.clear();
+    m_autoSyncNameModel.clear();
+    emit autoSyncingChanged();
+    m_api->fetchRemoteConversations(apiKey);
+}
+
+void ConversationManager::onAutoSyncConversationsFetched(const QVariantList &conversations)
+{
+    if (!m_autoSyncing) {
+        return;
+    }
+    for (const QVariant &v : conversations) {
+        const QVariantMap entry = v.toMap();
+        const QString remoteId = entry["id"].toString();
+        if (remoteId.isEmpty() || hasRemoteConversation(remoteId)) {
+            continue;
+        }
+        m_autoSyncPending.append(entry);
+        QVariantMap nameModel;
+        nameModel["name"] = entry["name"].toString();
+        nameModel["model"] = entry["model"].toString();
+        m_autoSyncNameModel[remoteId] = nameModel;
+    }
+    if (m_autoSyncPending.isEmpty()) {
+        m_autoSyncing = false;
+        emit autoSyncingChanged();
+        emit autoSyncFinished(0);
+        return;
+    }
+    // Start fetching messages for the first pending conversation.
+    const QVariantMap first = m_autoSyncPending.takeFirst().toMap();
+    m_api->fetchRemoteMessages(m_autoSyncApiKey, first["id"].toString());
+}
+
+void ConversationManager::onAutoSyncConversationsFetchFailed()
+{
+    if (!m_autoSyncing) {
+        return;
+    }
+    m_autoSyncing = false;
+    m_autoSyncApiKey.clear();
+    m_autoSyncPending.clear();
+    m_autoSyncNameModel.clear();
+    emit autoSyncingChanged();
+    emit autoSyncFinished(0);
+}
+
+void ConversationManager::onAutoSyncMessagesFetched(const QString &remoteConversationId,
+                                                     const QVariantList &messages)
+{
+    if (!m_autoSyncing) {
+        return;
+    }
+    const QVariantMap nameModel = m_autoSyncNameModel.value(remoteConversationId).toMap();
+    const QString localId = attachRemoteConversation(
+                remoteConversationId,
+                nameModel["name"].toString(),
+                nameModel["model"].toString(),
+                messages);
+    if (!localId.isEmpty()) {
+        m_autoSyncAttached++;
+    }
+    // Fetch the next one, or finish.
+    if (m_autoSyncPending.isEmpty()) {
+        m_autoSyncing = false;
+        m_autoSyncApiKey.clear();
+        m_autoSyncNameModel.clear();
+        emit autoSyncingChanged();
+        emit autoSyncFinished(m_autoSyncAttached);
+    } else {
+        const QVariantMap next = m_autoSyncPending.takeFirst().toMap();
+        m_api->fetchRemoteMessages(m_autoSyncApiKey, next["id"].toString());
+    }
+}
+
+void ConversationManager::onAutoSyncMessagesFetchFailed(const QString &remoteConversationId)
+{
+    Q_UNUSED(remoteConversationId)
+    if (!m_autoSyncing) {
+        return;
+    }
+    // Skip this one and continue with the next.
+    if (m_autoSyncPending.isEmpty()) {
+        m_autoSyncing = false;
+        m_autoSyncApiKey.clear();
+        m_autoSyncNameModel.clear();
+        emit autoSyncingChanged();
+        emit autoSyncFinished(m_autoSyncAttached);
+    } else {
+        const QVariantMap next = m_autoSyncPending.takeFirst().toMap();
+        m_api->fetchRemoteMessages(m_autoSyncApiKey, next["id"].toString());
+    }
 }

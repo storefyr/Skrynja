@@ -141,6 +141,14 @@ public:
     // True when a local conversation already references this remote id.
     Q_INVOKABLE bool hasRemoteConversation(const QString &remoteId) const;
 
+    // F17b: Automatically attach all remote conversations that are not yet
+    // attached locally. Fetches the list, then fetches messages for each
+    // unattached conversation sequentially. No-op when a sync is already
+    // running or the API key is empty. Emits autoSyncFinished when done.
+    Q_INVOKABLE void autoSyncRemoteConversations(const QString &apiKey);
+    Q_PROPERTY(bool autoSyncing READ autoSyncing NOTIFY autoSyncingChanged)
+    bool autoSyncing() const { return m_autoSyncing; }
+
     void loadAllConversations();
 
 signals:
@@ -153,6 +161,10 @@ signals:
     void streamingConversationIdChanged();
     void tokenUsageChanged(const QString &conversationId,
                            int promptTokens, int completionTokens);
+    // F17b: emitted when autoSyncRemoteConversations finishes (all done or
+    // aborted). attachedCount is how many were newly attached.
+    void autoSyncFinished(int attachedCount);
+    void autoSyncingChanged();
 
 private slots:
     void onMessageSent();
@@ -165,6 +177,12 @@ private slots:
     void onConversationCreated(const QString &remoteId);
     void flushStream();
     void finishBackgroundResponse();
+    // F17b: auto-sync slots
+    void onAutoSyncConversationsFetched(const QVariantList &conversations);
+    void onAutoSyncConversationsFetchFailed();
+    void onAutoSyncMessagesFetched(const QString &remoteConversationId,
+                                   const QVariantList &messages);
+    void onAutoSyncMessagesFetchFailed(const QString &remoteConversationId);
 
 private:
     ConversationModel *m_currentConversation;
@@ -181,6 +199,13 @@ private:
     bool m_streamDirty;
     qint64 m_totalPromptTokens;
     qint64 m_totalCompletionTokens;
+    // F17b: auto-sync state
+    MistralAPI *m_api;
+    QString m_autoSyncApiKey;
+    QVariantList m_autoSyncPending;   // remote conversations not yet attached
+    QVariantMap m_autoSyncNameModel;   // remoteId → {name, model}
+    bool m_autoSyncing;
+    int m_autoSyncAttached;
 
     QString generateConversationId() const;
     QString generateConversationTitle(const QList<Message> &messages) const;
