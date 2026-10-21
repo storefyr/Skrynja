@@ -11,6 +11,11 @@
 #include <QStringList>
 #include "conversationmodel.h"
 
+// QSettings path under SailJail: AppConfigLocation points to the sandboxed
+// ~/.config/<OrganizationName>/<ApplicationName>/ directory. The two-argument
+// QSettings constructor would use an inaccessible path outside the sandbox.
+QString skrynjaSettingsPath(const QString &fileName);
+
 class MistralAPI;
 
 struct Conversation {

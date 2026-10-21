@@ -41,6 +41,12 @@ These are non-negotiable. Violating them produces code that does not compile or 
 5. **`#stream` in URLs is a fragment, not a path.** `QUrl("https://api.mistral.ai/v1/conversations#stream")`
    would send the request without `#stream`. Always percent-encode it (`%23stream`) or set the
    request target manually. The unit tests cover this.
+6. **SailJail sandboxing is mandatory** (since Sailfish OS 4.4.0). The desktop file must have an
+   `[X-Sailjail]` section with `Permissions=`, `OrganizationName=org.skrynja` and
+   `ApplicationName=Skrynja`. `QStandardPaths::AppDataLocation` / `AppConfigLocation` always
+   return the sandboxed paths — never fall back to `QDir::homePath()`. QSettings must be
+   constructed with an explicit path inside `AppConfigLocation` (see `skrynjaSettingsPath()`),
+   not the two-argument constructor.
 
 ## Architecture
 

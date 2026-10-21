@@ -18,7 +18,9 @@
 int main(int argc, char *argv[])
 {
     QGuiApplication *app = SailfishApp::application(argc, argv);
-    app->setOrganizationName("harbour-skrynja");
+    // Must match OrganizationName/ApplicationName in the [X-Sailjail] section
+    // of the desktop file so SailJail whitelists the right data/config dirs.
+    app->setOrganizationName("org.skrynja");
     app->setApplicationName("Skrynja");
 
     QQuickView *view = SailfishApp::createView();

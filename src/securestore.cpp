@@ -129,11 +129,8 @@ bool isAvailable()
 
 QString saltFilePath()
 {
-    QString dir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
-    if (dir.isEmpty()) {
-        dir = QDir::homePath() + "/.local/share/harbour-skrynja";
-    }
-    return dir + "/.keysalt";
+    return QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)
+            + "/.keysalt";
 }
 
 QString obfuscate(const QString &plainText)

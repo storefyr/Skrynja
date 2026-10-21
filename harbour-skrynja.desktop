@@ -6,4 +6,8 @@ Icon=harbour-skrynja
 Exec=harbour-skrynja
 Comment=Le Chat de Mistral AI avec recherche web
 Categories=Network;Chat;
-X-Sailjail-Permissions=Internet;Pictures;Documents
+
+[X-Sailjail]
+Permissions=Internet;Pictures;Documents
+OrganizationName=org.skrynja
+ApplicationName=Skrynja

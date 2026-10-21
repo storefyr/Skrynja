@@ -24,6 +24,12 @@
 #include <QDebug>
 #include <algorithm>
 
+QString skrynjaSettingsPath(const QString &fileName)
+{
+    return QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)
+            + "/" + fileName + ".conf";
+}
+
 namespace {
 
 // Keep the on-disk payload bounded: an image that never gets sent again is
@@ -60,7 +66,7 @@ QVariantList rankCounts(const QVariantMap &counts, const QString &keyName)
 ConversationManager::ConversationManager(QObject *parent)
     : QObject(parent)
     , m_currentConversation(new ConversationModel(this))
-    , m_settings("harbour-skrynja", "conversations")
+    , m_settings(skrynjaSettingsPath("conversations"), QSettings::NativeFormat)
     , m_streamTimer(new QTimer(this))
     , m_streamDirty(false)
     , m_totalPromptTokens(0)
@@ -305,11 +311,11 @@ void ConversationManager::onSideRequestUsage(int promptTokens, int completionTok
 
 QString ConversationManager::conversationsDir() const
 {
-    QString base = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
-    if (base.isEmpty()) {
-        base = QDir::homePath() + "/.local/share/harbour-skrynja";
-    }
-    return base + "/conversations";
+    // Under SailJail AppDataLocation is always set (to the sandboxed
+    // ~/.local/share/<org>/<app> path); a homePath fallback would point
+    // outside the sandbox and fail there.
+    return QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)
+            + "/conversations";
 }
 
 bool ConversationManager::isSafeId(const QString &id)
@@ -1114,11 +1120,8 @@ QString ConversationManager::retainImage(const QString &filePath) const
                          Qt::KeepAspectRatio, Qt::SmoothTransformation);
     }
 
-    QString base = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
-    if (base.isEmpty()) {
-        base = QDir::homePath() + "/.local/share/harbour-skrynja";
-    }
-    const QString dir = base + "/images";
+    const QString dir = QStandardPaths::writableLocation(
+                QStandardPaths::AppDataLocation) + "/images";
     QDir().mkpath(dir);
     SecureStore::restrictDirPermissions(dir);
 

@@ -5,6 +5,32 @@ All notable changes to Skrynja will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-10-21
+Skrynja 0.4.0 — SailJail sandboxing (mandatory since Sailfish OS 4.4.0).
+
+### Changed (breaking)
+- **SailJail application profile.** The desktop file now uses the `[X-Sailjail]`
+  section format (`Permissions=Internet;Pictures;Documents`,
+  `OrganizationName=org.skrynja`, `ApplicationName=Skrynja`) instead of the
+  old flat `X-Sailjail-Permissions=` key. Sandboxing is mandatory for Harbour
+  apps since Sailfish OS 4.4.0.
+- **Organization name changed** from `harbour-skrynja` to `org.skrynja` to
+  match the desktop file. This moves the data directory to
+  `~/.local/share/org.skrynja/Skrynja/` and the config directory to
+  `~/.config/org.skrynja/Skrynja/`. Existing local conversations and settings
+  under the old paths are not migrated — start fresh or copy the files
+  manually.
+- **QSettings uses explicit sandboxed paths.** Both `SettingsManager` and
+  `ConversationManager` now construct `QSettings` with a path inside
+  `QStandardPaths::AppConfigLocation` (the sandboxed config dir) instead of
+  the two-argument constructor, which would write to an inaccessible path
+  outside the sandbox.
+- **`QDir::homePath()` fallbacks removed.** `conversationsDir()`,
+  `retainImage()` and `SecureStore::saltFilePath()` no longer fall back to
+  `~/.local/share/harbour-skrynja` — under SailJail that path is outside the
+  sandbox and unwritable. `QStandardPaths::AppDataLocation` always returns
+  the sandboxed path.
+
 ## [0.3.0] - 2026-10-21
 Skrynja 0.3.0 — Vision: images uploaded once to Mistral's Files API.
 

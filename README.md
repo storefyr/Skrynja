@@ -149,7 +149,7 @@ DELETE https://api.mistral.ai/v1/conversations/{id}          (delete a conversat
 
 ## 🔒 Security & Privacy
 
-- ✅ API keys are stored locally with QSettings, isolated by Sailjail sandboxing
+- ✅ SailJail sandboxing with minimal permissions (Internet, Pictures, Documents)
 - ✅ No telemetry or analytics
 - ✅ Direct communication with Mistral (HTTPS), no intermediary
 - ✅ No intermediate server

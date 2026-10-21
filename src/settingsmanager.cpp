@@ -1,6 +1,7 @@
 #include "settingsmanager.h"
 #include "providers.h"
 #include "securestore.h"
+#include "conversationmanager.h"
 #include <QDateTime>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -51,7 +52,7 @@ const int MAX_SAVED_PROMPTS = 100;
 
 SettingsManager::SettingsManager(QObject *parent)
     : QObject(parent)
-    , m_settings("harbour-skrynja", "Skrynja")
+    , m_settings(skrynjaSettingsPath("Skrynja"), QSettings::NativeFormat)
     , m_temperature(-1.0)
     , m_maxTokens(0)
     , m_chatStyle("flat")

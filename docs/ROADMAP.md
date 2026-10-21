@@ -30,6 +30,7 @@ specs in `docs/features/` remain as historical reference; the ones marked **remo
 | F13 | Unit tests: `%23stream` URL building, SSE event parser, reconcile, dirty/restart | — | done (unreleased) |
 | F14 | Vision via `MessageInputEntry` chunks (text + file), image uploaded to `/v1/files` once server-side | — | done |
 | F15 | Reasoning models: `content` arrives as a chunk list (thinking + text) — parse and render both | — | done |
+| F16 | SailJail: `[X-Sailjail]` desktop section, sandboxed QSettings paths, remove homePath fallbacks, org name `org.skrynja` | — | done (v0.4.0) |
 
 ## Removed in the fork
 

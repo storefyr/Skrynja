@@ -1,6 +1,6 @@
 Name:       harbour-skrynja
 Summary:    Client de chat IA pour Sailfish OS avec recherche web
-Version:    0.3.0
+Version:    0.4.0
 Release:    1
 Group:      Applications/Internet
 License:    MIT

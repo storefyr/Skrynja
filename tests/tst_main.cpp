@@ -1519,7 +1519,7 @@ private slots:
         SettingsManager reopened;
         QCOMPARE(reopened.apiKey(), QString("sk-test-secret-value"));
 
-        QSettings raw("harbour-skrynja", "Skrynja");
+        QSettings raw(skrynjaSettingsPath("Skrynja"), QSettings::NativeFormat);
         QVERIFY(!raw.contains("apiKey"));
         QVERIFY(!raw.value("apiKeyEnc").toString()
                 .contains("sk-test-secret-value"));
@@ -1536,7 +1536,7 @@ private slots:
         }
         // Simulate a SailCat install: key and model under providers/mistral/
         {
-            QSettings raw("harbour-skrynja", "Skrynja");
+            QSettings raw(skrynjaSettingsPath("Skrynja"), QSettings::NativeFormat);
             raw.remove("apiKeyEnc");
             raw.remove("modelName");
             raw.remove("models");
@@ -1551,7 +1551,7 @@ private slots:
         QCOMPARE(migrated.modelName(), QString("mistral-large-latest"));
 
         // The multi-provider entries are gone, the single-provider ones remain
-        QSettings raw("harbour-skrynja", "Skrynja");
+        QSettings raw(skrynjaSettingsPath("Skrynja"), QSettings::NativeFormat);
         QVERIFY(!raw.contains("providers"));
         QVERIFY(!raw.contains("provider"));
         QVERIFY(!raw.value("apiKeyEnc").toString().isEmpty());
@@ -1701,7 +1701,7 @@ int main(int argc, char *argv[])
     qputenv("XDG_DATA_HOME", dataDir.path().toUtf8());
 
     QCoreApplication app(argc, argv);
-    app.setOrganizationName("harbour-skrynja");
+    app.setOrganizationName("org.skrynja");
     app.setApplicationName("Skrynja");
 
     int status = 0;
