@@ -34,7 +34,8 @@ specs in `docs/features/` remain as historical reference; the ones marked **remo
 | F17 | Attach remote conversation: `GET /v1/conversations` list, `GET /v1/conversations/{id}/messages` fetch, UI page, local conv keeps remote id | — | done (v0.5.0) |
 | F17b | Bulk attach: "Attach all" menu on remote page, sequential fetch+attach with progress | — | done (v0.6.0) |
 | F18 | Voice input: microphone button in ChatPage, `AudioRecorder` → `POST /v1/audio/transcriptions` (voxtral), transcribed text fills the input field | — | done (v0.8.0); fixed for Danish in v0.8.11 (Voxtral 3 model `voxtral-mini-transcribe-3-0`, language hint, longer timeouts); recorder fixed in v0.8.13 (audio/PCM codec, Qt 5.6 signal connects) |
-| F18b | Voice anonymization: local fixed pipeline (pitch shift + spectral tilt + telephone-band limiting + jittered noise) on the recording before it is sent, so the speaker is harder to identify by voice. ON BY DEFAULT since v0.9.7 | — | released in v0.9.1; hardened through v0.9.6 on `vibe/f18b-strong-anonymization-b6c41e`; single fixed level + default-on in v0.9.7 |
+| F18b | Voice anonymization: local fixed pipeline (pitch shift + spectral tilt + telephone-band limiting + jittered noise) on the recording before it is sent, so the speaker is harder to identify by voice. ON BY DEFAULT since v0.9.7 | — | done (v0.9.7, PR #8) |
+| F18c | Local on-device STT (whisper.cpp) so audio never leaves the phone | — | **rejected** (2026-10-22, tested in Notes Plus): too slow on a phone CPU and far too poor at Danish. Revisit only if a fast Danish-quality on-device model appears |
 
 ## Removed in the fork
 

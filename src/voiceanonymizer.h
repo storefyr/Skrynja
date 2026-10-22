@@ -30,10 +30,12 @@
 //   slightly per recording, so no two files share the same
 //   transformation — averaging or inverting across recordings fails.
 //
-// Honest limits: anonymization is obfuscation, not encryption. The only
-// true protection against voiceprinting is keeping the audio on the
-// device (local STT, e.g. whisper.cpp — possible future feature) or
-// typing instead of speaking.
+// Honest limits: anonymization is obfuscation, not encryption. Keeping
+// the audio on the device (local STT) would be the only true protection
+// against voiceprinting — but on-device testing (Notes Plus, 2026-10-22)
+// showed whisper.cpp is far too slow on a phone CPU and far too poor at
+// Danish, so local STT is NOT a viable option right now. Realistic
+// alternatives: this anonymization pipeline, or typing instead of speaking.
 //
 // Input/output: 16-bit PCM WAV files (the format AudioRecorder produces
 // with codec audio/PCM + container wav). Mono and stereo are supported;

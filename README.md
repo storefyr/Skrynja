@@ -154,6 +154,7 @@ DELETE https://api.mistral.ai/v1/conversations/{id}          (delete a conversat
 - ✅ Direct communication with Mistral (HTTPS), no intermediary
 - ✅ No intermediate server
 - ✅ Local copy of conversations on your device
+- ✅ **Voice input is anonymized on the device before upload** (on by default): pitch shift + spectral tilt + telephone-band limiting + jittered noise, so your voice is much harder to identify from the recording. This is obfuscation, not encryption — the transcribed text can still identify you, and your API key ties the request to your account. Local on-device STT (whisper.cpp) was tested and rejected: too slow on a phone CPU and too poor at Danish.
 - ⚠️ **With the Conversations API, the conversation history also lives on Mistral's servers** — that is the price of server-side memory and web search
 - ⚠️ On Mistral's free "Experiment" plan, API inputs and outputs go into their model training programs by default. Opt out in the Admin Console privacy settings if that matters to you
 - ⚠️ Your API key gives access to your Mistral account - keep it secret
