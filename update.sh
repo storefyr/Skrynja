@@ -1,12 +1,28 @@
 #!/bin/sh
 # Skrynja update script - run on the Sailfish OS device
-# Usage: sh update.sh [version]
-# Example: sh update.sh 0.5.8
+# Usage: sh update.sh [version] [arch]
+# Example: sh update.sh 0.8.11
+#          sh update.sh 0.8.11 armv7hl   (override auto-detected arch)
 
 set -e
 
 VERSION="${1:-0.8.11}"
-ARCH="aarch64"
+
+# Auto-detect the device architecture unless overridden as the 2nd argument
+if [ -n "$2" ]; then
+    ARCH="$2"
+else
+    case "$(uname -m)" in
+        armv7l|armv7hl|armv7*) ARCH="armv7hl" ;;
+        aarch64)               ARCH="aarch64" ;;
+        i?86)                  ARCH="i486" ;;
+        *)
+            echo "Unknown architecture: $(uname -m)" >&2
+            exit 1
+            ;;
+    esac
+fi
+
 RPM_NAME="harbour-skrynja-${VERSION}-1.${ARCH}.rpm"
 DOWNLOAD_URL="https://github.com/storefyr/Skrynja/releases/download/v${VERSION}/${RPM_NAME}"
 TMP_DIR="/tmp"
