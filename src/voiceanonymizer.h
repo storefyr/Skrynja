@@ -26,8 +26,8 @@
 //
 // The Strength presets combine these effects:
 //   subtle: pitch 1.10 + noise 0.005 (mild, still natural)
-//   medium: pitch 1.18 + ring 320 Hz @ 30% + noise 0.008 (clearly changed)
-//   strong: pitch 1.30 + ring 350 Hz @ 40% + noise 0.012 (robotic)
+//   medium: pitch 1.18 + ring 320 Hz @ 30% + noise 0.008 (recommended)
+//   strong: pitch 1.24 + ring 320 Hz @ 30% + noise 0.012 (max, may hurt STT)
 //
 // NOTE on ring modulation: the carrier frequency must stay ABOVE the
 // human voice fundamental range (85-255 Hz). At 180-220 Hz the sidebands

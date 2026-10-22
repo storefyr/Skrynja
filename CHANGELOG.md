@@ -5,6 +5,22 @@ All notable changes to Skrynja will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.4] - 2026-10-22
+Skrynja 0.9.4 — Voice anonymization: "strong" retuned after second on-device test.
+
+### Changed
+- **"Strong" is now the maximum safe effort, not a robot voice.** After a
+  second test round, even the retuned v0.9.3 strong preset (350 Hz @ 40%)
+  still hurt transcription too much. Strong now reuses the proven-safe
+  Medium ring settings (320 Hz @ 30%) and only increases pitch (1.24) and
+  noise (0.012). The Settings description for "strong" states honestly that
+  maximum anonymization may reduce transcription accuracy, and recommends
+  Medium for everyday use.
+- Rationale (documented for future tuning): anonymization is obfuscation,
+  not encryption — against automated voiceprinting none of these presets
+  is a guarantee. Medium already hides the voice from any human listener;
+  stronger processing mainly costs STT accuracy.
+
 ## [0.9.3] - 2026-10-22
 Skrynja 0.9.3 — Fix: "strong" anonymization broke speech-to-text (ring modulation carrier inside the voice range).
 

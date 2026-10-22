@@ -301,9 +301,12 @@ bool VoiceAnonymizer::anonymizeWithStrength(const QString &inputFile,
         noiseLevel = 0.008;
         break;
     case Strong:
-        pitchFactor = 1.30;
-        ringFreq = 350.0;   // above the voice fundamental range
-        ringDepth = 0.40;
+        // Maximum effort: same proven-safe ring settings as Medium, only
+        // more pitch shift and noise. Even this can reduce transcription
+        // accuracy — Medium is the recommended everyday level.
+        pitchFactor = 1.24;
+        ringFreq = 320.0;   // above the voice fundamental range
+        ringDepth = 0.30;
         noiseLevel = 0.012;
         break;
     }

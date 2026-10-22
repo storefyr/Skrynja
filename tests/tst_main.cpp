@@ -2608,8 +2608,8 @@ private slots:
         };
         // 16000 / 1.10 = 14545 samples = 29090 bytes (subtle)
         QCOMPARE(dataSize(outSubtle), 29090u);
-        // 16000 / 1.30 = 12307 samples = 24614 bytes (strong, shorter)
-        QCOMPARE(dataSize(outStrong), 24614u);
+        // 16000 / 1.24 = 12903 samples = 25806 bytes (strong, shorter)
+        QCOMPARE(dataSize(outStrong), 25806u);
         // The stronger preset must change the audio more: different payload.
         QFile fSub(outSubtle), fStr(outStrong);
         QVERIFY(fSub.open(QIODevice::ReadOnly));
