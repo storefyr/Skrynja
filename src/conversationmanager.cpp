@@ -1482,16 +1482,21 @@ QVariantMap ConversationManager::getFunStats() const
     QVariantMap stats;
 
     // Common words not worth counting (French + English, all >= 4 chars)
-    static const QStringList stopWordList = QString(
-        "dans avec pour vous nous votre plus mais tout tous toute toutes elle elles cette comme "
-        "aussi être fait faire peut cela sont donc entre sans sous vers leurs leur notre deux "
-        "trois bien très voici ainsi alors avoir même mêmes autres autre chaque quand quelques "
-        "peuvent exemple selon partie utiliser this that with from have your will which they "
-        "them then than when what also more some such only very into over each other about "
-        "would could should there their these those been does just like make made need want "
-        "know time using used use example based here most however through while where because")
-        .split(' ');
-    static const QSet<QString> stopWords(stopWordList.begin(), stopWordList.end());
+    static QSet<QString> stopWords;
+    if (stopWords.isEmpty()) {
+        const QStringList words = QString(
+            "dans avec pour vous nous votre plus mais tout tous toute toutes elle elles cette comme "
+            "aussi être fait faire peut cela sont donc entre sans sous vers leurs leur notre deux "
+            "trois bien très voici ainsi alors avoir même mêmes autres autre chaque quand quelques "
+            "peuvent exemple selon partie utiliser this that with from have your will which they "
+            "them then than when what also more some such only very into over each other about "
+            "would could should there their these those been does just like make made need want "
+            "know time using used use example based here most however through while where because")
+            .split(' ');
+        for (const QString &w : words) {
+            stopWords.insert(w);
+        }
+    }
 
     QHash<QString, int> wordCounts;
     int longestUserChars = 0;
@@ -1526,7 +1531,7 @@ QVariantMap ConversationManager::getFunStats() const
                 }
             } else {
                 const QStringList words = msg.content.toLower().split(
-                            QRegularExpression(QString::fromUtf8("[^a-zà-öø-ÿ]+")), Qt::SkipEmptyParts);
+                            QRegularExpression(QString::fromUtf8("[^a-zà-öø-ÿ]+")), QString::SkipEmptyParts);
                 for (const QString &word : words) {
                     if (word.length() >= 4 && !stopWords.contains(word)) {
                         wordCounts[word]++;
