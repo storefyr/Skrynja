@@ -28,6 +28,7 @@ Page {
     property string loadedTitle: ""
     property string loadedPrompt: ""
     property string loadedCategory: ""
+    property bool loadedDevTools: false
 
     property var categoryOptions: Categories.all()
 
@@ -160,6 +161,27 @@ Page {
                 placeholderText: qsTr("Enter a system prompt...")
             }
 
+            SectionHeader {
+                text: qsTr("Developer mode")
+            }
+
+            TextSwitch {
+                id: devToolsSwitch
+                text: qsTr("Developer mode")
+                description: qsTr("The assistant can read, edit and create files and run commands in a local workspace on this device")
+                checked: false
+            }
+
+            Label {
+                x: Theme.horizontalPageMargin
+                width: parent.width - 2 * Theme.horizontalPageMargin
+                text: qsTr("Workspace: %1. Files are cloned from GitHub the first time it is used.").arg(devTools.workspaceRoot())
+                font.pixelSize: Theme.fontSizeExtraSmall
+                color: Theme.secondaryColor
+                wrapMode: Text.WordWrap
+                visible: devToolsSwitch.checked
+            }
+
             Item {
                 width: parent.width
                 height: Theme.paddingLarge
@@ -213,6 +235,9 @@ Page {
         var categoryIndex = categoryOptions.indexOf(loadedCategory)
         categoryCombo.currentIndex = categoryIndex >= 0 ? categoryIndex
                                                         : categoryOptions.length - 1
+
+        loadedDevTools = conversationManager.isDevToolsEnabled(loadedId)
+        devToolsSwitch.checked = loadedDevTools
     }
 
     function apply() {
@@ -237,6 +262,11 @@ Page {
         if (category !== "" && category !== loadedCategory) {
             conversationManager.setConversationCategory(loadedId, category)
             loadedCategory = category
+        }
+
+        if (devToolsSwitch.checked !== loadedDevTools) {
+            conversationManager.setDevToolsEnabled(loadedId, devToolsSwitch.checked)
+            loadedDevTools = devToolsSwitch.checked
         }
     }
 

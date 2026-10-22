@@ -33,6 +33,13 @@ struct Conversation {
     // servers (deleted on another device, or expired). The local copy is
     // kept and shown as archived; the user can delete it permanently.
     bool archived = false;
+    // F19: developer tools (local file/command access for the model).
+    // Off by default; enabled per conversation in its settings.
+    bool devToolsEnabled = false;
+    // F19: the tool instructions were sent to the model once (they travel
+    // as a prefix on a user message, because the Conversations API locks
+    // "instructions" at create time and they could not be removed later).
+    bool devToolsInstructionsSent = false;
     bool unread = false;    // an answer landed while the user was elsewhere
     qint64 createdAt;
     qint64 updatedAt;
@@ -120,6 +127,14 @@ public:
     // remote conversation has not been created yet. Pass it to
     // MistralAPI::sendMessage: empty creates, set appends.
     Q_INVOKABLE QString remoteConversationId() const;
+    // F19: developer tools toggle, per conversation.
+    Q_INVOKABLE bool isDevToolsEnabled(const QString &conversationId) const;
+    Q_INVOKABLE void setDevToolsEnabled(const QString &conversationId,
+                                        bool enabled);
+    // F19: whether the dev-tools instructions were already sent to the model
+    // in this conversation, and marking them as sent.
+    Q_INVOKABLE bool devToolsInstructionsSent(const QString &conversationId) const;
+    Q_INVOKABLE void markDevToolsInstructionsSent(const QString &conversationId);
     // The text of the last user message in the current conversation, for the
     // caller to send as the new turn.
     Q_INVOKABLE QString pendingUserContent() const;

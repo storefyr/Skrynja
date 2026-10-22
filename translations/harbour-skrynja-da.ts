@@ -232,6 +232,26 @@
         <source>Provider busy - retrying (%1/%2)</source>
         <translation>Provider busy - retrying (%1/%2)</translation>
     </message>
+    <message>
+        <source>Developer mode</source>
+        <translation>Udviklertilstand</translation>
+    </message>
+    <message>
+        <source>Developer mode unavailable</source>
+        <translation>Udviklertilstand utilgængelig</translation>
+    </message>
+    <message>
+        <source>Running %1…</source>
+        <translation>Kører %1…</translation>
+    </message>
+    <message>
+        <source>The assistant kept calling tools; the loop was stopped after %1 rounds.</source>
+        <translation>Assistenten blev ved med at kalde værktøjer; løkken blev stoppet efter %1 runder.</translation>
+    </message>
+    <message>
+        <source>unknown error</source>
+        <translation>ukendt fejl</translation>
+    </message>
 </context>
 <context>
     <name>ConversationDetailPage</name>
@@ -510,6 +530,18 @@
     <message>
         <source>No API key for this provider yet - add it in Settings before sending.</source>
         <translation>No API key for this provider yet - add it in Settings before sending.</translation>
+    </message>
+    <message>
+        <source>Developer mode</source>
+        <translation>Udviklertilstand</translation>
+    </message>
+    <message>
+        <source>The assistant can read, edit and create files and run commands in a local workspace on this device</source>
+        <translation>Assistenten kan læse, redigere og oprette filer og køre kommandoer i et lokalt arbejdsområde på denne enhed</translation>
+    </message>
+    <message>
+        <source>Workspace: %1. Files are cloned from GitHub the first time it is used.</source>
+        <translation>Arbejdsområde: %1. Filerne klones fra GitHub første gang, det bruges.</translation>
     </message>
 </context>
 <context>

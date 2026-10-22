@@ -15,7 +15,8 @@ SOURCES += tst_main.cpp \
     ../src/securestore.cpp \
     ../src/categories.cpp \
     ../src/providers.cpp \
-    ../src/voiceanonymizer.cpp
+    ../src/voiceanonymizer.cpp \
+    ../src/devtools.cpp
 
 HEADERS += ../src/conversationmodel.h \
     ../src/conversationmanager.h \
@@ -24,4 +25,5 @@ HEADERS += ../src/conversationmodel.h \
     ../src/securestore.h \
     ../src/categories.h \
     ../src/providers.h \
-    ../src/voiceanonymizer.h
+    ../src/voiceanonymizer.h \
+    ../src/devtools.h

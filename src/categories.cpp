@@ -206,6 +206,10 @@ QSet<QString> buildStopWords()
 }
 
 // Accent-insensitive lowercase word list, so "réponse" matches "reponse".
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
 QStringList normalizedWords(const QString &text)
 {
     QString normalized = text.toLower();
@@ -220,6 +224,10 @@ QStringList normalizedWords(const QString &text)
 
     return normalized.split(QRegularExpression("[^a-z0-9]+"), QString::SkipEmptyParts);
 }
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
 
 }
 
@@ -248,6 +256,10 @@ bool isValid(const QString &category)
     return false;
 }
 
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
 QString classify(const QString &text)
 {
     if (text.trimmed().isEmpty()) {
@@ -315,5 +327,9 @@ QString classify(const QString &text)
     // A single weak hit is noise, not a topic.
     return bestScore >= 3 ? best : QString();
 }
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
 
 }
