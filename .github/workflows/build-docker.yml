@@ -136,9 +136,11 @@ jobs:
           Download the RPM package for your device:
 
           ### Supported Architectures
+          - **aarch64**: Jolla Phone (2026), Jolla C2, Xperia 10, Xperia 10 II, Xperia 10 III, Xperia 10 IV
           - **armv7hl**: Jolla 1, Jolla C, Xperia X, Xperia XA2
-          - **aarch64**: Xperia 10, Xperia 10 II, Xperia 10 III, Xperia 10 IV
           - **i486**: Sailfish OS Emulator
+
+          Not sure? Run `uname -m` on the device: `aarch64` → aarch64 RPM, `armv7l` → armv7hl RPM.
 
           ### Install on Device
           ```bash
