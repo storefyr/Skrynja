@@ -47,9 +47,12 @@ private slots:
     void onStopTimeout();
 
 private:
+    void emitStoppedOnce();
+
     QAudioRecorder *m_recorder;
     QString m_outputLocation;
     QTimer *m_stopTimer;
+    bool m_stoppedEmitted;
 };
 
 #endif

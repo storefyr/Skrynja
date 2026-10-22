@@ -813,6 +813,56 @@ private slots:
                  QString("voxtral-mini-transcribe-3-0"));
     }
 
+    // F18 (v0.8.12): transcribeAudio must reject an empty file fast.
+    void transcriptionRejectsEmptyFile()
+    {
+        MistralAPI api;
+        QSignalSpy spy(&api, SIGNAL(transcriptionFailed(QString)));
+
+        QString emptyPath = QDir::temp().filePath("skrynja-test-empty.wav");
+        QFile f(emptyPath);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.close();
+
+        api.transcribeAudio("fake-key", emptyPath);
+        QCOMPARE(spy.count(), 1);
+        QCOMPARE(spy.at(0).at(0).toString(),
+                 QString("The recording is empty"));
+        QFile::remove(emptyPath);
+    }
+
+    // F18 (v0.8.12): transcribeAudio must reject a truncated/invalid WAV
+    // (known Sailfish QAudioRecorder failure mode) before hitting the network.
+    void transcriptionRejectsInvalidWav()
+    {
+        MistralAPI api;
+        QSignalSpy spy(&api, SIGNAL(transcriptionFailed(QString)));
+
+        QString badPath = QDir::temp().filePath("skrynja-test-bad.wav");
+        QFile f(badPath);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("not a wav file, just garbage bytes");
+        f.close();
+
+        api.transcribeAudio("fake-key", badPath);
+        QCOMPARE(spy.count(), 1);
+        QVERIFY(spy.at(0).at(0).toString().contains("could not be saved"));
+        QFile::remove(badPath);
+    }
+
+    // F18 (v0.8.12): transcribeAudio must reject a missing file.
+    void transcriptionRejectsMissingFile()
+    {
+        MistralAPI api;
+        QSignalSpy spy(&api, SIGNAL(transcriptionFailed(QString)));
+
+        api.transcribeAudio("fake-key",
+                            "/nonexistent/skrynja-test-missing.wav");
+        QCOMPARE(spy.count(), 1);
+        QCOMPARE(spy.at(0).at(0).toString(),
+                 QString("Could not read the recording file"));
+    }
+
     // F17: parseRemoteConversations handles the bare-array top-level shape
     // that the live API returns (not wrapped in {"data": [...]}).
     void parseRemoteConversationsHandlesBareArray()

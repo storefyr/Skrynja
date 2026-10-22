@@ -10,14 +10,30 @@ Skrynja 0.8.12 — Fix: transcription race condition — transcription never sta
 
 ### Fixed
 - **Transcription race condition (F18)**: `chatPage.transcribing` was set to
-  `true` *after* `globalAudioRecorder.stop()` was called. When the recorder
-  is not in `RecordingState`, `stop()` emits `stopped` **synchronously**, so
-  the `onStopped` handler ran while `transcribing` was still `false` and
-  skipped the `transcribeAudio()` call entirely. The watchdog then fired
-  after 120 s with "The transcription took too long" — even though no
-  transcription request was ever sent. This explains why v0.8.11 (Voxtral 3
-  model) showed the exact same symptom on device. `transcribing` and the
-  watchdog are now set **before** `stop()` is called.
+  `true` *after* `globalAudioRecorder.stop()` was called. On the Sailfish
+  GStreamer backend, `stateChanged(StoppedState)` can be emitted
+  **synchronously** from inside `stop()`, so the `onStopped` handler ran
+  while `transcribing` was still `false` and skipped the `transcribeAudio()`
+  call entirely. The watchdog then fired after 120 s with "The transcription
+  took too long" — even though no transcription request was ever sent. This
+  explains why v0.8.11 (Voxtral 3 model) showed the exact same symptom on
+  device. `transcribing` and the watchdog are now set **before** `stop()` is
+  called.
+- **Duplicate `stopped` signal (F18)**: `stopped` could be emitted twice (once
+  from `onStateChanged(StoppedState)` and once from the stop-timeout guard),
+  which could start the transcription twice. A `emitStoppedOnce()` guard now
+  guarantees exactly one emission per recording session.
+- **Invalid WAV rejection (F18)**: `transcribeAudio` now validates the WAV
+  file (minimum 44-byte RIFF/WAVE header) before uploading. A truncated file
+  — a known Sailfish `QAudioRecorder` failure mode — now fails fast with a
+  clear message ("The recording could not be saved") instead of being sent
+  to the API and failing obscurely.
+
+### Added
+- **Recorder diagnostics (F18)**: `AudioRecorder` now logs state, status,
+  error string and output file size at record/stop/state-change/timeout.
+  These appear in the app log (`journalctl` / `devel-su` console) and make
+  on-device debugging of transcription issues possible without guessing.
 
 ## [0.8.11] - 2026-10-22
 Skrynja 0.8.11 — Fix: voice transcription works for Danish speakers.

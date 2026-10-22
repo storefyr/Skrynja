@@ -907,6 +907,21 @@ void MistralAPI::transcribeAudio(const QString &apiKey, const QString &audioPath
         emit transcriptionFailed(tr("The recording is empty"));
         return;
     }
+    // A valid WAV file has a 44-byte RIFF header. Fewer bytes means the
+    // recorder produced a truncated/invalid file (known Sailfish
+    // QAudioRecorder issue) — fail fast with a clear message instead of
+    // sending garbage to the API and waiting for a server error.
+    if (audioData.size() < 44
+            || !audioData.startsWith("RIFF")
+            || audioData.mid(8, 4) != "WAVE") {
+        qWarning() << "Transcription: invalid WAV file:" << localPath
+                   << "size:" << audioData.size();
+        emit transcriptionFailed(tr("The recording could not be saved. "
+                                   "Please try again."));
+        return;
+    }
+    qWarning() << "Transcription: sending" << audioData.size()
+               << "bytes of audio from" << localPath;
 
     // Multipart upload to the Audio Transcriptions API.
     // POST /v1/audio/transcriptions with the Voxtral 3 batch model.
