@@ -29,6 +29,9 @@ Dialog {
                                     Math.round(maxTokensSlider.value) : 0
         settingsManager.webSearch = webSearchSwitch.checked
 
+        settingsManager.voiceAnonymization = anonymizeVoiceSwitch.checked
+        settingsManager.voicePitchFactor = pitchSlider.value
+
         if (chatStyleComboBox.currentItem) {
             settingsManager.chatStyle = chatStyleComboBox.currentItem.styleValue
         }
@@ -451,6 +454,30 @@ Dialog {
                 font.pixelSize: Theme.fontSizeExtraSmall
                 color: Theme.secondaryColor
                 wrapMode: Text.WordWrap
+            }
+
+            // Voice Input Section (F18 anonymization, experimental)
+            SectionHeader {
+                text: qsTr("Voice input")
+            }
+
+            TextSwitch {
+                id: anonymizeVoiceSwitch
+                text: qsTr("Anonymize voice")
+                description: qsTr("Shift the pitch of your recording before it is sent for transcription, so you are harder to identify by voice. Processing happens on the device; nothing is sent to Mistral until the anonymized file is ready.")
+                checked: settingsManager.voiceAnonymization
+            }
+
+            Slider {
+                id: pitchSlider
+                width: parent.width
+                visible: anonymizeVoiceSwitch.checked
+                minimumValue: 0.8
+                maximumValue: 1.25
+                stepSize: 0.05
+                value: settingsManager.voicePitchFactor
+                valueText: value.toFixed(2)
+                label: qsTr("Voice pitch")
             }
 
             // System Prompt Section

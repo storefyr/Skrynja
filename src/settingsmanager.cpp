@@ -59,6 +59,8 @@ SettingsManager::SettingsManager(QObject *parent)
     , m_autoTitleMode("local")
     , m_showTimestamps(true)
     , m_enterKeySends(false)
+    , m_voiceAnonymization(false)
+    , m_voicePitchFactor(1.15)
     , m_webSearch(false)
     , m_modelSwitches(0)
 {
@@ -173,6 +175,38 @@ void SettingsManager::setWebSearch(bool enabled)
         m_webSearch = enabled;
         saveSettings();
         emit webSearchChanged();
+    }
+}
+
+bool SettingsManager::voiceAnonymization() const
+{
+    return m_voiceAnonymization;
+}
+
+void SettingsManager::setVoiceAnonymization(bool enabled)
+{
+    if (m_voiceAnonymization != enabled) {
+        m_voiceAnonymization = enabled;
+        saveSettings();
+        emit voiceAnonymizationChanged();
+    }
+}
+
+double SettingsManager::voicePitchFactor() const
+{
+    return m_voicePitchFactor;
+}
+
+void SettingsManager::setVoicePitchFactor(double factor)
+{
+    // Clamp to a sane range: 0.8 (noticeably lower) .. 1.25 (higher).
+    // 1.0 means "no pitch change".
+    if (factor < 0.8) factor = 0.8;
+    if (factor > 1.25) factor = 1.25;
+    if (!qFuzzyCompare(m_voicePitchFactor, factor)) {
+        m_voicePitchFactor = factor;
+        saveSettings();
+        emit voicePitchFactorChanged();
     }
 }
 
@@ -506,6 +540,8 @@ void SettingsManager::loadSettings()
         m_autoTitleMode = "local";
     }
     m_showTimestamps = m_settings.value("ui/showTimestamps", true).toBool();
+    m_voiceAnonymization = m_settings.value("voice/anonymization", false).toBool();
+    m_voicePitchFactor = m_settings.value("voice/pitchFactor", 1.15).toDouble();
     // 2.3.1 stored "ui/enterKeySends" = true for everyone, chosen or not.
     // A new key resets it once so Enter goes back to inserting a new line.
     m_settings.remove("ui/enterKeySends");
@@ -615,6 +651,8 @@ void SettingsManager::saveSettings()
     m_settings.setValue("ui/chatStyle", m_chatStyle);
     m_settings.setValue("ui/showTimestamps", m_showTimestamps);
     m_settings.setValue("ui/enterSends", m_enterKeySends);
+    m_settings.setValue("voice/anonymization", m_voiceAnonymization);
+    m_settings.setValue("voice/pitchFactor", m_voicePitchFactor);
     m_settings.sync();
     secureSettingsFile();
 }

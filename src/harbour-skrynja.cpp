@@ -15,6 +15,7 @@
 #include "conversationmanager.h"
 #include "settingsmanager.h"
 #include "audiorecorder.h"
+#include "voiceanonymizer.h"
 #include <QtQml>"
 
 int main(int argc, char *argv[])
@@ -35,6 +36,7 @@ int main(int argc, char *argv[])
     ConversationManager conversationManager;
     SettingsManager settingsManager;
     AudioRecorder audioRecorder;
+    VoiceAnonymizer voiceAnonymizer;
 
     qmlRegisterType<AudioRecorder>("harbour.skrynja", 1, 0, "AudioRecorder");
 
@@ -79,6 +81,7 @@ int main(int argc, char *argv[])
     context->setContextProperty("conversationModel", conversationManager.currentConversation());
     context->setContextProperty("settingsManager", &settingsManager);
     context->setContextProperty("globalAudioRecorder", &audioRecorder);
+    context->setContextProperty("voiceAnonymizer", &voiceAnonymizer);
 
     // Load main QML
     view->setSource(SailfishApp::pathTo("qml/harbour-skrynja.qml"));

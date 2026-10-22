@@ -5,6 +5,31 @@ All notable changes to Skrynja will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — experimental voice anonymization (test branch)
+Skrynja — Experiment: anonymize your voice before it leaves the device.
+
+**Status: test branch `vibe/f18-voice-anonymization-b6c41e` — not released.**
+
+### Added
+- **Voice anonymization (F18b, experimental)**: a new "Voice input" section
+  in Settings with an "Anonymize voice" toggle and a "Voice pitch" slider
+  (0.80–1.25, default 1.15). When enabled, the recording is processed
+  **locally on the device** before it is sent to Mistral:
+  - **Pitch shift** via resampling with linear interpolation — changes the
+    fundamental frequency of the voice (higher or lower).
+  - **Subtle background noise** (0.5% of full scale) — masks fine spectral
+    details without hurting transcription accuracy.
+  - On any processing failure the app falls back to the original recording:
+    privacy must never block transcription.
+- New `VoiceAnonymizer` C++ class (`src/voiceanonymizer.{h,cpp}`): minimal
+  16-bit PCM WAV reader/writer + DSP helpers, exposed to QML as
+  `voiceAnonymizer`.
+- New settings `voiceAnonymization` (bool, default off) and
+  `voicePitchFactor` (double, default 1.15, clamped to [0.8, 1.25]).
+- 10 new unit tests (pitch no-op/shorten/lengthen, noise no-op/change,
+  WAV round-trip, garbage/missing-file rejection, settings persistence,
+  pitch clamping).
+
 ## [0.8.13] - 2026-10-22
 Skrynja 0.8.13 — Fix: recorder never recorded — wrong codec + broken signal connects.
 

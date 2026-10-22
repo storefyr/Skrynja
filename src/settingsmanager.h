@@ -25,6 +25,11 @@ class SettingsManager : public QObject
     Q_PROPERTY(QString autoTitleMode READ autoTitleMode WRITE setAutoTitleMode NOTIFY autoTitleModeChanged)
     Q_PROPERTY(bool showTimestamps READ showTimestamps WRITE setShowTimestamps NOTIFY showTimestampsChanged)
     Q_PROPERTY(bool enterKeySends READ enterKeySends WRITE setEnterKeySends NOTIFY enterKeySendsChanged)
+    // F18 voice anonymization (experimental): pitch-shift the recording
+    // before it is sent for transcription, so the speaker is harder to
+    // identify from their voice. Off by default.
+    Q_PROPERTY(bool voiceAnonymization READ voiceAnonymization WRITE setVoiceAnonymization NOTIFY voiceAnonymizationChanged)
+    Q_PROPERTY(double voicePitchFactor READ voicePitchFactor WRITE setVoicePitchFactor NOTIFY voicePitchFactorChanged)
     Q_PROPERTY(QVariantList savedPrompts READ savedPrompts NOTIFY savedPromptsChanged)
     Q_PROPERTY(QString appVersion READ appVersion CONSTANT)
 
@@ -50,6 +55,11 @@ public:
     void setSystemPrompt(const QString &prompt);
     bool webSearch() const;
     void setWebSearch(bool enabled);
+
+    bool voiceAnonymization() const;
+    void setVoiceAnonymization(bool enabled);
+    double voicePitchFactor() const;
+    void setVoicePitchFactor(double factor);
 
     QString chatStyle() const;
     void setChatStyle(const QString &style);
@@ -117,6 +127,8 @@ signals:
     void showTimestampsChanged();
     void enterKeySendsChanged();
     void savedPromptsChanged();
+    void voiceAnonymizationChanged();
+    void voicePitchFactorChanged();
 
 private:
     QSettings m_settings;
@@ -131,6 +143,8 @@ private:
     QString m_autoTitleMode;
     bool m_showTimestamps;
     bool m_enterKeySends;
+    bool m_voiceAnonymization;
+    double m_voicePitchFactor;
     QStringList m_cachedModels;
     QStringList m_cachedVisionModels;
     QVariantList m_savedPrompts;

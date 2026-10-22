@@ -33,7 +33,8 @@ specs in `docs/features/` remain as historical reference; the ones marked **remo
 | F16 | SailJail: `[X-Sailjail]` desktop section, sandboxed QSettings paths, remove homePath fallbacks, org name `org.skrynja` | — | done (v0.4.0) |
 | F17 | Attach remote conversation: `GET /v1/conversations` list, `GET /v1/conversations/{id}/messages` fetch, UI page, local conv keeps remote id | — | done (v0.5.0) |
 | F17b | Bulk attach: "Attach all" menu on remote page, sequential fetch+attach with progress | — | done (v0.6.0) |
-| F18 | Voice input: microphone button in ChatPage, `AudioRecorder` → `POST /v1/audio/transcriptions` (voxtral), transcribed text fills the input field | — | done (v0.8.0); fixed for Danish in v0.8.11 (Voxtral 3 model `voxtral-mini-transcribe-3-0`, language hint, longer timeouts) |
+| F18 | Voice input: microphone button in ChatPage, `AudioRecorder` → `POST /v1/audio/transcriptions` (voxtral), transcribed text fills the input field | — | done (v0.8.0); fixed for Danish in v0.8.11 (Voxtral 3 model `voxtral-mini-transcribe-3-0`, language hint, longer timeouts); recorder fixed in v0.8.13 (audio/PCM codec, Qt 5.6 signal connects) |
+| F18b | Voice anonymization (EXPERIMENTAL, test branch): local pitch-shift + noise on the recording before it is sent, so the speaker is harder to identify by voice | — | experimenting on `vibe/f18-voice-anonymization-b6c41e` |
 
 ## Removed in the fork
 

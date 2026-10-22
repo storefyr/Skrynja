@@ -2,6 +2,7 @@
 #include <QCoreApplication>
 #include <QSignalSpy>
 #include <QTemporaryDir>
+#include <QtMath>
 #include <QDir>
 #include <QFile>
 #include <QStandardPaths>
@@ -20,6 +21,7 @@
 #include "providers.h"
 #include "securestore.h"
 #include "settingsmanager.h"
+#include "voiceanonymizer.h"
 
 class TestConversationModel : public QObject
 {
@@ -2218,6 +2220,47 @@ private slots:
         }
     }
 
+    // F18 anonymization: the toggle and pitch factor persist across reloads,
+    // default to off / 1.15, and the factor is clamped to a sane range.
+    void voiceAnonymizationSettingsPersist()
+    {
+        {
+            SettingsManager settings;
+            QCOMPARE(settings.voiceAnonymization(), false); // default off
+            QCOMPARE(settings.voicePitchFactor(), 1.15);   // default pitch
+            settings.setVoiceAnonymization(true);
+            settings.setVoicePitchFactor(0.9);
+            QCOMPARE(settings.voiceAnonymization(), true);
+            QCOMPARE(settings.voicePitchFactor(), 0.9);
+        }
+        // Reread from disk: both survive a reload
+        {
+            SettingsManager reopened;
+            QCOMPARE(reopened.voiceAnonymization(), true);
+            QCOMPARE(reopened.voicePitchFactor(), 0.9);
+            reopened.setVoiceAnonymization(false);
+            reopened.setVoicePitchFactor(1.15);
+        }
+        {
+            SettingsManager reopened;
+            QCOMPARE(reopened.voiceAnonymization(), false);
+            QCOMPARE(reopened.voicePitchFactor(), 1.15);
+        }
+    }
+
+    // F18 anonymization: the pitch factor is clamped to [0.8, 1.25].
+    void voicePitchFactorIsClamped()
+    {
+        SettingsManager settings;
+        settings.setVoicePitchFactor(2.0);
+        QCOMPARE(settings.voicePitchFactor(), 1.25);
+        settings.setVoicePitchFactor(0.1);
+        QCOMPARE(settings.voicePitchFactor(), 0.8);
+        settings.setVoicePitchFactor(1.15);
+        QCOMPARE(settings.voicePitchFactor(), 1.15);
+        settings.setVoicePitchFactor(1.15); // no-op, no crash
+    }
+
     void savedPromptsRoundTrip()
     {
         SettingsManager settings;
@@ -2263,6 +2306,192 @@ private slots:
         QCOMPARE(settings.estimatedCost("some-future-model", 1000, 1000), -1.0);
     }
 
+};
+
+// F18 voice anonymization (experimental test branch).
+class TestVoiceAnonymizer : public QObject
+{
+    Q_OBJECT
+
+private:
+    // Build a tiny valid 16-bit mono PCM WAV in memory and write it to disk.
+    static QString writeTestWav(const QString &path, int sampleCount)
+    {
+        QByteArray pcm;
+        pcm.reserve(sampleCount * 2);
+        for (int i = 0; i < sampleCount; ++i) {
+            // A simple ramp so interpolation has something to bite on.
+            const qint16 v = static_cast<qint16>((i % 100) * 100 - 5000);
+            pcm.append(static_cast<char>(v & 0xFF));
+            pcm.append(static_cast<char>((v >> 8) & 0xFF));
+        }
+        QByteArray wav;
+        wav.append("RIFF");
+        auto u32 = [&wav](quint32 v) {
+            wav.append(static_cast<char>(v & 0xFF));
+            wav.append(static_cast<char>((v >> 8) & 0xFF));
+            wav.append(static_cast<char>((v >> 16) & 0xFF));
+            wav.append(static_cast<char>((v >> 24) & 0xFF));
+        };
+        auto u16 = [&wav](quint16 v) {
+            wav.append(static_cast<char>(v & 0xFF));
+            wav.append(static_cast<char>((v >> 8) & 0xFF));
+        };
+        u32(36 + pcm.size());
+        wav.append("WAVE");
+        wav.append("fmt ");
+        u32(16);
+        u16(1);      // PCM
+        u16(1);      // mono
+        u32(16000);  // sample rate
+        u32(32000);  // byte rate
+        u16(2);      // block align
+        u16(16);     // bits per sample
+        wav.append("data");
+        u32(pcm.size());
+        wav.append(pcm);
+
+        QFile f(path);
+        if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+            return QString();
+        }
+        f.write(wav);
+        f.close();
+        return path;
+    }
+
+private slots:
+    // Pitch factor 1.0 is a no-op: the PCM payload comes back unchanged.
+    void pitchFactorOneIsNoOp()
+    {
+        QByteArray pcm;
+        for (int i = 0; i < 1000; ++i) {
+            const qint16 v = static_cast<qint16>(i * 7 - 3000);
+            pcm.append(static_cast<char>(v & 0xFF));
+            pcm.append(static_cast<char>((v >> 8) & 0xFF));
+        }
+        QCOMPARE(VoiceAnonymizer::shiftPitch(pcm, 1.0), pcm);
+    }
+
+    // Pitching up (factor > 1) shortens the sample count.
+    void pitchUpShortensAudio()
+    {
+        QByteArray pcm;
+        for (int i = 0; i < 16000; ++i) {
+            const qint16 v = static_cast<qint16>(qSin(i / 50.0) * 10000);
+            pcm.append(static_cast<char>(v & 0xFF));
+            pcm.append(static_cast<char>((v >> 8) & 0xFF));
+        }
+        QCOMPARE(pcm.size(), 32000);  // 16000 samples × 2 bytes
+        const QByteArray up = VoiceAnonymizer::shiftPitch(pcm, 1.25);
+        // 16000 samples / 1.25 = 12800 samples = 25600 bytes
+        QCOMPARE(up.size(), 25600);
+    }
+
+    // Pitching down (factor < 1) lengthens the sample count.
+    void pitchDownLengthensAudio()
+    {
+        QByteArray pcm;
+        for (int i = 0; i < 16000; ++i) {
+            const qint16 v = static_cast<qint16>(qSin(i / 50.0) * 10000);
+            pcm.append(static_cast<char>(v & 0xFF));
+            pcm.append(static_cast<char>((v >> 8) & 0xFF));
+        }
+        QCOMPARE(pcm.size(), 32000);
+        const QByteArray down = VoiceAnonymizer::shiftPitch(pcm, 0.8);
+        // 16000 / 0.8 = 20000 samples = 40000 bytes
+        QCOMPARE(down.size(), 40000);
+    }
+
+    // Noise level 0 is a no-op.
+    void noiseZeroIsNoOp()
+    {
+        QByteArray pcm;
+        for (int i = 0; i < 500; ++i) {
+            pcm.append(static_cast<char>(i & 0xFF));
+            pcm.append(static_cast<char>((i >> 8) & 0xFF));
+        }
+        QCOMPARE(VoiceAnonymizer::addNoise(pcm, 0.0), pcm);
+    }
+
+    // Noise changes the samples but keeps the length.
+    void noiseChangesSamplesKeepsLength()
+    {
+        QByteArray pcm;
+        for (int i = 0; i < 2000; ++i) {
+            const qint16 v = static_cast<qint16>(i);
+            pcm.append(static_cast<char>(v & 0xFF));
+            pcm.append(static_cast<char>((v >> 8) & 0xFF));
+        }
+        QCOMPARE(pcm.size(), 4000);  // 2000 samples × 2 bytes
+        const QByteArray noisy = VoiceAnonymizer::addNoise(pcm, 0.01);
+        QCOMPARE(noisy.size(), pcm.size());
+        QVERIFY(noisy != pcm);
+    }
+
+    // Full round-trip: WAV in → anonymized WAV out → valid WAV, shorter.
+    void anonymizeRoundTrip()
+    {
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        const QString in = dir.filePath("in.wav");
+        const QString out = dir.filePath("out.wav");
+        QVERIFY(!writeTestWav(in, 16000).isEmpty());
+
+        VoiceAnonymizer anonymizer;
+        QString err;
+        const bool ok = anonymizer.anonymize(in, out, 1.25, 0.005, &err);
+        if (!ok) {
+            QFAIL(qPrintable(QString("anonymize failed: ") + err));
+        }
+        QVERIFY(QFile::exists(out));
+
+        // Output must be a valid WAV with a data chunk.
+        QFile f(out);
+        QVERIFY(f.open(QIODevice::ReadOnly));
+        const QByteArray wav = f.readAll();
+        f.close();
+        QVERIFY(wav.size() > 44);
+        QVERIFY(wav.startsWith("RIFF"));
+        QVERIFY(wav.mid(8, 4) == "WAVE");
+        const quint32 dataSize = (static_cast<quint8>(wav[40]))
+                               | (static_cast<quint32>(static_cast<quint8>(wav[41])) << 8)
+                               | (static_cast<quint32>(static_cast<quint8>(wav[42])) << 16)
+                               | (static_cast<quint32>(static_cast<quint8>(wav[43])) << 24);
+        // 16000 samples pitched up by 1.25 → 12800 samples → 25600 bytes
+        // (noise keeps the length unchanged)
+        QCOMPARE(dataSize, 25600u);
+        QCOMPARE(wav.size(), 44 + 25600);
+    }
+
+    // Garbage input is rejected with a clear error, not a crash.
+    void anonymizeRejectsGarbage()
+    {
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        const QString bad = dir.filePath("bad.wav");
+        QFile f(bad);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("this is not a wav file at all");
+        f.close();
+
+        VoiceAnonymizer anonymizer;
+        QString err;
+        QVERIFY(!anonymizer.anonymize(bad, dir.filePath("out.wav"),
+                                      1.15, 0.005, &err));
+        QVERIFY(!err.isEmpty());
+    }
+
+    // A missing input file is rejected.
+    void anonymizeRejectsMissingFile()
+    {
+        VoiceAnonymizer anonymizer;
+        QString err;
+        QVERIFY(!anonymizer.anonymize("/nonexistent/in.wav",
+                                      "/nonexistent/out.wav",
+                                      1.15, 0.005, &err));
+        QVERIFY(!err.isEmpty());
+    }
 };
 
 class TestProviders : public QObject
@@ -2356,6 +2585,10 @@ int main(int argc, char *argv[])
     }
     {
         TestSettingsManager t;
+        status |= QTest::qExec(&t, argc, argv);
+    }
+    {
+        TestVoiceAnonymizer t;
         status |= QTest::qExec(&t, argc, argv);
     }
     {

@@ -18,7 +18,8 @@ SOURCES += src/harbour-skrynja.cpp \
     src/securestore.cpp \
     src/categories.cpp \
     src/providers.cpp \
-    src/audiorecorder.cpp
+    src/audiorecorder.cpp \
+    src/voiceanonymizer.cpp
 
 HEADERS += src/mistralapi.h \
     src/conversationmodel.h \
@@ -27,7 +28,8 @@ HEADERS += src/mistralapi.h \
     src/securestore.h \
     src/categories.h \
     src/providers.h \
-    src/audiorecorder.h
+    src/audiorecorder.h \
+    src/voiceanonymizer.h
 
 DISTFILES += qml/harbour-skrynja.qml \
     qml/cover/CoverPage.qml \

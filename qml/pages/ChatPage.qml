@@ -1116,8 +1116,32 @@ Page {
                 // which skips detection and improves accuracy.
                 var lang = settingsManager.language
                 if (lang === "nb_NO") lang = "nb"
+
+                // F18 anonymization (experimental): if enabled, pitch-shift
+                // the recording locally before it leaves the device, so the
+                // speaker is harder to identify from their voice. On any
+                // failure we fall back to the original recording — privacy
+                // must never block transcription.
+                var uploadPath = chatPage.recordingPath
+                if (settingsManager.voiceAnonymization) {
+                    var anonPath = chatPage.recordingPath.replace(/\.wav$/i, "-anon.wav")
+                    var err = ""
+                    var ok = voiceAnonymizer.anonymize(chatPage.recordingPath,
+                                                       anonPath,
+                                                       settingsManager.voicePitchFactor,
+                                                       0.005,   // subtle noise
+                                                       err)
+                    if (ok) {
+                        uploadPath = anonPath
+                        console.warn("Voice anonymization applied: " + anonPath)
+                    } else {
+                        console.warn("Voice anonymization failed (" + err
+                                     + "), sending original recording")
+                    }
+                }
+
                 mistralApi.transcribeAudio(settingsManager.apiKey,
-                                            chatPage.recordingPath, lang)
+                                            uploadPath, lang)
             }
         }
     }
