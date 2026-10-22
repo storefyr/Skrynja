@@ -31,6 +31,7 @@ public:
     Q_INVOKABLE void record();
     Q_INVOKABLE void stop();
     Q_INVOKABLE void pause();
+    Q_INVOKABLE void cancel();
 
 signals:
     void recordingChanged();
