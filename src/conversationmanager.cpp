@@ -1,4 +1,5 @@
 #include "conversationmanager.h"
+#include "agenttools.h"
 #include "categories.h"
 #include "mistralapi.h"
 #include "providers.h"
@@ -75,6 +76,9 @@ ConversationManager::ConversationManager(QObject *parent)
     , m_autoSyncing(false)
     , m_autoSyncAttached(0)
     , m_streamIncomplete(false)
+    , m_agentTools(nullptr)
+    , m_agentModeActive(false)
+    , m_agentCallCount(0)
 {
     // Repainting the whole message on every SSE delta is what makes long
     // answers stutter: coalesce them and write at a fixed cadence.
@@ -125,6 +129,8 @@ void ConversationManager::bindApi(MistralAPI *api)
             this, &ConversationManager::onConversationCreated);
     connect(api, &MistralAPI::responseIncomplete,
             this, &ConversationManager::onResponseIncomplete);
+    connect(api, &MistralAPI::functionCallRequested,
+            this, &ConversationManager::onFunctionCallRequested);
     connect(api, &MistralAPI::remoteConversationsFetched,
             this, &ConversationManager::onAutoSyncConversationsFetched);
     connect(api, &MistralAPI::remoteConversationsFetchFailed,
@@ -161,6 +167,9 @@ void ConversationManager::onMessageSent()
     m_streamIncomplete = false;
     m_pendingSources.clear();
     m_pendingThinking.clear();
+    // A new user turn resets the tool-call budget (F19).
+    m_agentCallCount = 0;
+    m_agentModeActive = false;
 
     if (m_streamingConversationId != m_currentConversationId) {
         m_streamingConversationId = m_currentConversationId;
@@ -273,8 +282,24 @@ void ConversationManager::onResponseCompleted()
     m_streamTimer->stop();
 
     const QString finishedId = m_streamingConversationId;
+    // F19: when the stream just ended in tool calls, the model has not
+    // answered yet. The tool-result append starts a new stream, which will
+    // end in another responseCompleted. Do not finalise the turn here: the
+    // empty assistant bubble must survive until the real answer arrives.
+    const bool toolLoopContinuing = m_agentModeActive;
     const bool onScreen = !finishedId.isEmpty()
             && finishedId == m_currentConversationId;
+
+    if (toolLoopContinuing) {
+        // Keep the bubble and the streaming id: the follow-up stream writes
+        // into the same assistant message.
+        m_streamBuffer.clear();
+        m_streamDirty = false;
+        m_streamIncomplete = false;
+        m_pendingSources.clear();
+        m_pendingThinking.clear();
+        return;
+    }
 
     if (onScreen) {
         flushStream();
@@ -294,6 +319,7 @@ void ConversationManager::onResponseCompleted()
     m_streamBuffer.clear();
     m_streamDirty = false;
     m_streamIncomplete = false;
+    m_agentModeActive = false;
 
     // Flag the answer as unread. A chat page showing this conversation clears
     // it straight away; if the user walked off to the history, the badge stays.
@@ -336,6 +362,76 @@ void ConversationManager::onSideRequestUsage(int promptTokens, int completionTok
 {
     // Billed, but not part of what the conversation banner reports
     addTokenUsage(promptTokens, completionTokens, m_activeModel);
+}
+
+// ---------------------------------------------------------------- F19 agent mode
+
+// Hard cap on tool calls per user turn: bounds the cost and the wall-clock
+// time of one answer, and gives the model a clear signal to stop.
+static const int MAX_AGENT_TOOL_CALLS = 10;
+
+void ConversationManager::setAgentTools(AgentTools *tools)
+{
+    m_agentTools = tools;
+}
+
+void ConversationManager::onFunctionCallRequested(const QVariantList &calls)
+{
+    // A stream ended with function.call.delta events: the model wants local
+    // tools. Execute them synchronously (they are fast local file ops) and
+    // append the results, which starts the follow-up stream. The loop is
+    // bounded so a model that keeps calling tools cannot run forever.
+    if (!m_agentTools || calls.isEmpty() || !m_api) {
+        return;
+    }
+
+    Conversation *conv = findConversation(m_streamingConversationId);
+    if (!conv) {
+        return;
+    }
+
+    // The API key travels with the in-flight request in MistralAPI: the
+    // tool-result append is the same exchange, so reuse it rather than
+    // re-reading (and re-deobfuscating) the stored key here.
+    const QString apiKey = m_api->pendingApiKey();
+    const QString remoteId = conv->remoteConversationId;
+    if (apiKey.isEmpty() || remoteId.isEmpty()) {
+        // No key or no remote conversation: the tool loop cannot continue.
+        // The answer stays as it is; the user can retry.
+        return;
+    }
+
+    QVariantList results;
+    for (const QVariant &v : calls) {
+        const QVariantMap call = v.toMap();
+        const QString name = call["name"].toString();
+        const QString toolCallId = call["tool_call_id"].toString();
+
+        ++m_agentCallCount;
+        m_agentModeActive = true;
+        QString resultJson;
+        if (m_agentCallCount > MAX_AGENT_TOOL_CALLS) {
+            resultJson = QString("{\"error\":\"tool call limit reached (%1) - "
+                                 "answer with what you have\"}")
+                    .arg(MAX_AGENT_TOOL_CALLS);
+        } else {
+            // Re-serialize the parsed arguments map back to a JSON string:
+            // AgentTools::execute expects the raw arguments JSON.
+            const QJsonDocument argsDoc(QJsonObject::fromVariantMap(
+                                            call["arguments"].toMap()));
+            resultJson = m_agentTools->execute(name,
+                        QString::fromUtf8(argsDoc.toJson(QJsonDocument::Compact)));
+        }
+
+        QVariantMap result;
+        result["tool_call_id"] = toolCallId;
+        result["result"] = resultJson;
+        results.append(result);
+    }
+
+    // The append starts a new stream. If the model calls more tools, this
+    // slot fires again with a fresh batch; the counter keeps the loop finite.
+    m_api->appendFunctionResults(apiKey, remoteId, results);
 }
 
 // ---------------------------------------------------------------- storage

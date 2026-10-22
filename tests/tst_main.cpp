@@ -2,6 +2,7 @@
 #include <QCoreApplication>
 #include <QSignalSpy>
 #include <QTemporaryDir>
+#include <QScopedPointer>
 #include <QtMath>
 #include <QDir>
 #include <QFile>
@@ -23,6 +24,7 @@
 #include "securestore.h"
 #include "settingsmanager.h"
 #include "voiceanonymizer.h"
+#include "agenttools.h"
 
 class TestConversationModel : public QObject
 {
@@ -2761,6 +2763,436 @@ private slots:
     }
 };
 
+class TestAgentTools : public QObject
+{
+    Q_OBJECT
+
+private slots:
+    void initTestCase()
+    {
+        // A throwaway project tree under a temp dir.
+        m_root.reset(new QTemporaryDir());
+        QVERIFY(m_root->isValid());
+        const QString base = m_root->path();
+        QDir dir(base);
+        QVERIFY(dir.mkpath("src"));
+        QVERIFY(dir.mkpath("qml/pages"));
+
+        writeFile(base + "/src/main.cpp", "int main() { return 0; }\n");
+        writeFile(base + "/src/util.cpp", "int helper() { return 42; }\n");
+        writeFile(base + "/qml/pages/ChatPage.qml",
+                  "import Sailfish.Silica 1.0\nPage { id: page }\n");
+        writeFile(base + "/README.md", "# Test project\n");
+    }
+
+    void toolSchemasHaveExpectedNames()
+    {
+        const QJsonArray tools = AgentTools::toolSchemas(false);
+        QStringList names;
+        for (const QJsonValue &v : tools) {
+            names.append(v.toObject()["function"].toObject()["name"].toString());
+        }
+        QVERIFY(names.contains("read_file"));
+        QVERIFY(names.contains("list_files"));
+        QVERIFY(names.contains("search_code"));
+        QVERIFY(names.contains("edit_file"));
+        // run_command is opt-in
+        QVERIFY(!names.contains("run_command"));
+
+        const QJsonArray withRun = AgentTools::toolSchemas(true);
+        QStringList namesWithRun;
+        for (const QJsonValue &v : withRun) {
+            namesWithRun.append(v.toObject()["function"].toObject()["name"].toString());
+        }
+        QVERIFY(namesWithRun.contains("run_command"));
+    }
+
+    void toolSchemasAreWellFormed()
+    {
+        const QJsonArray tools = AgentTools::toolSchemas(true);
+        for (const QJsonValue &v : tools) {
+            const QJsonObject tool = v.toObject();
+            QCOMPARE(tool["type"].toString(), QString("function"));
+            const QJsonObject function = tool["function"].toObject();
+            QVERIFY(!function["name"].toString().isEmpty());
+            QVERIFY(!function["description"].toString().isEmpty());
+            const QJsonObject params = function["parameters"].toObject();
+            QCOMPARE(params["type"].toString(), QString("object"));
+            QVERIFY(params.contains("properties"));
+            QVERIFY(params.contains("required"));
+        }
+    }
+
+    void pathEscapeIsRejected()
+    {
+        AgentTools tools;
+        tools.setProjectRootForTest(m_root->path());
+        // Absolute path
+        QVERIFY(tools.resolvePath("/etc/passwd").isEmpty());
+        // .. traversal
+        QVERIFY(tools.resolvePath("../outside.txt").isEmpty());
+        QVERIFY(tools.resolvePath("src/../../outside.txt").isEmpty());
+        // A valid relative path resolves under the root
+        const QString resolved = tools.resolvePath("src/main.cpp");
+        QVERIFY(!resolved.isEmpty());
+        QVERIFY(resolved.startsWith(m_root->path()));
+    }
+
+    void noProjectRootDisablesTools()
+    {
+        AgentTools tools;
+        // No root set: every call errors out
+        const QString result = tools.execute("read_file",
+                                             "{\"path\":\"src/main.cpp\"}");
+        QVERIFY(result.contains("error"));
+    }
+
+    void readFileReturnsContent()
+    {
+        AgentTools tools;
+        tools.setProjectRootForTest(m_root->path());
+        const QString result = tools.execute("read_file",
+                                             "{\"path\":\"src/main.cpp\"}");
+        const QJsonObject obj = QJsonDocument::fromJson(result.toUtf8()).object();
+        QCOMPARE(obj["ok"].toBool(), true);
+        QVERIFY(obj["content"].toString().contains("int main()"));
+        QCOMPARE(obj["lines"].toInt(), 1);
+    }
+
+    void readFileRejectsEscape()
+    {
+        AgentTools tools;
+        tools.setProjectRootForTest(m_root->path());
+        const QString result = tools.execute("read_file",
+                                             "{\"path\":\"../../etc/passwd\"}");
+        const QJsonObject obj = QJsonDocument::fromJson(result.toUtf8()).object();
+        QVERIFY(obj.contains("error"));
+        QVERIFY(!obj["ok"].toBool(true));
+    }
+
+    void listFilesFindsProjectFiles()
+    {
+        AgentTools tools;
+        tools.setProjectRootForTest(m_root->path());
+        const QString result = tools.execute("list_files", "{}");
+        const QJsonObject obj = QJsonDocument::fromJson(result.toUtf8()).object();
+        QCOMPARE(obj["ok"].toBool(), true);
+        const QJsonArray entries = obj["entries"].toArray();
+        QStringList paths;
+        for (const QJsonValue &v : entries) {
+            paths.append(v.toString());
+        }
+        QVERIFY(paths.contains("src/main.cpp"));
+        QVERIFY(paths.contains("qml/pages/ChatPage.qml"));
+        QVERIFY(paths.contains("README.md"));
+    }
+
+    void listFilesWithPattern()
+    {
+        AgentTools tools;
+        tools.setProjectRootForTest(m_root->path());
+        const QString result = tools.execute(
+                    "list_files", "{\"pattern\":\"*.qml\"}");
+        const QJsonObject obj = QJsonDocument::fromJson(result.toUtf8()).object();
+        const QJsonArray entries = obj["entries"].toArray();
+        QCOMPARE(entries.size(), 1);
+        QCOMPARE(entries.at(0).toString(), QString("qml/pages/ChatPage.qml"));
+    }
+
+    void searchCodeFindsMatches()
+    {
+        AgentTools tools;
+        tools.setProjectRootForTest(m_root->path());
+        const QString result = tools.execute("search_code",
+                                             "{\"query\":\"helper\"}");
+        const QJsonObject obj = QJsonDocument::fromJson(result.toUtf8()).object();
+        QCOMPARE(obj["ok"].toBool(), true);
+        const QJsonArray matches = obj["matches"].toArray();
+        QVERIFY(matches.size() >= 1);
+        QVERIFY(matches.at(0).toString().contains("src/util.cpp"));
+        QVERIFY(matches.at(0).toString().contains("int helper()"));
+    }
+
+    void searchCodeInSubdirectory()
+    {
+        AgentTools tools;
+        tools.setProjectRootForTest(m_root->path());
+        const QString result = tools.execute(
+                    "search_code", "{\"query\":\"main\",\"path\":\"src\"}");
+        const QJsonObject obj = QJsonDocument::fromJson(result.toUtf8()).object();
+        const QJsonArray matches = obj["matches"].toArray();
+        QVERIFY(matches.size() >= 1);
+        for (const QJsonValue &v : matches) {
+            QVERIFY(v.toString().startsWith("src/"));
+        }
+    }
+
+    void editFileAppliesUniqueReplacement()
+    {
+        AgentTools tools;
+        tools.setProjectRootForTest(m_root->path());
+        const QString result = tools.execute(
+                    "edit_file",
+                    "{\"path\":\"src/util.cpp\","
+                    "\"old_text\":\"return 42;\","
+                    "\"new_text\":\"return 43;\"}");
+        const QJsonObject obj = QJsonDocument::fromJson(result.toUtf8()).object();
+        QCOMPARE(obj["ok"].toBool(), true);
+        QCOMPARE(obj["replacements"].toInt(), 1);
+
+        // The file on disk changed
+        QFile file(m_root->path() + "/src/util.cpp");
+        QVERIFY(file.open(QIODevice::ReadOnly | QIODevice::Text));
+        const QString content = QString::fromUtf8(file.readAll());
+        file.close();
+        QVERIFY(content.contains("return 43;"));
+        QVERIFY(!content.contains("return 42;"));
+    }
+
+    void editFileRejectsMissingOldText()
+    {
+        AgentTools tools;
+        tools.setProjectRootForTest(m_root->path());
+        const QString result = tools.execute(
+                    "edit_file",
+                    "{\"path\":\"src/util.cpp\","
+                    "\"old_text\":\"this does not exist\","
+                    "\"new_text\":\"x\"}");
+        const QJsonObject obj = QJsonDocument::fromJson(result.toUtf8()).object();
+        QVERIFY(obj.contains("error"));
+    }
+
+    void editFileRejectsAmbiguousOldText()
+    {
+        // Write a file where the target text appears twice
+        writeFile(m_root->path() + "/src/dup.cpp", "foo\nfoo\n");
+        AgentTools tools;
+        tools.setProjectRootForTest(m_root->path());
+        const QString result = tools.execute(
+                    "edit_file",
+                    "{\"path\":\"src/dup.cpp\","
+                    "\"old_text\":\"foo\","
+                    "\"new_text\":\"bar\"}");
+        const QJsonObject obj = QJsonDocument::fromJson(result.toUtf8()).object();
+        QVERIFY(obj.contains("error"));
+        QVERIFY(obj["error"].toString().contains("multiple"));
+    }
+
+    void runCommandIsRefusedWhenDisabled()
+    {
+        AgentTools tools;
+        tools.setProjectRootForTest(m_root->path());
+        tools.setRunCommandAllowed(false);
+        const QString result = tools.execute("run_command",
+                                             "{\"command\":\"ls\"}");
+        const QJsonObject obj = QJsonDocument::fromJson(result.toUtf8()).object();
+        QVERIFY(obj.contains("error"));
+        QVERIFY(obj["error"].toString().contains("disabled"));
+    }
+
+    void runCommandExecutesWhenAllowed()
+    {
+        AgentTools tools;
+        tools.setProjectRootForTest(m_root->path());
+        tools.setRunCommandAllowed(true);
+        // "echo" is available everywhere; QProcess splits on whitespace.
+        const QString result = tools.execute("run_command",
+                                             "{\"command\":\"/bin/echo hello\"}");
+        const QJsonObject obj = QJsonDocument::fromJson(result.toUtf8()).object();
+        QCOMPARE(obj["ok"].toBool(), true);
+        QCOMPARE(obj["exitCode"].toInt(), 0);
+        QVERIFY(obj["output"].toString().contains("hello"));
+    }
+
+    void unknownToolReturnsError()
+    {
+        AgentTools tools;
+        tools.setProjectRootForTest(m_root->path());
+        const QString result = tools.execute("delete_everything", "{}");
+        const QJsonObject obj = QJsonDocument::fromJson(result.toUtf8()).object();
+        QVERIFY(obj.contains("error"));
+        QVERIFY(obj["error"].toString().contains("Unknown tool"));
+    }
+
+    void invalidArgumentsJsonReturnsError()
+    {
+        AgentTools tools;
+        tools.setProjectRootForTest(m_root->path());
+        const QString result = tools.execute("read_file", "not json");
+        const QJsonObject obj = QJsonDocument::fromJson(result.toUtf8()).object();
+        QVERIFY(obj.contains("error"));
+    }
+
+private:
+    void writeFile(const QString &path, const QString &content)
+    {
+        QFile file(path);
+        QVERIFY(file.open(QIODevice::WriteOnly | QIODevice::Text));
+        file.write(content.toUtf8());
+        file.close();
+    }
+
+    QScopedPointer<QTemporaryDir> m_root;
+};
+
+class TestAgentFunctionCalling : public QObject
+{
+    Q_OBJECT
+
+private slots:
+    void functionResultsBodyHasCorrectShape()
+    {
+        QVariantList results;
+        QVariantMap r1;
+        r1["tool_call_id"] = "call_1";
+        r1["result"] = "{\"ok\":true,\"content\":\"hello\"}";
+        results.append(r1);
+        QVariantMap r2;
+        r2["tool_call_id"] = "call_2";
+        r2["result"] = "{\"error\":\"not found\"}";
+        results.append(r2);
+
+        const QByteArray body = MistralAPI::buildFunctionResultsBody(results);
+        const QJsonDocument doc = QJsonDocument::fromJson(body);
+        QVERIFY(doc.isObject());
+        const QJsonObject obj = doc.object();
+        QCOMPARE(obj["stream"].toBool(), true);
+        const QJsonArray inputs = obj["inputs"].toArray();
+        QCOMPARE(inputs.size(), 2);
+
+        const QJsonObject first = inputs.at(0).toObject();
+        QCOMPARE(first["object"].toString(), QString("entry"));
+        QCOMPARE(first["type"].toString(), QString("function.result"));
+        QCOMPARE(first["tool_call_id"].toString(), QString("call_1"));
+        QCOMPARE(first["result"].toString(),
+                 QString("{\"ok\":true,\"content\":\"hello\"}"));
+
+        const QJsonObject second = inputs.at(1).toObject();
+        QCOMPARE(second["tool_call_id"].toString(), QString("call_2"));
+    }
+
+    void turnBodyIncludesAgentToolsAtCreate()
+    {
+        MistralAPI api;
+        QJsonArray agentTools;
+        QJsonObject readFileTool;
+        readFileTool["type"] = "function";
+        QJsonObject readFileFn;
+        readFileFn["name"] = "read_file";
+        readFileTool["function"] = readFileFn;
+        agentTools.append(readFileTool);
+
+        const QByteArray body = api.buildTurnBody(
+                    "mistral-small-latest", "Be helpful", "hi", "",
+                    true, true, -1.0, 0, QString(), agentTools);
+        const QJsonObject obj = QJsonDocument::fromJson(body).object();
+        const QJsonArray tools = obj["tools"].toArray();
+        // web_search + read_file
+        QCOMPARE(tools.size(), 2);
+        QCOMPARE(tools.at(0).toObject()["type"].toString(), QString("web_search"));
+        QCOMPARE(tools.at(1).toObject()["type"].toString(), QString("function"));
+        QCOMPARE(tools.at(1).toObject()["function"].toObject()["name"].toString(),
+                 QString("read_file"));
+    }
+
+    void turnBodyOmitsToolsOnAppend()
+    {
+        // Tools are create-time only: an append (isCreate=false) must not
+        // carry them even when agent tools are passed.
+        MistralAPI api;
+        QJsonArray agentTools;
+        QJsonObject tool;
+        tool["type"] = "function";
+        agentTools.append(tool);
+
+        const QByteArray body = api.buildTurnBody(
+                    "mistral-small-latest", "", "hi", "",
+                    false, false, -1.0, 0, QString(), agentTools);
+        const QJsonObject obj = QJsonDocument::fromJson(body).object();
+        QVERIFY(!obj.contains("tools"));
+        QVERIFY(!obj.contains("model"));
+        QVERIFY(!obj.contains("instructions"));
+    }
+
+    void functionCallDeltaReassembly()
+    {
+        // The model sends arguments as fragments across several deltas.
+        // parseStreamLine accumulates them by tool_call_id.
+        MistralAPI api;
+        QSignalSpy spy(&api, &MistralAPI::functionCallRequested);
+
+        // Simulate: first delta opens the call, second carries a fragment,
+        // conversation.response.done flushes.
+        api.parseStreamLine("function.call.delta",
+            "{\"type\":\"function.call.delta\",\"id\":\"fc_1\","
+            "\"tool_call_id\":\"call_abc\",\"name\":\"read_file\","
+            "\"arguments\":\"{\\\"pa\"}");
+        api.parseStreamLine("function.call.delta",
+            "{\"type\":\"function.call.delta\",\"id\":\"fc_1\","
+            "\"tool_call_id\":\"call_abc\",\"name\":\"read_file\","
+            "\"arguments\":\"th\\\":\\\"src/main.cpp\\\"}\"}");
+        api.parseStreamLine("conversation.response.done",
+            "{\"usage\":{\"prompt_tokens\":10,\"completion_tokens\":5}}");
+
+        QCOMPARE(spy.count(), 1);
+        const QVariantList calls = spy.at(0).at(0).toList();
+        QCOMPARE(calls.size(), 1);
+        const QVariantMap call = calls.at(0).toMap();
+        QCOMPARE(call["tool_call_id"].toString(), QString("call_abc"));
+        QCOMPARE(call["name"].toString(), QString("read_file"));
+        const QVariantMap args = call["arguments"].toMap();
+        QCOMPARE(args["path"].toString(), QString("src/main.cpp"));
+    }
+
+    void functionCallDeltaMultipleCalls()
+    {
+        // Parallel tool calls: two tool_call_ids in one response.
+        MistralAPI api;
+        QSignalSpy spy(&api, &MistralAPI::functionCallRequested);
+
+        api.parseStreamLine("function.call.delta",
+            "{\"tool_call_id\":\"c1\",\"name\":\"read_file\","
+            "\"arguments\":\"{\\\"path\\\":\\\"a.cpp\\\"}\"}");
+        api.parseStreamLine("function.call.delta",
+            "{\"tool_call_id\":\"c2\",\"name\":\"search_code\","
+            "\"arguments\":\"{\\\"query\\\":\\\"foo\\\"}\"}");
+        api.parseStreamLine("conversation.response.done", "{}");
+
+        QCOMPARE(spy.count(), 1);
+        const QVariantList calls = spy.at(0).at(0).toList();
+        QCOMPARE(calls.size(), 2);
+    }
+
+    void dataOnlyFunctionCallDelta()
+    {
+        // Some servers send data-only SSE (no "event:" line); the payload
+        // self-describes via its "type" field.
+        MistralAPI api;
+        QSignalSpy spy(&api, &MistralAPI::functionCallRequested);
+
+        api.parseStreamLine("",
+            "{\"type\":\"function.call.delta\",\"tool_call_id\":\"c1\","
+            "\"name\":\"list_files\",\"arguments\":\"{}\"}");
+        api.parseStreamLine("conversation.response.done", "{}");
+
+        QCOMPARE(spy.count(), 1);
+        const QVariantList calls = spy.at(0).at(0).toList();
+        QCOMPARE(calls.size(), 1);
+        QCOMPARE(calls.at(0).toMap()["name"].toString(), QString("list_files"));
+    }
+
+    void noFunctionCallsMeansNoSignal()
+    {
+        // A plain text answer: no function.call.delta, no signal.
+        MistralAPI api;
+        QSignalSpy spy(&api, &MistralAPI::functionCallRequested);
+        api.parseStreamLine("message.output.delta",
+                            "{\"content\":\"Hello\"}");
+        api.parseStreamLine("conversation.response.done", "{}");
+        QCOMPARE(spy.count(), 0);
+    }
+};
+
 int main(int argc, char *argv[])
 {
     // Redirect QSettings and the conversation files away from the real
@@ -2805,6 +3237,14 @@ int main(int argc, char *argv[])
     }
     {
         TestProviders t;
+        status |= QTest::qExec(&t, argc, argv);
+    }
+    {
+        TestAgentTools t;
+        status |= QTest::qExec(&t, argc, argv);
+    }
+    {
+        TestAgentFunctionCalling t;
         status |= QTest::qExec(&t, argc, argv);
     }
     return status;

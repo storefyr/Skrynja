@@ -16,6 +16,7 @@
 #include "settingsmanager.h"
 #include "audiorecorder.h"
 #include "voiceanonymizer.h"
+#include "agenttools.h"
 #include <QtQml>"
 
 int main(int argc, char *argv[])
@@ -37,12 +38,28 @@ int main(int argc, char *argv[])
     SettingsManager settingsManager;
     AudioRecorder audioRecorder;
     VoiceAnonymizer voiceAnonymizer;
+    AgentTools agentTools;
 
     qmlRegisterType<AudioRecorder>("harbour.skrynja", 1, 0, "AudioRecorder");
 
     // The manager owns the streaming lifecycle so an answer survives the chat
     // page being popped off the stack mid-response.
     conversationManager.bindApi(&mistralApi);
+
+    // F19: agent mode. The tools follow the configured project root and the
+    // run_command permission from settings; the manager executes the calls
+    // the model makes and appends the results.
+    agentTools.setProjectRoot(settingsManager.agentProjectRoot());
+    agentTools.setRunCommandAllowed(settingsManager.agentRunCommand());
+    conversationManager.setAgentTools(&agentTools);
+    QObject::connect(&settingsManager, &SettingsManager::agentProjectRootChanged,
+                     [&agentTools, &settingsManager]() {
+        agentTools.setProjectRoot(settingsManager.agentProjectRoot());
+    });
+    QObject::connect(&settingsManager, &SettingsManager::agentRunCommandChanged,
+                     [&agentTools, &settingsManager]() {
+        agentTools.setRunCommandAllowed(settingsManager.agentRunCommand());
+    });
 
     // Mistral AI is the only provider: the Conversations API exists nowhere
     // else. The endpoint is fixed in MistralAPI's constructor; nothing here
@@ -82,6 +99,7 @@ int main(int argc, char *argv[])
     context->setContextProperty("settingsManager", &settingsManager);
     context->setContextProperty("globalAudioRecorder", &audioRecorder);
     context->setContextProperty("voiceAnonymizer", &voiceAnonymizer);
+    context->setContextProperty("agentTools", &agentTools);
 
     // Load main QML
     view->setSource(SailfishApp::pathTo("qml/harbour-skrynja.qml"));

@@ -17,6 +17,7 @@
 QString skrynjaSettingsPath(const QString &fileName);
 
 class MistralAPI;
+class AgentTools;
 
 struct Conversation {
     QString id;
@@ -147,6 +148,13 @@ public:
     // page is destroyed (navigating back to the history pops it).
     void bindApi(MistralAPI *api);
 
+    // F19: agent mode. When set, the manager executes function calls locally
+    // via this AgentTools instance and appends the results, looping until
+    // the model answers with text or the call cap is hit.
+    void setAgentTools(AgentTools *tools);
+    // True when agent mode produced tool schemas for the current turn.
+    bool agentModeActive() const { return m_agentModeActive; }
+
     // Model the in-flight request is using, recorded for the token statistics.
     Q_INVOKABLE void setActiveModel(const QString &model);
 
@@ -199,6 +207,8 @@ private slots:
     void onResponseIncomplete();
     void flushStream();
     void finishBackgroundResponse();
+    // F19: a stream ended with pending function calls.
+    void onFunctionCallRequested(const QVariantList &calls);
     // F17b: auto-sync slots
     void onAutoSyncConversationsFetched(const QVariantList &conversations);
     void onAutoSyncConversationsFetchFailed();
@@ -232,6 +242,10 @@ private:
     // timeout, network drop). Applied as interrupted=true on the message
     // when the response completes.
     bool m_streamIncomplete;
+    // F19: agent mode state.
+    AgentTools *m_agentTools;
+    bool m_agentModeActive;
+    int m_agentCallCount;
 
     QString generateConversationId() const;
     QString generateConversationTitle(const QList<Message> &messages) const;

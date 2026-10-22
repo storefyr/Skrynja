@@ -10,6 +10,10 @@ Dialog {
     property var chatStyleList: settingsManager.availableChatStyles()
     property var autoTitleModeList: settingsManager.availableAutoTitleModes()
     property bool revealKey: false
+    // F19: the project root the agent tools operate on, picked via the
+    // Sailfish file picker. Stored as a local path (the picker returns a
+    // file:// URL).
+    property string agentProjectPath: settingsManager.agentProjectRoot
 
     canAccept: true
 
@@ -30,6 +34,11 @@ Dialog {
         settingsManager.webSearch = webSearchSwitch.checked
 
         settingsManager.voiceAnonymization = anonymizeVoiceSwitch.checked
+
+        // F19: agent mode settings
+        settingsManager.agentProjectRoot = agentProjectPath
+        settingsManager.agentEnabled = agentModeSwitch.checked
+        settingsManager.agentRunCommand = agentRunCommandSwitch.checked
 
         if (chatStyleComboBox.currentItem) {
             settingsManager.chatStyle = chatStyleComboBox.currentItem.styleValue
@@ -465,6 +474,53 @@ Dialog {
                 text: qsTr("Anonymize voice")
                 description: qsTr("Your recording is processed on the device before it is sent for transcription, so you are harder to identify by voice: the pitch is shifted, the timbre darkened and the audio band-limited. Nothing is sent to Mistral until the anonymized file is ready. On by default — disable only if you experience problems.")
                 checked: settingsManager.voiceAnonymization
+            }
+
+            // Agent Mode Section (F19)
+            SectionHeader {
+                text: qsTr("Agent mode")
+            }
+
+            ValueButton {
+                id: agentProjectButton
+                label: qsTr("Project folder")
+                description: agentProjectPath !== ""
+                             ? qsTr("The model can read, search and edit files in this folder")
+                             : qsTr("Not set")
+                value: agentProjectPath !== "" ? agentProjectPath : qsTr("Choose…")
+                onClicked: {
+                    var picker = pageStack.push("Sailfish.Pickers.FilePickerPage", {
+                        allowedOrientations: settingsPage.allowedOrientations
+                    })
+                    picker.selectedContentPropertiesChanged.connect(function() {
+                        var uri = picker.selectedContentProperties["filePath"]
+                        if (uri !== undefined && uri !== "") {
+                            // The picker returns a file:// URL; the tools
+                            // need a plain local path.
+                            var path = uri
+                            if (path.indexOf("file://") === 0) {
+                                path = decodeURIComponent(path.substring(7))
+                            }
+                            agentProjectPath = path
+                        }
+                    })
+                }
+            }
+
+            TextSwitch {
+                id: agentModeSwitch
+                text: qsTr("Enable agent tools")
+                description: qsTr("New conversations can read, search and edit files in the project folder, so the AI can help develop the project from your phone. Tools are set when a conversation is created; start a new conversation to use them.")
+                checked: settingsManager.agentEnabled
+                enabled: agentProjectPath !== ""
+            }
+
+            TextSwitch {
+                id: agentRunCommandSwitch
+                text: qsTr("Allow running commands")
+                description: qsTr("Lets the model run shell commands in the project folder (builds, tests, git). Off by default.")
+                checked: settingsManager.agentRunCommand
+                enabled: agentModeSwitch.checked
             }
 
             // System Prompt Section

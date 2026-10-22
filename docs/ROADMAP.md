@@ -36,6 +36,7 @@ specs in `docs/features/` remain as historical reference; the ones marked **remo
 | F18 | Voice input: microphone button in ChatPage, `AudioRecorder` → `POST /v1/audio/transcriptions` (voxtral), transcribed text fills the input field | — | done (v0.8.0); fixed for Danish in v0.8.11 (Voxtral 3 model `voxtral-mini-transcribe-3-0`, language hint, longer timeouts); recorder fixed in v0.8.13 (audio/PCM codec, Qt 5.6 signal connects) |
 | F18b | Voice anonymization: local fixed pipeline (pitch shift + spectral tilt + telephone-band limiting + jittered noise) on the recording before it is sent, so the speaker is harder to identify by voice. ON BY DEFAULT since v0.9.7 | — | done (v0.9.7, PR #8) |
 | F18c | Local on-device STT (whisper.cpp) so audio never leaves the phone | — | **rejected** (2026-10-22, tested in Notes Plus): too slow on a phone CPU and far too poor at Danish. Revisit only if a fast Danish-quality on-device model appears |
+| F19 | Agent mode: local function tools (read_file, list_files, search_code, edit_file, run_command) via Conversations API function calling, so the AI can develop a project from the phone | [23-agent-tools.md](features/23-agent-tools.md) | in progress |
 
 ## Removed in the fork
 

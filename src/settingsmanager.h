@@ -31,6 +31,16 @@ class SettingsManager : public QObject
     // single fixed anonymization level; disable only if transcription
     // problems occur.
     Q_PROPERTY(bool voiceAnonymization READ voiceAnonymization WRITE setVoiceAnonymization NOTIFY voiceAnonymizationChanged)
+    // F19: agent mode. When enabled and a project root is set, new
+    // conversations declare local function tools (read_file, list_files,
+    // search_code, edit_file) so the model can work on the project.
+    Q_PROPERTY(bool agentEnabled READ agentEnabled WRITE setAgentEnabled NOTIFY agentEnabledChanged)
+    // Canonical path of the project the agent tools operate on. Empty means
+    // agent mode has nothing to work with and is effectively off.
+    Q_PROPERTY(QString agentProjectRoot READ agentProjectRoot WRITE setAgentProjectRoot NOTIFY agentProjectRootChanged)
+    // F19: allows the run_command tool. Off by default: it executes shell
+    // commands, which is the one tool with side effects beyond file edits.
+    Q_PROPERTY(bool agentRunCommand READ agentRunCommand WRITE setAgentRunCommand NOTIFY agentRunCommandChanged)
     Q_PROPERTY(QVariantList savedPrompts READ savedPrompts NOTIFY savedPromptsChanged)
     Q_PROPERTY(QString appVersion READ appVersion CONSTANT)
 
@@ -59,6 +69,13 @@ public:
 
     bool voiceAnonymization() const;
     void setVoiceAnonymization(bool enabled);
+
+    bool agentEnabled() const;
+    void setAgentEnabled(bool enabled);
+    QString agentProjectRoot() const;
+    void setAgentProjectRoot(const QString &path);
+    bool agentRunCommand() const;
+    void setAgentRunCommand(bool allowed);
 
     QString chatStyle() const;
     void setChatStyle(const QString &style);
@@ -128,6 +145,9 @@ signals:
     void enterKeySendsChanged();
     void savedPromptsChanged();
     void voiceAnonymizationChanged();
+    void agentEnabledChanged();
+    void agentProjectRootChanged();
+    void agentRunCommandChanged();
 
 
 private:
@@ -144,6 +164,9 @@ private:
     bool m_enterKeySends;
     bool m_webSearch;
     bool m_voiceAnonymization;
+    bool m_agentEnabled;
+    QString m_agentProjectRoot;
+    bool m_agentRunCommand;
 
     QStringList m_cachedModels;
     QStringList m_cachedVisionModels;

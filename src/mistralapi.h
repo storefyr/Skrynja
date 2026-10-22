@@ -13,6 +13,8 @@
 #include <QElapsedTimer>
 #include <QJsonArray>
 #include <QVariant>
+#include <QVariantMap>
+#include <QVariantList>
 
 // Talks to Mistral's Conversations API (/v1/conversations), the only Mistral
 // API that offers the web_search tool. The API is stateful: the first message
@@ -31,6 +33,9 @@ public:
 
     bool isBusy() const;
     QString error() const;
+    // F19: the API key of the in-flight request, so the tool-result append
+    // does not need the caller to pass it back.
+    QString pendingApiKey() const { return m_pendingApiKey; }
 
     // Sends one user turn. An empty remoteConversationId creates the remote
     // conversation; a set one appends to it. When imageFileId is set the image
@@ -88,8 +93,34 @@ public:
     Q_INVOKABLE QString tempAudioPath() const;
     Q_INVOKABLE void cancelRequest();
     Q_INVOKABLE void clearError();
+    // F19: agent mode. When true and the conversation is created, the
+    // request body declares the local function tools so the model can call
+    // read_file / list_files / search_code / edit_file / run_command.
+    // toolsJson is the "tools" fragment (AgentTools::toolSchemas) to merge
+    // with web_search at creation time.
+    Q_INVOKABLE void sendMessageWithTools(const QString &apiKey,
+                                          const QString &modelName,
+                                          const QString &systemPrompt,
+                                          const QString &userContent,
+                                          const QString &imagePath,
+                                          bool webSearch,
+                                          const QString &remoteConversationId,
+                                          const QJsonArray &agentTools,
+                                          double temperature = -1.0,
+                                          int maxTokens = 0,
+                                          const QString &imageFileId = QString());
+    // F19: appends function.result entries to the remote conversation and
+    // streams the model's follow-up. results is a list of maps with
+    // "tool_call_id" and "result" (a JSON string).
+    Q_INVOKABLE void appendFunctionResults(const QString &apiKey,
+                                           const QString &remoteConversationId,
+                                           const QVariantList &results);
 
 signals:
+    // F19: emitted when the stream produced function.call.delta events and
+    // conversation.response.done arrived. calls is a QVariantList of maps
+    // {tool_call_id, name, arguments} with arguments as a parsed QVariantMap.
+    void functionCallRequested(const QVariantList &calls);
     void isBusyChanged();
     void errorChanged();
     void streamingResponse(const QString &content);
@@ -157,6 +188,8 @@ private slots:
 private:
     friend class TestMistralAPI;
     friend class TestConversationManager;
+    friend class TestAgentTools;
+    friend class TestAgentFunctionCalling;
 
     QNetworkAccessManager *m_networkManager;
     QNetworkReply *m_currentReply;
@@ -227,6 +260,8 @@ private:
     void queueChatRequest(int extraDelayMs);
     void forgetPendingRequest();
     // Builds the create/append request body and the URL path for a turn.
+    // agentTools is empty for a plain chat; when set and isCreate, the
+    // entries are merged into the "tools" array alongside web_search.
     QByteArray buildTurnBody(const QString &modelName,
                              const QString &systemPrompt,
                              const QString &userContent,
@@ -235,8 +270,18 @@ private:
                              bool isCreate,
                              double temperature,
                              int maxTokens,
-                             const QString &imageFileId = QString()) const;
+                             const QString &imageFileId = QString(),
+                             const QJsonArray &agentTools = QJsonArray()) const;
     QString turnPath(const QString &remoteConversationId) const;
+    // F19: builds the function.result append body.
+    static QByteArray buildFunctionResultsBody(const QVariantList &results);
+    // F19: reassembly state for function.call.delta events, keyed by
+    // tool_call_id. Each value is {name, arguments} with arguments the
+    // accumulated JSON string.
+    QVariantMap m_pendingFunctionCalls;
+    // F19: the agent tool schemas for the in-flight turn, kept so a retry
+    // after a rate limit rebuilds the same body.
+    QJsonArray m_pendingAgentTools;
     // F18: the audio transcription model id (Voxtral 3 batch model, the
     // first Mistral transcription model with Danish support).
     static QString transcriptionModelId();

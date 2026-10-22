@@ -3,6 +3,7 @@
 #include "securestore.h"
 #include "conversationmanager.h"
 #include <QDateTime>
+#include <QDir>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -61,6 +62,8 @@ SettingsManager::SettingsManager(QObject *parent)
     , m_enterKeySends(false)
     , m_webSearch(false)
     , m_voiceAnonymization(true)
+    , m_agentEnabled(false)
+    , m_agentRunCommand(false)
     , m_modelSwitches(0)
 {
     loadSettings();
@@ -188,6 +191,52 @@ void SettingsManager::setVoiceAnonymization(bool enabled)
         m_voiceAnonymization = enabled;
         saveSettings();
         emit voiceAnonymizationChanged();
+    }
+}
+
+bool SettingsManager::agentEnabled() const
+{
+    return m_agentEnabled;
+}
+
+void SettingsManager::setAgentEnabled(bool enabled)
+{
+    if (m_agentEnabled != enabled) {
+        m_agentEnabled = enabled;
+        saveSettings();
+        emit agentEnabledChanged();
+    }
+}
+
+QString SettingsManager::agentProjectRoot() const
+{
+    return m_agentProjectRoot;
+}
+
+void SettingsManager::setAgentProjectRoot(const QString &path)
+{
+    // Store the canonical form so the value is stable across picker round
+    // trips (trailing slashes, symlinks).
+    const QString canonical = path.isEmpty() ? QString()
+                                             : QDir(path).canonicalPath();
+    if (m_agentProjectRoot != canonical) {
+        m_agentProjectRoot = canonical;
+        saveSettings();
+        emit agentProjectRootChanged();
+    }
+}
+
+bool SettingsManager::agentRunCommand() const
+{
+    return m_agentRunCommand;
+}
+
+void SettingsManager::setAgentRunCommand(bool allowed)
+{
+    if (m_agentRunCommand != allowed) {
+        m_agentRunCommand = allowed;
+        saveSettings();
+        emit agentRunCommandChanged();
     }
 }
 
@@ -524,6 +573,11 @@ void SettingsManager::loadSettings()
     // On by default since v0.9.7: the user must actively disable it.
     // A stored value (including an explicit "off") is always respected.
     m_voiceAnonymization = m_settings.value("voice/anonymization", true).toBool();
+    // F19: agent mode is off until the user picks a project root and flips
+    // the switch. run_command is off even when agent mode is on.
+    m_agentEnabled = m_settings.value("agent/enabled", false).toBool();
+    m_agentProjectRoot = m_settings.value("agent/projectRoot", "").toString();
+    m_agentRunCommand = m_settings.value("agent/runCommand", false).toBool();
     // Legacy keys from the experimental strength presets (v0.9.1-v0.9.6)
     // are no longer used — remove them once.
     m_settings.remove("voice/pitchFactor");
@@ -638,6 +692,9 @@ void SettingsManager::saveSettings()
     m_settings.setValue("ui/showTimestamps", m_showTimestamps);
     m_settings.setValue("ui/enterSends", m_enterKeySends);
     m_settings.setValue("voice/anonymization", m_voiceAnonymization);
+    m_settings.setValue("agent/enabled", m_agentEnabled);
+    m_settings.setValue("agent/projectRoot", m_agentProjectRoot);
+    m_settings.setValue("agent/runCommand", m_agentRunCommand);
     m_settings.sync();
     secureSettingsFile();
 }
