@@ -33,133 +33,28 @@ Skrynja 0.9.7 — Voice anonymization is now ON BY DEFAULT, with a single fixed 
 - Updated: default-on persistence, legacy-key cleanup, fixed-pipeline
   round-trip (length range), per-recording jitter, wrapper signature.
 
-## [0.9.6] - 2026-10-22
-Skrynja 0.9.6 — Voice anonymization: ring modulation removed from presets, replaced by spectral tilt.
+## [0.9.2 – 0.9.6] - 2026-10-22
+Skrynja 0.9.2–0.9.6 — Experimental voice anonymization iteration (PR #8, test branch `vibe/f18b-strong-anonymization-b6c41e`).
 
-### Changed
-- **Ring modulation is no longer used in any preset.** Three on-device
-  test rounds (v0.9.2–v0.9.5) showed it kept raising the transcription
-  error rate even with the carrier above the voice range, because it
-  destroys the harmonic structure that speech-to-text models rely on.
-  The DSP primitive `ringModulate()` stays (unit-tested) but unused.
-- **Spectral tilt replaces it** in the presets: a one-pole low-pass that
-  darkens the timbre (the "radio voice" sound). It changes the voice just
-  as clearly but keeps the harmonic structure intact — STT models handle
-  it far better.
-  - Medium: pitch ~1.18 + tilt −0.35 + noise
-  - Strong: pitch ~1.24 + tilt −0.55 + telephone-band limiting + more noise
-- Jitter now applies to tilt instead of ring frequency.
+These were test releases of the voice anonymization feature, superseded by 0.9.7
+(single fixed level, on by default). Consolidated history:
 
-### Added
-- `VoiceAnonymizer::spectralTilt()` + unit tests (no-op at 0, low tone
-  passes, high tone attenuated, silence stays silent).
-
-## [0.9.5] - 2026-10-22
-Skrynja 0.9.5 — Voice anonymization: anti-voiceprint hardening.
-
-### Security
-- **Deterministic noise bug fixed**: `std::rand()` was never seeded, so
-  every app start produced the *identical* noise pattern. An attacker who
-  knew the algorithm could average several anonymized recordings, recover
-  the noise and subtract it. The RNG is now seeded per process.
-- **Per-recording jitter**: pitch factor, ring frequency and noise level
-  are varied by a few percent for every recording, so no two anonymized
-  files share the same transformation — averaging or inverting across
-  recordings no longer works. The jitter is small enough to stay
-  speech-to-text safe.
-- **Telephone-band limiting in "strong"**: a 300–3400 Hz biquad filter
-  strips the out-of-speech-band spectral detail that voiceprint systems
-  rely on. STT models (trained on telephone audio) handle this well.
-
-### Honest limits (unchanged, now also in code comments)
-Anonymization is obfuscation, not encryption. The only true protection
-against voiceprinting is keeping the audio on the device (local STT,
-e.g. whisper.cpp — a possible future feature) or typing instead of
-speaking.
-
-### Added
-- `VoiceAnonymizer::bandLimit()` (two RBJ biquads, HP 300 Hz + LP 3400 Hz).
-- 2 new unit tests: per-recording jitter produces different output sizes;
-  band limiting attenuates a 6 kHz tone by > 20 dB while passing a 1 kHz
-  tone with < 3 dB loss. Round-trip test now asserts ranges (jitter makes
-  exact lengths non-deterministic).
-
-## [0.9.4] - 2026-10-22
-Skrynja 0.9.4 — Voice anonymization: "strong" retuned after second on-device test.
-
-### Changed
-- **"Strong" is now the maximum safe effort, not a robot voice.** After a
-  second test round, even the retuned v0.9.3 strong preset (350 Hz @ 40%)
-  still hurt transcription too much. Strong now reuses the proven-safe
-  Medium ring settings (320 Hz @ 30%) and only increases pitch (1.24) and
-  noise (0.012). The Settings description for "strong" states honestly that
-  maximum anonymization may reduce transcription accuracy, and recommends
-  Medium for everyday use.
-- Rationale (documented for future tuning): anonymization is obfuscation,
-  not encryption — against automated voiceprinting none of these presets
-  is a guarantee. Medium already hides the voice from any human listener;
-  stronger processing mainly costs STT accuracy.
-
-## [0.9.3] - 2026-10-22
-Skrynja 0.9.3 — Fix: "strong" anonymization broke speech-to-text (ring modulation carrier inside the voice range).
-
-### Fixed
-- **Ring modulation carrier moved above the voice fundamental range.**
-  The v0.9.2 "strong" preset (180 Hz @ 60%) and "medium" (220 Hz @ 35%)
-  used a carrier inside the 85–255 Hz fundamental range of the human
-  voice; the sidebands overlapped the speech spectrum and the STT model
-  transcribed nonsense. New values, verified against on-device tests:
-  - Medium: ring 320 Hz @ 30% (was 220 Hz @ 35%)
-  - Strong: ring 350 Hz @ 40%, pitch 1.30 (was 180 Hz @ 60%, pitch 1.28)
-- Unit test expectation for the strong preset updated (24614 bytes).
-
-## [0.9.2] - 2026-10-22
-Skrynja 0.9.2 — Stronger voice anonymization (F18b): strength presets + ring modulation.
-
-**Experimental — test branch `vibe/f18b-strong-anonymization-b6c41e`.**
-
-### Added
-- **Anonymization strength presets** replace the raw pitch slider
-  (Settings → Voice input → "Anonymization strength"):
-  - **Subtle** — small pitch shift (1.10) + faint noise. Still sounds like you.
-  - **Medium** (default) — pitch shift (1.18) + ring modulation at 320 Hz
-    (30% depth) + noise. Clearly a changed voice.
-  - **Strong** — heavy pitch shift (1.30) + ring modulation at 350 Hz
-    (40% depth) + more noise. Robotic.
-
-### Fixed (after first on-device test)
-- **"Strong" destroyed speech-to-text**: the first preset used ring
-  modulation at 180 Hz with 60% depth. That carrier sits inside the
-  fundamental range of the human voice (85–255 Hz), and the sidebands
-  overlapped the speech spectrum — the model transcribed nonsense
-  ("Spark, anonymous, ein SM" instead of the spoken Danish sentence).
-  The carrier frequency now stays above the voice range: Medium uses
-  320 Hz @ 30%, Strong uses 350 Hz @ 40% (pitch raised to 1.30). Medium
-  was also retuned from 220 Hz to 320 Hz for the same reason.
-- **Ring modulation** as a new DSP effect in `VoiceAnonymizer`
-  (`ringModulate()`): multiplies the signal with a slow carrier wave,
-  destroying the natural harmonic structure of the voice — the classic
-  "robot voice" effect, much harder to recognize than a plain pitch shift.
-- New `VoiceAnonymizer::anonymizeWithStrength()` C++ API and
-  `strengthFromString()` mapping; the QML-facing `anonymizeFile()` now
-  takes a strength name ("subtle"/"medium"/"strong").
-- New setting `voiceAnonymizationStrength` (default "medium").
-  The 0.9.1 setting `voice/pitchFactor` (raw double) is migrated to the
-  closest preset once and removed.
-- 5 new unit tests (ring modulation no-op/changes/silence, strength
-  mapping, strength round-trip, strength persistence, legacy migration).
-
-### Changed
-- Settings → Voice input: the "Voice pitch" slider is replaced by an
-  "Anonymization strength" combo box with a description per preset.
+- **0.9.2**: strength presets (subtle/medium/strong) + ring modulation added.
+- **0.9.3**: fixed “strong” breaking speech-to-text — ring carrier at 180 Hz sat
+  inside the voice fundamental range (85–255 Hz); carrier moved above it (320/350 Hz).
+- **0.9.4**: retuned “strong” to max safe effort after a second failing test round.
+- **0.9.5**: anti-voiceprint hardening — seeded RNG (was deterministic noise!),
+  per-recording jitter (±3–5%), telephone-band limiting in “strong”.
+- **0.9.6**: ring modulation removed from presets (kept breaking STT even above
+  the voice range) — replaced by spectral tilt, which keeps harmonics intact.
 
 ## [0.9.1] - 2026-10-22
-Skrynja 0.9.1 — Experimental voice anonymization (F18b): anonymize your voice before it leaves the device.
+Skrynja 0.9.1 — Voice anonymization (F18b): anonymize your voice before it leaves the device.
 
-**Experimental feature — opt-in via Settings → Voice input → "Anonymize voice".**
+**Was experimental — opt-in via Settings → Voice input → "Anonymize voice". On by default since 0.9.7.**
 
 ### Added
-- **Voice anonymization (F18b, experimental)**: a new "Voice input" section
+- **Voice anonymization (F18b)**: a new "Voice input" section
   in Settings with an "Anonymize voice" toggle and a "Voice pitch" slider
   (0.80–1.25, default 1.15). When enabled, the recording is processed
   **locally on the device** before it is sent to Mistral:
