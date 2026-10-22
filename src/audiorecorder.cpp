@@ -5,28 +5,51 @@
 #include <QUrl>
 #include <QTimer>
 #include <QDebug>
+#include <QMediaRecorder>
 
 AudioRecorder::AudioRecorder(QObject *parent)
     : QObject(parent)
     , m_recorder(new QAudioRecorder(this))
     , m_stoppedEmitted(false)
 {
-    connect(m_recorder, SIGNAL(stateChanged(QAudioRecorder::State)),
-            this, SLOT(onStateChanged(QAudioRecorder::State)));
-    connect(m_recorder, SIGNAL(durationChanged(qint64)),
-            this, SIGNAL(durationChanged(qint64)));
-    connect(m_recorder, SIGNAL(error(QAudioRecorder::Error)),
-            this, SLOT(onError(QAudioRecorder::Error)));
+    // Pointer-based connects: string-based SIGNAL/SLOT connects with
+    // QAudioRecorder::State / QAudioRecorder::Error FAIL on Sailfish's
+    // Qt 5.6 ("No such signal") because moc registers the inherited
+    // QMediaRecorder signatures. Pointer connects are checked at compile
+    // time and work on both Qt 5.6 and 5.15.
+    connect(m_recorder, &QAudioRecorder::stateChanged,
+            this, &AudioRecorder::onStateChanged);
+    connect(m_recorder, &QAudioRecorder::durationChanged,
+            this, &AudioRecorder::durationChanged);
+    // 'error' is overloaded (signal error(Error) + getter error() const),
+    // so a plain &QAudioRecorder::error is ambiguous — disambiguate.
+    connect(m_recorder,
+            static_cast<void (QMediaRecorder::*)(QMediaRecorder::Error)>(
+                &QMediaRecorder::error),
+            this, &AudioRecorder::onError);
 
     m_stopTimer = new QTimer(this);
     m_stopTimer->setSingleShot(true);
     m_stopTimer->setInterval(5000);
-    connect(m_stopTimer, SIGNAL(timeout()), this, SLOT(onStopTimeout()));
+    connect(m_stopTimer, &QTimer::timeout, this, &AudioRecorder::onStopTimeout);
+
+    // Sailfish/GStreamer encoding configuration. IMPORTANT: the codec must
+    // be a real audio codec ("audio/PCM"), NOT the container mimetype
+    // ("audio/x-wav") — setting the container as codec fails with
+    // "Not compatible codecs and container format" and record() never
+    // starts. Pattern taken from mentaljam/sailfish-recorder, which works
+    // on Sailfish OS.
+    qWarning() << "AudioRecorder: supportedAudioCodecs:"
+               << m_recorder->supportedAudioCodecs()
+               << "supportedContainers:" << m_recorder->supportedContainers()
+               << "audioInputs:" << m_recorder->audioInputs();
+    m_recorder->setAudioInput(QStringLiteral("pulseaudio:"));
 
     QAudioEncoderSettings settings;
-    settings.setCodec("audio/x-wav");
+    settings.setCodec(QStringLiteral("audio/PCM"));
     settings.setQuality(QMultimedia::HighQuality);
     m_recorder->setEncodingSettings(settings);
+    m_recorder->setContainerFormat(QStringLiteral("wav"));
 }
 
 AudioRecorder::~AudioRecorder()
@@ -77,11 +100,14 @@ void AudioRecorder::record()
     qWarning() << "AudioRecorder::record() location:" << m_outputLocation
                << "state before:" << m_recorder->state()
                << "status before:" << m_recorder->status()
-               << "error before:" << m_recorder->errorString();
+               << "error before:" << m_recorder->errorString()
+               << "codec:" << m_recorder->audioSettings().codec()
+               << "container:" << m_recorder->containerFormat();
     m_stoppedEmitted = false;
     m_recorder->record();
     qWarning() << "AudioRecorder::record() state after:" << m_recorder->state()
-               << "status after:" << m_recorder->status();
+               << "status after:" << m_recorder->status()
+               << "error after:" << m_recorder->errorString();
 }
 
 void AudioRecorder::stop()

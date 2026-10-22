@@ -5,6 +5,27 @@ All notable changes to Skrynja will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.13] - 2026-10-22
+Skrynja 0.8.13 — Fix: recorder never recorded — wrong codec + broken signal connects.
+
+### Fixed
+- **Wrong audio codec (F18, root cause of "Could not read the recording
+  file")**: the recorder was configured with `setCodec("audio/x-wav")` —
+  but `audio/x-wav` is a *container* mimetype, not a codec. On Sailfish's
+  GStreamer backend this fails with "Not compatible codecs and container
+  format", `record()` never enters `RecordingState`, and no file is ever
+  written. Configuration is now codec `audio/PCM` + container `wav` +
+  audio input `pulseaudio:`, matching the working pattern from
+  mentaljam/sailfish-recorder. Supported codecs/containers/audio inputs
+  are logged at startup for on-device diagnostics.
+- **Broken signal connects on Qt 5.6 (F18)**: the string-based
+  `SIGNAL(stateChanged(QAudioRecorder::State))` connects failed on
+  Sailfish's Qt 5.6 with "No such signal" (moc registers the inherited
+  `QMediaRecorder::State` signature), so `onStateChanged`/`onError` never
+  ran on device. Replaced with compile-time-checked pointer-based
+  connects (`error` disambiguated with a static_cast, as it is overloaded).
+- `record()` log line now also prints the active codec and container.
+
 ## [0.8.12] - 2026-10-22
 Skrynja 0.8.12 — Fix: transcription race condition — transcription never started.
 
