@@ -13,6 +13,7 @@
 #include <QUrl>
 #include <QImage>
 #include <QImageWriter>
+#include <QSet>
 
 #include "categories.h"
 #include "conversationmodel.h"
@@ -2577,7 +2578,9 @@ private slots:
     }
 
     // Full round-trip with a strength preset: output is a valid WAV, and
-    // "strong" (pitch 1.28) shortens the audio more than "subtle" (1.10).
+    // "strong" (pitch ~1.24) shortens the audio more than "subtle" (~1.10).
+    // Pitch is jittered ±3% per recording (anti-voiceprint), so exact
+    // lengths vary — assert ranges instead of exact sizes.
     void anonymizeWithStrengthRoundTrip()
     {
         QTemporaryDir dir;
@@ -2606,15 +2609,104 @@ private slots:
                  | (static_cast<quint32>(static_cast<quint8>(wav[42])) << 16)
                  | (static_cast<quint32>(static_cast<quint8>(wav[43])) << 24);
         };
-        // 16000 / 1.10 = 14545 samples = 29090 bytes (subtle)
-        QCOMPARE(dataSize(outSubtle), 29090u);
-        // 16000 / 1.24 = 12903 samples = 25806 bytes (strong, shorter)
-        QCOMPARE(dataSize(outStrong), 25806u);
+        // Subtle: pitch in [1.067, 1.133] → 16000/pitch samples
+        // → between 14118 and 14996 samples → 28236..29992 bytes
+        const quint32 subtleSize = dataSize(outSubtle);
+        QVERIFY(subtleSize >= 28236u && subtleSize <= 29992u);
+        // Strong: pitch in [1.203, 1.277] → 12518..13304 samples
+        // → 25036..26608 bytes (strong is shorter than subtle)
+        const quint32 strongSize = dataSize(outStrong);
+        QVERIFY(strongSize >= 25036u && strongSize <= 26608u);
+        QVERIFY(strongSize < subtleSize);
         // The stronger preset must change the audio more: different payload.
         QFile fSub(outSubtle), fStr(outStrong);
         QVERIFY(fSub.open(QIODevice::ReadOnly));
         QVERIFY(fStr.open(QIODevice::ReadOnly));
         QVERIFY(fSub.readAll() != fStr.readAll());
+    }
+
+    // Anti-voiceprint: every anonymized recording must use a slightly
+    // different transformation (jittered pitch), so no two files share
+    // the same parameters and averaging/inversion across recordings fails.
+    void strengthJitterDiffersPerRecording()
+    {
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        const QString in = dir.filePath("in.wav");
+        QVERIFY(!writeTestWav(in, 16000).isEmpty());
+
+        auto dataSize = [](const QString &path) -> quint32 {
+            QFile f(path);
+            if (!f.open(QIODevice::ReadOnly)) return 0;
+            const QByteArray wav = f.readAll();
+            f.close();
+            if (wav.size() < 44) return 0;
+            return (static_cast<quint8>(wav[40]))
+                 | (static_cast<quint32>(static_cast<quint8>(wav[41])) << 8)
+                 | (static_cast<quint32>(static_cast<quint8>(wav[42])) << 16)
+                 | (static_cast<quint32>(static_cast<quint8>(wav[43])) << 24);
+        };
+
+        VoiceAnonymizer anonymizer;
+        QSet<quint32> sizes;
+        for (int i = 0; i < 3; ++i) {
+            const QString out = dir.filePath(QString("out%1.wav").arg(i));
+            QVERIFY(anonymizer.anonymizeWithStrength(in, out,
+                                                     VoiceAnonymizer::Medium));
+            sizes.insert(dataSize(out));
+        }
+        // Pitch jitter is ±3% → lengths span hundreds of samples; three
+        // recordings landing on the exact same length is practically
+        // impossible if jitter works.
+        QVERIFY(sizes.count() >= 2);
+    }
+
+    // Telephone band limiting: silence stays silent, length is preserved,
+    // and an out-of-band tone (6 kHz at 16 kHz sample rate) is attenuated
+    // while an in-band tone (1 kHz) passes mostly unchanged.
+    void bandLimitAttenuatesOutOfBandTone()
+    {
+        auto rms = [](const QByteArray &pcm) -> double {
+            const int count = pcm.size() / 2;
+            double acc = 0.0;
+            for (int i = 0; i < count; ++i) {
+                const qint16 s = static_cast<qint16>(
+                            static_cast<quint8>(pcm[i * 2])
+                            | (static_cast<quint16>(static_cast<quint8>(pcm[i * 2 + 1])) << 8));
+                acc += s * s;
+            }
+            return qSqrt(acc / qMax(1, count));
+        };
+        auto sine = [](double freq, quint32 sampleRate, int count) {
+            QByteArray pcm;
+            pcm.reserve(count * 2);
+            for (int i = 0; i < count; ++i) {
+                const qint16 v = static_cast<qint16>(
+                            qSin(2.0 * M_PI * freq * i / sampleRate) * 10000);
+                pcm.append(static_cast<char>(v & 0xFF));
+                pcm.append(static_cast<char>((v >> 8) & 0xFF));
+            }
+            return pcm;
+        };
+
+        // Out-of-band tone (6 kHz > 3400 Hz) must be strongly attenuated.
+        const QByteArray high = sine(6000.0, 16000, 16000);
+        const QByteArray highOut = VoiceAnonymizer::bandLimit(high, 16000);
+        QCOMPARE(highOut.size(), high.size());
+        QVERIFY(rms(highOut) < rms(high) * 0.10);   // > 20 dB down
+
+        // In-band tone (1 kHz) passes with only mild attenuation.
+        const QByteArray mid = sine(1000.0, 16000, 16000);
+        const QByteArray midOut = VoiceAnonymizer::bandLimit(mid, 16000);
+        QCOMPARE(midOut.size(), mid.size());
+        QVERIFY(rms(midOut) > rms(mid) * 0.70);    // less than 3 dB down
+
+        // Silence stays silent; degenerate input is a no-op.
+        QByteArray silence(4000, '\0');
+        QCOMPARE(VoiceAnonymizer::bandLimit(silence, 16000), silence);
+        QCOMPARE(VoiceAnonymizer::bandLimit(QByteArray("ab"), 16000),
+                 QByteArray("ab"));
+        QCOMPARE(VoiceAnonymizer::bandLimit(high, 0), high);
     }
 
     // F18b: the QML-facing wrapper takes a strength name, returns "" on

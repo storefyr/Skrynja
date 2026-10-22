@@ -27,12 +27,25 @@
 // The Strength presets combine these effects:
 //   subtle: pitch 1.10 + noise 0.005 (mild, still natural)
 //   medium: pitch 1.18 + ring 320 Hz @ 30% + noise 0.008 (recommended)
-//   strong: pitch 1.24 + ring 320 Hz @ 30% + noise 0.012 (max, may hurt STT)
+//   strong: pitch 1.24 + ring 320 Hz @ 30% + telephone band (300-3400 Hz)
+//           + noise 0.012 (max, may hurt STT)
 //
 // NOTE on ring modulation: the carrier frequency must stay ABOVE the
 // human voice fundamental range (85-255 Hz). At 180-220 Hz the sidebands
 // overlap the speech spectrum and the speech-to-text model hears
 // nonsense — verified on device (see v0.9.2 test round).
+//
+// Anti-voiceprint hardening (v0.9.5):
+// - The RNG is seeded per process. Without that, std::rand() produced the
+//   IDENTICAL noise pattern on every app start, and an attacker could
+//   average several anonymized recordings to recover and subtract it.
+// - anonymizeWithStrength() jitters pitch factor, ring frequency and noise
+//   level slightly per recording, so no two files share the same
+//   transformation — averaging or inverting across recordings fails.
+// - "strong" additionally band-limits the audio to the telephone band,
+//   stripping the out-of-speech-band spectral detail that voiceprint
+//   systems rely on. This is obfuscation, not a guarantee: the only true
+//   protection is keeping the audio on the device (local STT) or typing.
 //
 // Input/output: 16-bit PCM WAV files (the format AudioRecorder produces
 // with codec audio/PCM + container wav). Mono and stereo are supported;
@@ -94,6 +107,10 @@ public:
                                    quint32 sampleRate,
                                    double frequency,
                                    double depth);
+    // Telephone-band limiting (300-3400 Hz, two RBJ biquads): strips the
+    // spectral detail outside the speech band that voiceprint systems
+    // rely on. Speech-to-text models handle band-limited audio well.
+    static QByteArray bandLimit(const QByteArray &pcm16, quint32 sampleRate);
 };
 
 #endif

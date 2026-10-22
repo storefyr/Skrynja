@@ -5,7 +5,32 @@
 #include <QDebug>
 #include <QtGlobal>
 #include <QtMath>
+#include <QDateTime>
 #include <cstdlib>
+
+namespace {
+// Seed std::rand() once per process. Without a seed the C runtime uses
+// the default seed 1, so every app start would produce the IDENTICAL
+// noise pattern — an attacker could average several anonymized
+// recordings, recover the noise and subtract it. Seeding from the
+// current time + a random-ish address makes each run different.
+// (Not cryptographic — but enough to break deterministic averaging.)
+void seedRandOnce()
+{
+    static bool seeded = false;
+    if (seeded) return;
+    seeded = true;
+    const quint64 now = static_cast<quint64>(QDateTime::currentMSecsSinceEpoch());
+    const quint64 addr = reinterpret_cast<quintptr>(&seeded);
+    std::srand(static_cast<unsigned int>((now ^ addr) & 0xFFFFFFFFu));
+}
+
+// Uniform random double in [lo, hi).
+double uniformRand(double lo, double hi)
+{
+    return lo + (std::rand() / double(RAND_MAX)) * (hi - lo);
+}
+} // namespace
 
 VoiceAnonymizer::VoiceAnonymizer(QObject *parent)
     : QObject(parent)
@@ -225,6 +250,72 @@ VoiceAnonymizer::Strength VoiceAnonymizer::strengthFromString(const QString &nam
     return Medium;  // "medium" and anything unknown
 }
 
+QByteArray VoiceAnonymizer::bandLimit(const QByteArray &pcm16, quint32 sampleRate)
+{
+    if (sampleRate == 0 || pcm16.size() < 4) {
+        return pcm16;  // no-op
+    }
+    QByteArray out = pcm16;  // copy; filtered IN PLACE below
+    const int count = out.size() / 2;
+    char *d = out.data();
+
+    // Four RBJ biquads in series (Q = 0.707, Butterworth, Direct Form I):
+    // two high-passes at the 300 Hz telephone lower edge and two low-passes
+    // at the 3400 Hz upper edge — a 4th-order bandpass with steep skirts.
+    // A single 2nd-order stage only attenuates ~10 dB at 6 kHz; cascading
+    // doubles the slope. This strips the spectral detail outside the
+    // speech band that voiceprint systems rely on, while speech-to-text
+    // models (trained on telephone audio) handle it well.
+    struct Biquad {
+        double b0, b1, b2, a1, a2;
+        double x1, x2, y1, y2;
+    };
+    const double nyquist = sampleRate / 2.0;
+    auto makeBiquad = [nyquist, sampleRate](double f0, bool highpass) {
+        Biquad bq = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+        if (f0 <= 0.0) return bq;
+        if (f0 >= 0.45 * nyquist) f0 = 0.45 * nyquist;  // stay stable
+        const double w0 = 2.0 * M_PI * f0 / double(sampleRate);
+        const double alpha = qSin(w0) / (2.0 * 0.7071);
+        const double cosw0 = qCos(w0);
+        const double a0 = 1.0 + alpha;
+        if (highpass) {
+            bq.b0 = (1.0 + cosw0) / 2.0 / a0;
+            bq.b1 = -(1.0 + cosw0) / a0;
+            bq.b2 = (1.0 + cosw0) / 2.0 / a0;
+        } else {
+            bq.b0 = (1.0 - cosw0) / 2.0 / a0;
+            bq.b1 = (1.0 - cosw0) / a0;
+            bq.b2 = (1.0 - cosw0) / 2.0 / a0;
+        }
+        bq.a1 = -2.0 * cosw0 / a0;
+        bq.a2 = (1.0 - alpha) / a0;
+        return bq;
+    };
+    Biquad hp1 = makeBiquad(300.0, true);
+    Biquad hp2 = makeBiquad(300.0, true);
+    Biquad lp1 = makeBiquad(3400.0, false);
+    Biquad lp2 = makeBiquad(3400.0, false);
+
+    for (int i = 0; i < count; ++i) {
+        const double x = static_cast<qint16>(readU16(d + i * 2));
+        double y = x;
+        // Two high-pass stages, then two low-pass stages.
+        Biquad *stages[4] = {&hp1, &hp2, &lp1, &lp2};
+        for (int s = 0; s < 4; ++s) {
+            Biquad *bq = stages[s];
+            const double z = bq->b0 * y + bq->b1 * bq->x1 + bq->b2 * bq->x2
+                           - bq->a1 * bq->y1 - bq->a2 * bq->y2;
+            bq->x2 = bq->x1; bq->x1 = y; bq->y2 = bq->y1; bq->y1 = z;
+            y = z;
+        }
+        const qint16 sv = static_cast<qint16>(qBound(-32768.0, y, 32767.0));
+        d[i * 2] = static_cast<char>(sv & 0xFF);
+        d[i * 2 + 1] = static_cast<char>((sv >> 8) & 0xFF);
+    }
+    return out;
+}
+
 // ---------------------------------------------------------------------------
 // File-level anonymization
 // ---------------------------------------------------------------------------
@@ -275,9 +366,12 @@ bool VoiceAnonymizer::anonymizeWithStrength(const QString &inputFile,
                                             Strength strength,
                                             QString *errorMessage)
 {
+    seedRandOnce();
+
     // Strength presets: pitch factor, ring modulation (frequency in Hz,
-    // depth 0..1) and white-noise level. Chosen so that each step is a
-    // clearly audible change while transcription stays accurate.
+    // depth 0..1), telephone band limiting and white-noise level. Chosen
+    // so that each step is a clearly audible change while transcription
+    // stays accurate.
     //
     // Ring modulation pitfall (found in on-device testing): a low carrier
     // frequency (<= ~220 Hz) sits inside the fundamental range of the
@@ -285,9 +379,15 @@ bool VoiceAnonymizer::anonymizeWithStrength(const QString &inputFile,
     // speech spectrum — the speech-to-text model then hears nonsense
     // ("Spark, anonymous, ein SM" instead of the spoken sentence).
     // The carrier must stay ABOVE the speech range: 300 Hz and up.
+    //
+    // Anti-voiceprint jitter: pitch, ring frequency and noise level are
+    // varied by a few percent per recording, so no two anonymized files
+    // share the same transformation — averaging or inverting across
+    // recordings fails. The jitter is small enough to stay STT-safe.
     double pitchFactor = 1.10;
     double ringFreq = 0.0;
     double ringDepth = 0.0;
+    bool bandLimited = false;
     double noiseLevel = 0.005;
     switch (strength) {
     case Subtle:
@@ -301,14 +401,24 @@ bool VoiceAnonymizer::anonymizeWithStrength(const QString &inputFile,
         noiseLevel = 0.008;
         break;
     case Strong:
-        // Maximum effort: same proven-safe ring settings as Medium, only
-        // more pitch shift and noise. Even this can reduce transcription
-        // accuracy — Medium is the recommended everyday level.
+        // Maximum effort: same proven-safe ring settings as Medium, more
+        // pitch shift and noise, PLUS telephone-band limiting (strips the
+        // out-of-speech-band spectral detail voiceprint systems use).
+        // Even this can reduce transcription accuracy — Medium is the
+        // recommended everyday level.
         pitchFactor = 1.24;
         ringFreq = 320.0;   // above the voice fundamental range
         ringDepth = 0.30;
+        bandLimited = true;
         noiseLevel = 0.012;
         break;
+    }
+
+    // Per-recording jitter (±3% on pitch/noise, ±5% on ring frequency).
+    pitchFactor = qBound(1.05, pitchFactor * uniformRand(0.97, 1.03), 1.30);
+    noiseLevel = qMax(0.0, noiseLevel * uniformRand(0.97, 1.03));
+    if (ringFreq > 0.0) {
+        ringFreq = qBound(300.0, ringFreq * uniformRand(0.95, 1.05), 400.0);
     }
 
     const WavData wav = readWav(inputFile);
@@ -331,6 +441,9 @@ bool VoiceAnonymizer::anonymizeWithStrength(const QString &inputFile,
     if (ringDepth > 0.0) {
         processed = ringModulate(processed, wav.sampleRate, ringFreq, ringDepth);
     }
+    if (bandLimited) {
+        processed = bandLimit(processed, wav.sampleRate);
+    }
     if (noiseLevel > 0.0) {
         processed = addNoise(processed, noiseLevel);
     }
@@ -348,6 +461,7 @@ bool VoiceAnonymizer::anonymizeWithStrength(const QString &inputFile,
                << "(strength" << strength
                << ", pitch" << pitchFactor
                << ", ring" << ringFreq << "Hz @" << ringDepth
+               << (bandLimited ? ", band-limited" : "")
                << ", noise" << noiseLevel << ")";
     return true;
 }

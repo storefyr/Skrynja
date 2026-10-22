@@ -5,6 +5,36 @@ All notable changes to Skrynja will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.5] - 2026-10-22
+Skrynja 0.9.5 — Voice anonymization: anti-voiceprint hardening.
+
+### Security
+- **Deterministic noise bug fixed**: `std::rand()` was never seeded, so
+  every app start produced the *identical* noise pattern. An attacker who
+  knew the algorithm could average several anonymized recordings, recover
+  the noise and subtract it. The RNG is now seeded per process.
+- **Per-recording jitter**: pitch factor, ring frequency and noise level
+  are varied by a few percent for every recording, so no two anonymized
+  files share the same transformation — averaging or inverting across
+  recordings no longer works. The jitter is small enough to stay
+  speech-to-text safe.
+- **Telephone-band limiting in "strong"**: a 300–3400 Hz biquad filter
+  strips the out-of-speech-band spectral detail that voiceprint systems
+  rely on. STT models (trained on telephone audio) handle this well.
+
+### Honest limits (unchanged, now also in code comments)
+Anonymization is obfuscation, not encryption. The only true protection
+against voiceprinting is keeping the audio on the device (local STT,
+e.g. whisper.cpp — a possible future feature) or typing instead of
+speaking.
+
+### Added
+- `VoiceAnonymizer::bandLimit()` (two RBJ biquads, HP 300 Hz + LP 3400 Hz).
+- 2 new unit tests: per-recording jitter produces different output sizes;
+  band limiting attenuates a 6 kHz tone by > 20 dB while passing a 1 kHz
+  tone with < 3 dB loss. Round-trip test now asserts ranges (jitter makes
+  exact lengths non-deterministic).
+
 ## [0.9.4] - 2026-10-22
 Skrynja 0.9.4 — Voice anonymization: "strong" retuned after second on-device test.
 

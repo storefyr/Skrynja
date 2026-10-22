@@ -701,7 +701,7 @@ Dialog {
     function voiceStrengthDescription(strength) {
         switch (strength) {
         case "subtle": return qsTr("Slight pitch shift and faint background noise. Still sounds like you.")
-        case "strong": return qsTr("Maximum anonymization: strong pitch shift, ring modulation and more noise. Hides your voice best, but may reduce transcription accuracy.")
+        case "strong": return qsTr("Maximum anonymization: strong pitch shift, ring modulation, telephone-band filtering and more noise. Pitch and noise vary slightly per recording so averaging cannot undo them. May reduce transcription accuracy.")
         default: return qsTr("Pitch shift plus a subtle robotic modulation of your voice. Recommended for everyday use.")
         }
     }
