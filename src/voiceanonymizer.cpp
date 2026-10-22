@@ -250,6 +250,45 @@ VoiceAnonymizer::Strength VoiceAnonymizer::strengthFromString(const QString &nam
     return Medium;  // "medium" and anything unknown
 }
 
+QByteArray VoiceAnonymizer::spectralTilt(const QByteArray &pcm16,
+                                         quint32 sampleRate,
+                                         double tilt)
+{
+    if (tilt == 0.0 || sampleRate == 0 || pcm16.size() < 2) {
+        return pcm16;  // no-op
+    }
+    QByteArray out = pcm16;  // copy; filtered IN PLACE below
+    const int count = out.size() / 2;
+    char *d = out.data();
+
+    // One-pole filter with a = exp(-2*pi*fc/sr) (0 < a < 1, stable).
+    // We map tilt to a cutoff frequency so that:
+    //   tilt -0.35 (medium) → fc ≈ 0.044 * sr  (~700 Hz @ 16 kHz)
+    //   tilt -0.55 (strong) → fc ≈ 0.069 * sr  (~1100 Hz @ 16 kHz)
+    // A negative tilt low-passes (darker timbre, "radio voice"); a positive
+    // tilt high-passes (brighter). Unlike ring modulation the harmonic
+    // structure stays intact, which keeps the audio STT-friendly.
+    const double fc = sampleRate * qAbs(tilt) / 8.0;
+    const double a = qExp(-2.0 * M_PI * fc / double(sampleRate));
+    double yPrev = 0.0;
+    double xPrev = 0.0;
+    for (int i = 0; i < count; ++i) {
+        const double x = static_cast<qint16>(readU16(d + i * 2));
+        double y;
+        if (tilt < 0.0) {
+            y = (1.0 - a) * x + a * yPrev;                  // low-pass
+        } else {
+            y = a * (yPrev + x - xPrev);                    // high-pass
+        }
+        yPrev = y;
+        xPrev = x;
+        const qint16 sv = static_cast<qint16>(qBound(-32768.0, y, 32767.0));
+        d[i * 2] = static_cast<char>(sv & 0xFF);
+        d[i * 2 + 1] = static_cast<char>((sv >> 8) & 0xFF);
+    }
+    return out;
+}
+
 QByteArray VoiceAnonymizer::bandLimit(const QByteArray &pcm16, quint32 sampleRate)
 {
     if (sampleRate == 0 || pcm16.size() < 4) {
@@ -368,25 +407,23 @@ bool VoiceAnonymizer::anonymizeWithStrength(const QString &inputFile,
 {
     seedRandOnce();
 
-    // Strength presets: pitch factor, ring modulation (frequency in Hz,
-    // depth 0..1), telephone band limiting and white-noise level. Chosen
-    // so that each step is a clearly audible change while transcription
-    // stays accurate.
+    // Strength presets: pitch factor, spectral tilt, telephone band
+    // limiting and white-noise level. Chosen so that each step is a
+    // clearly audible change while transcription stays accurate.
     //
-    // Ring modulation pitfall (found in on-device testing): a low carrier
-    // frequency (<= ~220 Hz) sits inside the fundamental range of the
-    // human voice (85-255 Hz) and creates sidebands that overlap the
-    // speech spectrum — the speech-to-text model then hears nonsense
-    // ("Spark, anonymous, ein SM" instead of the spoken sentence).
-    // The carrier must stay ABOVE the speech range: 300 Hz and up.
+    // NOTE (v0.9.6): ring modulation is no longer used in any preset.
+    // On-device testing (v0.9.2–v0.9.5) showed it kept raising the
+    // transcription error rate even with a carrier above the voice range,
+    // because it destroys the harmonic structure that STT models rely on.
+    // Spectral tilt changes the timbre just as clearly but keeps the
+    // harmonics intact — STT models handle it far better.
     //
-    // Anti-voiceprint jitter: pitch, ring frequency and noise level are
-    // varied by a few percent per recording, so no two anonymized files
-    // share the same transformation — averaging or inverting across
-    // recordings fails. The jitter is small enough to stay STT-safe.
+    // Anti-voiceprint jitter: pitch, tilt and noise level are varied by a
+    // few percent per recording, so no two anonymized files share the same
+    // transformation — averaging or inverting across recordings fails.
+    // The jitter is small enough to stay STT-safe.
     double pitchFactor = 1.10;
-    double ringFreq = 0.0;
-    double ringDepth = 0.0;
+    double tilt = 0.0;
     bool bandLimited = false;
     double noiseLevel = 0.005;
     switch (strength) {
@@ -396,29 +433,26 @@ bool VoiceAnonymizer::anonymizeWithStrength(const QString &inputFile,
         break;
     case Medium:
         pitchFactor = 1.18;
-        ringFreq = 320.0;   // above the voice fundamental range
-        ringDepth = 0.30;
+        tilt = -0.35;       // darker timbre, "radio voice"
         noiseLevel = 0.008;
         break;
     case Strong:
-        // Maximum effort: same proven-safe ring settings as Medium, more
-        // pitch shift and noise, PLUS telephone-band limiting (strips the
-        // out-of-speech-band spectral detail voiceprint systems use).
-        // Even this can reduce transcription accuracy — Medium is the
-        // recommended everyday level.
+        // Maximum effort: more pitch shift, stronger tilt, telephone-band
+        // limiting (strips the out-of-speech-band spectral detail
+        // voiceprint systems use) and more noise. Even this can reduce
+        // transcription accuracy — Medium is the recommended level.
         pitchFactor = 1.24;
-        ringFreq = 320.0;   // above the voice fundamental range
-        ringDepth = 0.30;
+        tilt = -0.55;
         bandLimited = true;
         noiseLevel = 0.012;
         break;
     }
 
-    // Per-recording jitter (±3% on pitch/noise, ±5% on ring frequency).
+    // Per-recording jitter (±3% on pitch/noise/tilt).
     pitchFactor = qBound(1.05, pitchFactor * uniformRand(0.97, 1.03), 1.30);
     noiseLevel = qMax(0.0, noiseLevel * uniformRand(0.97, 1.03));
-    if (ringFreq > 0.0) {
-        ringFreq = qBound(300.0, ringFreq * uniformRand(0.95, 1.05), 400.0);
+    if (tilt != 0.0) {
+        tilt = qBound(-0.70, tilt * uniformRand(0.97, 1.03), -0.15);
     }
 
     const WavData wav = readWav(inputFile);
@@ -438,8 +472,8 @@ bool VoiceAnonymizer::anonymizeWithStrength(const QString &inputFile,
     if (!qFuzzyCompare(pitchFactor, 1.0)) {
         processed = shiftPitch(processed, pitchFactor);
     }
-    if (ringDepth > 0.0) {
-        processed = ringModulate(processed, wav.sampleRate, ringFreq, ringDepth);
+    if (tilt != 0.0) {
+        processed = spectralTilt(processed, wav.sampleRate, tilt);
     }
     if (bandLimited) {
         processed = bandLimit(processed, wav.sampleRate);
@@ -460,7 +494,7 @@ bool VoiceAnonymizer::anonymizeWithStrength(const QString &inputFile,
                << QFileInfo(outputFile).size() << "bytes"
                << "(strength" << strength
                << ", pitch" << pitchFactor
-               << ", ring" << ringFreq << "Hz @" << ringDepth
+               << ", tilt" << tilt
                << (bandLimited ? ", band-limited" : "")
                << ", noise" << noiseLevel << ")";
     return true;

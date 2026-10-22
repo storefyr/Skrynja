@@ -5,6 +5,27 @@ All notable changes to Skrynja will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.6] - 2026-10-22
+Skrynja 0.9.6 — Voice anonymization: ring modulation removed from presets, replaced by spectral tilt.
+
+### Changed
+- **Ring modulation is no longer used in any preset.** Three on-device
+  test rounds (v0.9.2–v0.9.5) showed it kept raising the transcription
+  error rate even with the carrier above the voice range, because it
+  destroys the harmonic structure that speech-to-text models rely on.
+  The DSP primitive `ringModulate()` stays (unit-tested) but unused.
+- **Spectral tilt replaces it** in the presets: a one-pole low-pass that
+  darkens the timbre (the "radio voice" sound). It changes the voice just
+  as clearly but keeps the harmonic structure intact — STT models handle
+  it far better.
+  - Medium: pitch ~1.18 + tilt −0.35 + noise
+  - Strong: pitch ~1.24 + tilt −0.55 + telephone-band limiting + more noise
+- Jitter now applies to tilt instead of ring frequency.
+
+### Added
+- `VoiceAnonymizer::spectralTilt()` + unit tests (no-op at 0, low tone
+  passes, high tone attenuated, silence stays silent).
+
 ## [0.9.5] - 2026-10-22
 Skrynja 0.9.5 — Voice anonymization: anti-voiceprint hardening.
 

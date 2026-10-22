@@ -2661,6 +2661,62 @@ private slots:
         QVERIFY(sizes.count() >= 2);
     }
 
+    // Spectral tilt with 0 is a no-op.
+    void spectralTiltZeroIsNoOp()
+    {
+        QByteArray pcm;
+        for (int i = 0; i < 500; ++i) {
+            pcm.append(static_cast<char>(i & 0xFF));
+            pcm.append(static_cast<char>((i >> 8) & 0xFF));
+        }
+        QCOMPARE(VoiceAnonymizer::spectralTilt(pcm, 16000, 0.0), pcm);
+    }
+
+    // A negative spectral tilt low-passes: a high-frequency tone is
+    // attenuated while a low-frequency tone passes mostly unchanged.
+    // Length is always preserved.
+    void spectralTiltAttenuatesHighFrequencies()
+    {
+        auto rms = [](const QByteArray &pcm) -> double {
+            const int count = pcm.size() / 2;
+            double acc = 0.0;
+            for (int i = 0; i < count; ++i) {
+                const qint16 s = static_cast<qint16>(
+                            static_cast<quint8>(pcm[i * 2])
+                            | (static_cast<quint16>(static_cast<quint8>(pcm[i * 2 + 1])) << 8));
+                acc += s * s;
+            }
+            return qSqrt(acc / qMax(1, count));
+        };
+        auto sine = [](double freq, quint32 sampleRate, int count) {
+            QByteArray pcm;
+            pcm.reserve(count * 2);
+            for (int i = 0; i < count; ++i) {
+                const qint16 v = static_cast<qint16>(
+                            qSin(2.0 * M_PI * freq * i / sampleRate) * 10000);
+                pcm.append(static_cast<char>(v & 0xFF));
+                pcm.append(static_cast<char>((v >> 8) & 0xFF));
+            }
+            return pcm;
+        };
+
+        // Low tone (200 Hz) — inside the voice fundamental range, passes.
+        const QByteArray low = sine(200.0, 16000, 16000);
+        const QByteArray lowOut = VoiceAnonymizer::spectralTilt(low, 16000, -0.35);
+        QCOMPARE(lowOut.size(), low.size());
+        QVERIFY(rms(lowOut) > rms(low) * 0.50);
+
+        // High tone (6 kHz) — attenuated by the low-pass tilt.
+        const QByteArray high = sine(6000.0, 16000, 16000);
+        const QByteArray highOut = VoiceAnonymizer::spectralTilt(high, 16000, -0.35);
+        QCOMPARE(highOut.size(), high.size());
+        QVERIFY(rms(highOut) < rms(high) * 0.50);
+
+        // Silence stays silent.
+        QByteArray silence(4000, '\0');
+        QCOMPARE(VoiceAnonymizer::spectralTilt(silence, 16000, -0.35), silence);
+    }
+
     // Telephone band limiting: silence stays silent, length is preserved,
     // and an out-of-band tone (6 kHz at 16 kHz sample rate) is attenuated
     // while an in-band tone (1 kHz) passes mostly unchanged.
