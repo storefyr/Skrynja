@@ -475,10 +475,17 @@ Page {
                             if (chatPage.recording) {
                                 // Stop recording. Transcription starts when
                                 // the recorder emits 'stopped' (file is flushed).
+                                // IMPORTANT: set transcribing BEFORE stop() —
+                                // stop() may emit 'stopped' synchronously (when
+                                // the recorder is not in RecordingState), and
+                                // onStopped only transcribes when transcribing
+                                // is already true. Setting it after stop() made
+                                // the transcription never start, so the
+                                // watchdog always fired with "took too long".
                                 chatPage.recording = false
-                                globalAudioRecorder.stop()
                                 chatPage.transcribing = true
                                 transcribingWatchdog.restart()
+                                globalAudioRecorder.stop()
                             } else if (!chatPage.transcribing) {
                                 // Start recording
                                 chatPage.recordingPath = mistralApi.tempAudioPath()

@@ -1,12 +1,12 @@
 #!/bin/sh
 # Skrynja update script - run on the Sailfish OS device
 # Usage: sh update.sh [version] [arch]
-# Example: sh update.sh 0.8.11
-#          sh update.sh 0.8.11 armv7hl   (override auto-detected arch)
+# Example: sh update.sh 0.8.12
+#          sh update.sh 0.8.12 armv7hl   (override auto-detected arch)
 
 set -e
 
-VERSION="${1:-0.8.11}"
+VERSION="${1:-0.8.12}"
 
 # Auto-detect the device architecture unless overridden as the 2nd argument
 if [ -n "$2" ]; then

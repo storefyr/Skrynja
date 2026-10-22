@@ -5,6 +5,20 @@ All notable changes to Skrynja will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.12] - 2026-10-22
+Skrynja 0.8.12 — Fix: transcription race condition — transcription never started.
+
+### Fixed
+- **Transcription race condition (F18)**: `chatPage.transcribing` was set to
+  `true` *after* `globalAudioRecorder.stop()` was called. When the recorder
+  is not in `RecordingState`, `stop()` emits `stopped` **synchronously**, so
+  the `onStopped` handler ran while `transcribing` was still `false` and
+  skipped the `transcribeAudio()` call entirely. The watchdog then fired
+  after 120 s with "The transcription took too long" — even though no
+  transcription request was ever sent. This explains why v0.8.11 (Voxtral 3
+  model) showed the exact same symptom on device. `transcribing` and the
+  watchdog are now set **before** `stop()` is called.
+
 ## [0.8.11] - 2026-10-22
 Skrynja 0.8.11 — Fix: voice transcription works for Danish speakers.
 
