@@ -158,6 +158,7 @@ DELETE https://api.mistral.ai/v1/conversations/{id}          (delete a conversat
 - ⚠️ **With the Conversations API, the conversation history also lives on Mistral's servers** — that is the price of server-side memory and web search
 - ⚠️ On Mistral's free "Experiment" plan, API inputs and outputs go into their model training programs by default. Opt out in the Admin Console privacy settings if that matters to you
 - ⚠️ Your API key gives access to your Mistral account - keep it secret
+- ⚠️ **Developer mode (experimental, off by default)** lets the AI read, edit and create files and run shell commands in a local workspace inside the app's SailJail sandbox (`~/.local/share/org.skrynja/Skrynja/workspace`, a clone of this repository). Enable it per conversation in the conversation's settings. Paths cannot escape the workspace, but `run_command` executes arbitrary shell commands there — only enable it when you trust the model's answers. Requires `git` on the device for the first-time clone.
 
 ## 🚀 Releases & CI/CD
 

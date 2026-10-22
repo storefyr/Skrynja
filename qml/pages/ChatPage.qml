@@ -27,6 +27,13 @@ Page {
     // Server-side tool currently running (e.g. web_search), empty when idle.
     property string toolName: ""
 
+    // F19: developer mode — the model's tool calls are executed locally and
+    // the results fed back. Counts the tool rounds of the current user turn
+    // so a runaway model cannot loop forever.
+    property int toolRounds: 0
+    property int maxToolRounds: 10
+    property bool devToolsActive: false
+
     // Set while a rate-limited request waits its turn again. The answer is
     // still coming, so this is a notice, not an error.
     property int retrySeconds: 0
@@ -806,6 +813,10 @@ Page {
                 chatPage.titleRequested = true
                 chatPage.labelConversation(conversationId)
             }
+
+            // F19: developer mode — if the model answered with tool calls,
+            // run them locally and feed the results back as a new user turn.
+            chatPage.runToolCalls(conversationId)
         }
 
         onCurrentConversationChanged: {
@@ -928,11 +939,126 @@ Page {
                                                  : settingsManager.systemPrompt
     }
 
+    // F19: the instruction block prepended to the first user turn after
+    // developer mode is enabled. English, like the preset prompts: the
+    // model understands it best and it is developer-facing, not user-facing.
+    function devToolsInstructions() {
+        return "You are running inside Skrynja, a Sailfish OS app, with local "
+             + "developer tools enabled. You can read, edit and create files and "
+             + "run shell commands in a local workspace on the user's device "
+             + "(" + devTools.workspaceRoot() + "), a clone of the Skrynja "
+             + "repository. To use a tool, include a block like this in your "
+             + "answer — nothing else on the block line:\n"
+             + "<tool name=\"read_file\"><path>src/main.cpp</path></tool>\n"
+             + "Available tools:\n"
+             + "- read_file: <path> — read a UTF-8 file (max 200 KB)\n"
+             + "- list_dir: <path> (optional, default root) — list a directory\n"
+             + "- search: <pattern> and optional <dir> — grep-like search (max 100 matches)\n"
+             + "- edit_file: <path>, <old_text>, <new_text> — replace one exact, unique occurrence\n"
+             + "- write_file: <path>, <content> — create or overwrite a file (max 1 MB)\n"
+             + "- run_command: <command> — run a shell command in the workspace (60 s timeout)\n"
+             + "Paths are relative to the workspace; absolute paths and \"..\" "
+             + "are rejected. When you call tools, the user sees only your "
+             + "text; the tool blocks are replaced by their results, which "
+             + "arrive as a new user message starting with \"Tool result\". "
+             + "Call tools one block at a time when a result decides the next "
+             + "call. Never invent file contents — read first."
+    }
+
+    // F19: the tool-call loop. If the last assistant message contains tool
+    // calls, run them, feed the results back as a user message, and ask the
+    // model again. Bounded by maxToolRounds so a looping model stops.
+    function runToolCalls(conversationId) {
+        if (mistralApi.isBusy) {
+            return
+        }
+        if (!conversationManager.isDevToolsEnabled(conversationId)) {
+            chatPage.devToolsActive = false
+            return
+        }
+        if (conversationId !== conversationManager.currentConversationId()) {
+            return
+        }
+
+        var answer = conversationModel.getLastAssistantMessage()
+        var calls = devTools.parseToolCalls(answer)
+        if (calls.length === 0) {
+            chatPage.devToolsActive = false
+            return
+        }
+        if (chatPage.toolRounds >= chatPage.maxToolRounds) {
+            console.warn("F19: tool round limit reached, stopping the loop")
+            chatPage.devToolsActive = false
+            errorNotification.previewSummary = qsTr("Developer mode")
+            errorNotification.previewBody =
+                    qsTr("The assistant kept calling tools; the loop was stopped after %1 rounds.")
+                    .arg(chatPage.maxToolRounds)
+            errorNotification.publish()
+            return
+        }
+        chatPage.toolRounds++
+
+        // Show what the model is doing while the tools run.
+        chatPage.devToolsActive = true
+        chatPage.toolName = calls.length === 1 ? calls[0].name
+                                               : calls.length + " tools"
+
+        // The raw <tool> blocks are replaced by a short marker in the bubble.
+        var visible = devTools.stripToolCalls(answer)
+        if (visible === "") {
+            visible = qsTr("Running %1…").arg(chatPage.toolName)
+        }
+        conversationModel.updateLastAssistantMessage(visible)
+
+        var resultText = ""
+        for (var i = 0; i < calls.length; ++i) {
+            var call = calls[i]
+            var result = devTools.runTool(call.name, call.args)
+            if (i > 0) {
+                resultText += "\n\n"
+            }
+            if (result.ok) {
+                resultText += "Tool result for " + call.name + ":\n"
+                            + result.output
+            } else {
+                resultText += "Tool " + call.name + " failed: "
+                            + (result.error || qsTr("unknown error"))
+            }
+        }
+
+        conversationModel.addUserMessage(resultText, "")
+        conversationManager.saveCurrentConversation()
+        chatPage.dispatchRequest()
+    }
+
     function dispatchRequest() {
         var content = conversationManager.pendingUserContent()
         var imagePath = conversationManager.pendingUserImagePath()
         if (content.trim().length === 0 && imagePath === "") {
             return
+        }
+
+        // F19: developer mode. The tool instructions cannot go into the
+        // system prompt: the Conversations API locks "instructions" when the
+        // conversation is created, so they would survive even after the user
+        // disables developer mode. They travel as a prefix on the first user
+        // turn after activation instead, exactly once.
+        var convId = conversationManager.currentConversationId()
+        if (conversationManager.isDevToolsEnabled(convId)
+                && !conversationManager.devToolsInstructionsSent(convId)) {
+            // NOTE: ensureWorkspace() takes no QString* argument — QML cannot
+            // pass one (same reason VoiceAnonymizer has anonymizeFile()).
+            if (!devTools.ensureWorkspace()) {
+                errorNotification.previewSummary = qsTr("Developer mode unavailable")
+                errorNotification.previewBody = devTools.lastError()
+                errorNotification.publish()
+                conversationManager.setDevToolsEnabled(convId, false)
+                return
+            }
+            content = devToolsInstructions() + "\n\n" + content
+            conversationModel.updateLastUserMessage(content)
+            conversationManager.saveCurrentConversation()
+            conversationManager.markDevToolsInstructionsSent(convId)
         }
 
         // F14: when an image is attached, upload it to Mistral's Files API
@@ -995,6 +1121,7 @@ Page {
 
         messageInput.text = ""
         messageInput.focus = false
+        chatPage.toolRounds = 0
         conversationModel.addUserMessage(message, imagePath)
 
         // Persist before the round trip: losing the question because the app

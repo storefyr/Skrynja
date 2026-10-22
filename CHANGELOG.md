@@ -5,6 +5,43 @@ All notable changes to Skrynja will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.9] - 2026-10-22
+Skrynja 0.9.9 — EXPERIMENTAL: developer tools — the AI gets local file and command access (F19).
+
+> **Experimental**: developer mode is off by default and enabled per
+> conversation. It lets the model read, edit and create files and run shell
+> commands in a local workspace on your device. Use it to develop Skrynja
+> from inside Skrynja.
+
+### Added
+- **Developer tools (F19, experimental)**: when "Developer mode" is enabled in
+  a conversation's settings, the model can use six local tools — `read_file`,
+  `list_dir`, `search`, `edit_file`, `write_file` and `run_command`. The model
+  emits `<tool name="...">...</tool>` blocks; the app runs them on the device
+  and feeds the results back as a new user turn (max 10 rounds per question).
+  The raw tool blocks are replaced by a short marker in the chat bubble.
+- **Workspace**: `~/.local/share/org.skrynja/Skrynja/workspace` (inside the
+  app's SailJail sandbox). Cloned from `github.com/storefyr/Skrynja` on first
+  use. Requires `git` on the device (`devel-su pkcon install git`).
+- **Path safety**: all tool paths are resolved against the workspace root;
+  absolute paths, `~` and `..` traversal are rejected.
+- **Limits**: reads capped at 200 KB, writes at 1 MB, directory listings at
+  500 entries, searches at 100 matches, commands time out after 60 s.
+- **Per conversation**: the toggle lives in the conversation's settings page
+  ("Developer mode" section). The tool instructions are sent to the model
+  once, as a prefix on the first user turn after activation — they cannot go
+  into the system prompt, because the Conversations API locks `instructions`
+  at create time and they could not be removed again.
+- **27 new unit tests** for the parser, path safety, read/write/edit, search
+  and command execution (173 total, all passing).
+
+### Fixed
+- **Zero warnings, for real**: the `QString::split(..., SkipEmptyParts)`
+  overloads that Qt 5.15 marks deprecated (but Qt 5.6 on Sailfish only has)
+  are now wrapped in `#pragma GCC diagnostic ignored
+  "-Wdeprecated-declarations"` — the Sailfish build stays on the Qt 5.6 API
+  and the desktop build is warning-free.
+
 ## [0.9.8] - 2026-10-22
 Skrynja 0.9.8 — Maintenance: complete Danish translations, zero build warnings, roadmap cleanup.
 

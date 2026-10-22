@@ -384,6 +384,13 @@ QJsonObject ConversationManager::conversationToJson(const Conversation &conv) co
     if (conv.archived) {
         obj["archived"] = true;
     }
+    // F19: developer tools, off unless explicitly enabled per conversation.
+    if (conv.devToolsEnabled) {
+        obj["devToolsEnabled"] = true;
+    }
+    if (conv.devToolsInstructionsSent) {
+        obj["devToolsInstructionsSent"] = true;
+    }
     obj["unread"] = conv.unread;
     obj["createdAt"] = conv.createdAt;
     obj["updatedAt"] = conv.updatedAt;
@@ -438,6 +445,9 @@ Conversation ConversationManager::conversationFromJson(const QJsonObject &obj)
     // remote conversation does not exist yet (D8: start fresh, no replay).
     conv.remoteConversationId = obj["remoteConversationId"].toString();
     conv.archived = obj["archived"].toBool();
+    // F19: absent in files written before this feature -> off by default.
+    conv.devToolsEnabled = obj["devToolsEnabled"].toBool();
+    conv.devToolsInstructionsSent = obj["devToolsInstructionsSent"].toBool();
     conv.unread = obj["unread"].toBool();
     conv.createdAt = obj["createdAt"].toVariant().toLongLong();
     conv.updatedAt = obj["updatedAt"].toVariant().toLongLong();
@@ -935,6 +945,43 @@ QString ConversationManager::remoteConversationId() const
 {
     const Conversation *conv = findConversation(m_currentConversationId);
     return conv ? conv->remoteConversationId : QString();
+}
+
+bool ConversationManager::isDevToolsEnabled(const QString &conversationId) const
+{
+    const Conversation *conv = findConversation(conversationId);
+    return conv ? conv->devToolsEnabled : false;
+}
+
+void ConversationManager::setDevToolsEnabled(const QString &conversationId,
+                                             bool enabled)
+{
+    Conversation *conv = findConversation(conversationId);
+    if (!conv || conv->devToolsEnabled == enabled) {
+        return;
+    }
+
+    conv->devToolsEnabled = enabled;
+    markDirty(conversationId);
+    saveDirtyConversations();
+}
+
+bool ConversationManager::devToolsInstructionsSent(const QString &conversationId) const
+{
+    const Conversation *conv = findConversation(conversationId);
+    return conv ? conv->devToolsInstructionsSent : false;
+}
+
+void ConversationManager::markDevToolsInstructionsSent(const QString &conversationId)
+{
+    Conversation *conv = findConversation(conversationId);
+    if (!conv || conv->devToolsInstructionsSent) {
+        return;
+    }
+
+    conv->devToolsInstructionsSent = true;
+    markDirty(conversationId);
+    saveDirtyConversations();
 }
 
 QString ConversationManager::pendingUserContent() const
@@ -1477,6 +1524,10 @@ QVariantMap ConversationManager::getConversationStatistics(const QString &conver
     return stats;
 }
 
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
 QVariantMap ConversationManager::getFunStats() const
 {
     QVariantMap stats;
@@ -1572,6 +1623,10 @@ QVariantMap ConversationManager::getFunStats() const
 
     return stats;
 }
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
 
 QVariantMap ConversationManager::getStatistics() const
 {

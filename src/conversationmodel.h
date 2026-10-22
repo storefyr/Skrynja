@@ -66,6 +66,9 @@ public:
                                         const QStringList &sources = QStringList(),
                                         const QString &thinking = QString());
     Q_INVOKABLE void updateLastAssistantMessage(const QString &content);
+    // F19: rewrites the last user message (used to prepend the dev-tools
+    // instructions before the turn goes out).
+    Q_INVOKABLE void updateLastUserMessage(const QString &content);
     // Attaches web_search source URLs to the last assistant message.
     void setLastAssistantSources(const QStringList &sources);
     // Attaches a reasoning trace to the last assistant message.

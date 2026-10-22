@@ -260,6 +260,18 @@ QString ConversationModel::getLastUserMessage() const
     return QString();
 }
 
+void ConversationModel::updateLastUserMessage(const QString &content)
+{
+    for (int i = m_messages.count() - 1; i >= 0; --i) {
+        if (m_messages.at(i).role == "user") {
+            m_messages[i].content = content;
+            QModelIndex index = createIndex(i, 0);
+            emit dataChanged(index, index, {ContentRole});
+            return;
+        }
+    }
+}
+
 QString ConversationModel::getLastUserImagePath() const
 {
     for (int i = m_messages.count() - 1; i >= 0; --i) {

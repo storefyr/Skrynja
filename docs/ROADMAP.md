@@ -36,6 +36,7 @@ specs in `docs/features/` remain as historical reference; the ones marked **remo
 | F18 | Voice input: microphone button in ChatPage, `AudioRecorder` → `POST /v1/audio/transcriptions` (voxtral), transcribed text fills the input field | — | done (v0.8.0); fixed for Danish in v0.8.11 (Voxtral 3 model `voxtral-mini-transcribe-3-0`, language hint, longer timeouts); recorder fixed in v0.8.13 (audio/PCM codec, Qt 5.6 signal connects) |
 | F18b | Voice anonymization: local fixed pipeline (pitch shift + spectral tilt + telephone-band limiting + jittered noise) on the recording before it is sent, so the speaker is harder to identify by voice. ON BY DEFAULT since v0.9.7 | — | done (v0.9.7, PR #8) |
 | F18c | Local on-device STT (whisper.cpp) so audio never leaves the phone | — | **rejected** (2026-10-22, tested in Notes Plus): too slow on a phone CPU and far too poor at Danish. Revisit only if a fast Danish-quality on-device model appears |
+| F19 | **Developer tools (EXPERIMENTAL)**: the model gets local tools (`read_file`, `list_dir`, `search`, `edit_file`, `write_file`, `run_command`) in a workspace cloned from this repo, so Skrynja can be developed from inside Skrynja. Per-conversation toggle, off by default, path-traversal safe, 10-round loop cap | — | **in progress (v0.9.9, branch `vibe/f19-devtools-b6c41e`)** |
 
 ## Removed in the fork
 

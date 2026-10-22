@@ -23,6 +23,7 @@
 #include "securestore.h"
 #include "settingsmanager.h"
 #include "voiceanonymizer.h"
+#include "devtools.h"
 
 class TestConversationModel : public QObject
 {
@@ -2761,6 +2762,381 @@ private slots:
     }
 };
 
+
+// ---------------------------------------------------------------------------
+// F19: developer tools. The workspace is NOT cloned here (ensureWorkspace
+// would run git): main() redirects XDG_DATA_HOME to a temp dir, so we create
+// the workspace directory and its test files by hand.
+// ---------------------------------------------------------------------------
+class TestDevTools : public QObject
+{
+    Q_OBJECT
+
+private:
+    // Create <workspace>/src/hello.txt with known content. Returns the
+    // workspace root.
+    QString makeWorkspace()
+    {
+        DevTools dt;
+        const QString root = dt.workspaceRoot();
+        QDir().mkpath(root + "/src");
+        QFile f(root + "/src/hello.txt");
+        if (f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+            f.write("hello skrynja\nsecond line\n");
+            f.close();
+        }
+        QFile g(root + "/README.md");
+        if (g.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+            g.write("# Skrynja\nA Sailfish OS Mistral chat app.\n");
+            g.close();
+        }
+        return root;
+    }
+
+private slots:
+    // --- parsing -----------------------------------------------------------
+
+    void parsesSingleToolCall()
+    {
+        const QVariantList calls = DevTools::parseToolCalls(
+                    "Sure!\n<tool name=\"read_file\"><path>src/main.cpp</path></tool>\nDone.");
+        QCOMPARE(calls.size(), 1);
+        const QVariantMap call = calls.at(0).toMap();
+        QCOMPARE(call["name"].toString(), QString("read_file"));
+        QCOMPARE(call["args"].toMap()["path"].toString(), QString("src/main.cpp"));
+    }
+
+    void parsesMultipleToolCallsWithSeveralParams()
+    {
+        const QString text = "<tool name=\"edit_file\">"
+                             "<path>a.txt</path><old_text>x</old_text>"
+                             "<new_text>y</new_text></tool>"
+                             " middle "
+                             "<tool name=\"run_command\"><command>git status</command></tool>";
+        const QVariantList calls = DevTools::parseToolCalls(text);
+        QCOMPARE(calls.size(), 2);
+        QCOMPARE(calls.at(0).toMap()["name"].toString(), QString("edit_file"));
+        QCOMPARE(calls.at(0).toMap()["args"].toMap()["old_text"].toString(), QString("x"));
+        QCOMPARE(calls.at(0).toMap()["args"].toMap()["new_text"].toString(), QString("y"));
+        QCOMPARE(calls.at(1).toMap()["name"].toString(), QString("run_command"));
+        QCOMPARE(calls.at(1).toMap()["args"].toMap()["command"].toString(),
+                 QString("git status"));
+    }
+
+    void malformedBlocksAreSkipped()
+    {
+        // No closing tag, wrong name chars, empty body: nothing parseable,
+        // and nothing crashes.
+        QCOMPARE(DevTools::parseToolCalls("<tool name=\"read_file\"><path>x</path>").size(), 0);
+        QCOMPARE(DevTools::parseToolCalls("<tool><path>x</path></tool>").size(), 0);
+        QCOMPARE(DevTools::parseToolCalls("no tools here at all").size(), 0);
+        QCOMPARE(DevTools::parseToolCalls("").size(), 0);
+    }
+
+    void stripRemovesToolBlocks()
+    {
+        const QString text = "Before\n<tool name=\"search\"><pattern>foo</pattern></tool>\nAfter";
+        QCOMPARE(DevTools::stripToolCalls(text), QString("Before\n\nAfter"));
+        QCOMPARE(DevTools::stripToolCalls("no tools"), QString("no tools"));
+        // A block that is the whole answer strips to empty
+        QCOMPARE(DevTools::stripToolCalls(
+                    "<tool name=\"list_dir\"></tool>"), QString(""));
+    }
+
+    // --- path safety --------------------------------------------------------
+
+    void absolutePathsAreRejected()
+    {
+        makeWorkspace();
+        DevTools dt;
+        QVariantMap args;
+        args["path"] = "/etc/passwd";
+        const QVariantMap r = dt.runTool("read_file", args);
+        QVERIFY(!r["ok"].toBool());
+        QVERIFY(r["error"].toString().contains("workspace"));
+    }
+
+    void tildePathsAreRejected()
+    {
+        makeWorkspace();
+        DevTools dt;
+        QVariantMap args;
+        args["path"] = "~/secret.txt";
+        const QVariantMap r = dt.runTool("read_file", args);
+        QVERIFY(!r["ok"].toBool());
+    }
+
+    void traversalIsRejected()
+    {
+        makeWorkspace();
+        DevTools dt;
+        QVariantMap args;
+        args["path"] = "../outside.txt";
+        QVERIFY(!dt.runTool("read_file", args)["ok"].toBool());
+        args["path"] = "src/../../outside.txt";
+        QVERIFY(!dt.runTool("read_file", args)["ok"].toBool());
+        // Same for write: nothing may land outside the workspace
+        QVariantMap wargs;
+        wargs["path"] = "../evil.txt";
+        wargs["content"] = "x";
+        QVERIFY(!dt.runTool("write_file", wargs)["ok"].toBool());
+        QVERIFY(!QFileInfo::exists(dt.workspaceRoot() + "/../evil.txt"));
+    }
+
+    void emptyPathIsRejected()
+    {
+        makeWorkspace();
+        DevTools dt;
+        QVariantMap args;
+        args["path"] = "";
+        QVERIFY(!dt.runTool("read_file", args)["ok"].toBool());
+    }
+
+    // --- read / write / edit ------------------------------------------------
+
+    void writeThenReadRoundTrip()
+    {
+        const QString root = makeWorkspace();
+        DevTools dt;
+        QVariantMap wargs;
+        wargs["path"] = "notes/todo.txt";
+        wargs["content"] = "first\nsecond\n";
+        const QVariantMap w = dt.runTool("write_file", wargs);
+        QVERIFY(w["ok"].toBool());
+
+        QVariantMap rargs;
+        rargs["path"] = "notes/todo.txt";
+        const QVariantMap r = dt.runTool("read_file", rargs);
+        QVERIFY(r["ok"].toBool());
+        QCOMPARE(r["output"].toString(), QString("first\nsecond\n"));
+    }
+
+    void readMissingFileFails()
+    {
+        makeWorkspace();
+        DevTools dt;
+        QVariantMap args;
+        args["path"] = "no/such/file.txt";
+        const QVariantMap r = dt.runTool("read_file", args);
+        QVERIFY(!r["ok"].toBool());
+        QVERIFY(!r["error"].toString().isEmpty());
+    }
+
+    void editFileReplacesUniqueOccurrence()
+    {
+        makeWorkspace();
+        DevTools dt;
+        QVariantMap args;
+        args["path"] = "src/hello.txt";
+        args["old_text"] = "hello skrynja";
+        args["new_text"] = "hej skrynja";
+        const QVariantMap r = dt.runTool("edit_file", args);
+        QVERIFY(r["ok"].toBool());
+
+        QVariantMap rargs;
+        rargs["path"] = "src/hello.txt";
+        QCOMPARE(dt.runTool("read_file", rargs)["output"].toString(),
+                 QString("hej skrynja\nsecond line\n"));
+    }
+
+    void editFileRejectsMissingText()
+    {
+        makeWorkspace();
+        DevTools dt;
+        QVariantMap args;
+        args["path"] = "src/hello.txt";
+        args["old_text"] = "not in the file";
+        args["new_text"] = "x";
+        QVERIFY(!dt.runTool("edit_file", args)["ok"].toBool());
+    }
+
+    void editFileRejectsAmbiguousText()
+    {
+        makeWorkspace();
+        DevTools dt;
+        QVariantMap args;
+        args["path"] = "src/hello.txt";
+        args["old_text"] = "line";   // appears once... use a dup instead
+        args["new_text"] = "x";
+        // "line" appears once, so this succeeds; use a real duplicate:
+        args["old_text"] = "\n";
+        QVERIFY(!dt.runTool("edit_file", args)["ok"].toBool());
+        QVERIFY(dt.runTool("edit_file", args)["error"].toString().contains("more than once"));
+    }
+
+    void editFileRejectsEmptySearchText()
+    {
+        makeWorkspace();
+        DevTools dt;
+        QVariantMap args;
+        args["path"] = "src/hello.txt";
+        args["old_text"] = "";
+        args["new_text"] = "x";
+        QVERIFY(!dt.runTool("edit_file", args)["ok"].toBool());
+    }
+
+    // --- list / search ------------------------------------------------------
+
+    void listDirShowsEntries()
+    {
+        makeWorkspace();
+        DevTools dt;
+        QVariantMap args;
+        args["path"] = "src";
+        const QVariantMap r = dt.runTool("list_dir", args);
+        QVERIFY(r["ok"].toBool());
+        QVERIFY(r["output"].toString().contains("hello.txt"));
+    }
+
+    void listDirMissingFails()
+    {
+        makeWorkspace();
+        DevTools dt;
+        QVariantMap args;
+        args["path"] = "no/such/dir";
+        QVERIFY(!dt.runTool("list_dir", args)["ok"].toBool());
+    }
+
+    void searchFindsMatches()
+    {
+        makeWorkspace();
+        DevTools dt;
+        QVariantMap args;
+        args["pattern"] = "Sailfish";
+        const QVariantMap r = dt.runTool("search", args);
+        QVERIFY(r["ok"].toBool());
+        QVERIFY(r["output"].toString().contains("README.md"));
+        QVERIFY(r["output"].toString().contains("Sailfish"));
+        // Case-insensitive: "skrynja" matches the "Skrynja" heading
+        QVariantMap lower;
+        lower["pattern"] = "skrynja";
+        const QVariantMap rl = dt.runTool("search", lower);
+        QVERIFY(rl["ok"].toBool());
+        QVERIFY(rl["output"].toString().contains("README.md:1: # Skrynja"));
+    }
+
+    void searchWithoutMatchesSaysSo()
+    {
+        makeWorkspace();
+        DevTools dt;
+        QVariantMap args;
+        args["pattern"] = "zzz-no-such-thing-zzz";
+        const QVariantMap r = dt.runTool("search", args);
+        QVERIFY(r["ok"].toBool());
+        QCOMPARE(r["output"].toString(), QString("No matches"));
+    }
+
+    void searchRejectsEmptyPattern()
+    {
+        makeWorkspace();
+        DevTools dt;
+        QVariantMap args;
+        args["pattern"] = "";
+        QVERIFY(!dt.runTool("search", args)["ok"].toBool());
+    }
+
+    // --- commands -----------------------------------------------------------
+
+    void runCommandEchoes()
+    {
+        makeWorkspace();
+        DevTools dt;
+        QVariantMap args;
+        args["command"] = "echo skrynja-devtools";
+        const QVariantMap r = dt.runTool("run_command", args);
+        QVERIFY(r["ok"].toBool());
+        QVERIFY(r["output"].toString().contains("skrynja-devtools"));
+        QVERIFY(r["output"].toString().contains("[exit code 0]"));
+    }
+
+    void runCommandReportsExitCode()
+    {
+        makeWorkspace();
+        DevTools dt;
+        QVariantMap args;
+        args["command"] = "exit 3";
+        const QVariantMap r = dt.runTool("run_command", args);
+        QVERIFY(!r["ok"].toBool());
+        QVERIFY(r["error"].toString().contains("3"));
+        QVERIFY(r["output"].toString().contains("[exit code 3]"));
+    }
+
+    void runCommandRejectsEmpty()
+    {
+        makeWorkspace();
+        DevTools dt;
+        QVariantMap args;
+        args["command"] = "   ";
+        QVERIFY(!dt.runTool("run_command", args)["ok"].toBool());
+    }
+
+    void unknownToolFails()
+    {
+        makeWorkspace();
+        DevTools dt;
+        QVariantMap args;
+        const QVariantMap r = dt.runTool("rm_rf_everything", args);
+        QVERIFY(!r["ok"].toBool());
+        QVERIFY(r["error"].toString().contains("Unknown tool"));
+    }
+
+    // --- ConversationManager persistence ------------------------------------
+
+    void devToolsFlagPersistsPerConversation()
+    {
+        ConversationManager manager;
+        manager.purgeAllConversations();
+
+        const QString id = manager.currentConversationId();
+        QVERIFY(!id.isEmpty());
+        QVERIFY(!manager.isDevToolsEnabled(id));
+        QVERIFY(!manager.devToolsInstructionsSent(id));
+
+        manager.setDevToolsEnabled(id, true);
+        QVERIFY(manager.isDevToolsEnabled(id));
+        manager.markDevToolsInstructionsSent(id);
+        QVERIFY(manager.devToolsInstructionsSent(id));
+
+        // Round trip through storage
+        manager.saveCurrentConversation();
+        manager.createNewConversation();
+        manager.loadConversation(id);
+        QVERIFY(manager.isDevToolsEnabled(id));
+        QVERIFY(manager.devToolsInstructionsSent(id));
+
+        // Off again, and the flag survives as off
+        manager.setDevToolsEnabled(id, false);
+        manager.saveCurrentConversation();
+        manager.createNewConversation();
+        manager.loadConversation(id);
+        QVERIFY(!manager.isDevToolsEnabled(id));
+        // The instructions-sent flag is independent of the toggle
+        QVERIFY(manager.devToolsInstructionsSent(id));
+    }
+
+    void devToolsDefaultsOffForOldConversations()
+    {
+        // A conversation file written before F19 has neither key.
+        ConversationManager manager;
+        manager.purgeAllConversations();
+        const QString dir = QStandardPaths::writableLocation(
+                    QStandardPaths::AppDataLocation) + "/conversations";
+        QVERIFY(QDir().mkpath(dir));
+        const QString id = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
+        QFile file(dir + "/" + id + ".json");
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write("{\"id\":\"" + id.toUtf8() + "\",\"title\":\"Old\","
+                   "\"createdAt\":1000,\"updatedAt\":2000,"
+                   "\"messages\":["
+                   "{\"role\":\"user\",\"content\":\"q\",\"timestamp\":1000}]}");
+        file.close();
+        ConversationManager reopened;
+        reopened.loadConversation(id);
+        QVERIFY(!reopened.isDevToolsEnabled(id));
+        QVERIFY(!reopened.devToolsInstructionsSent(id));
+    }
+};
+
 int main(int argc, char *argv[])
 {
     // Redirect QSettings and the conversation files away from the real
@@ -2805,6 +3181,10 @@ int main(int argc, char *argv[])
     }
     {
         TestProviders t;
+        status |= QTest::qExec(&t, argc, argv);
+    }
+    {
+        TestDevTools t;
         status |= QTest::qExec(&t, argc, argv);
     }
     return status;
