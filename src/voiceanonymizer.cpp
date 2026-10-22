@@ -278,6 +278,13 @@ bool VoiceAnonymizer::anonymizeWithStrength(const QString &inputFile,
     // Strength presets: pitch factor, ring modulation (frequency in Hz,
     // depth 0..1) and white-noise level. Chosen so that each step is a
     // clearly audible change while transcription stays accurate.
+    //
+    // Ring modulation pitfall (found in on-device testing): a low carrier
+    // frequency (<= ~220 Hz) sits inside the fundamental range of the
+    // human voice (85-255 Hz) and creates sidebands that overlap the
+    // speech spectrum — the speech-to-text model then hears nonsense
+    // ("Spark, anonymous, ein SM" instead of the spoken sentence).
+    // The carrier must stay ABOVE the speech range: 300 Hz and up.
     double pitchFactor = 1.10;
     double ringFreq = 0.0;
     double ringDepth = 0.0;
@@ -289,14 +296,14 @@ bool VoiceAnonymizer::anonymizeWithStrength(const QString &inputFile,
         break;
     case Medium:
         pitchFactor = 1.18;
-        ringFreq = 220.0;
-        ringDepth = 0.35;
+        ringFreq = 320.0;   // above the voice fundamental range
+        ringDepth = 0.30;
         noiseLevel = 0.008;
         break;
     case Strong:
-        pitchFactor = 1.28;
-        ringFreq = 180.0;
-        ringDepth = 0.60;
+        pitchFactor = 1.30;
+        ringFreq = 350.0;   // above the voice fundamental range
+        ringDepth = 0.40;
         noiseLevel = 0.012;
         break;
     }

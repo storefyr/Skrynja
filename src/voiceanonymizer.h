@@ -26,8 +26,13 @@
 //
 // The Strength presets combine these effects:
 //   subtle: pitch 1.10 + noise 0.005 (mild, still natural)
-//   medium: pitch 1.18 + ring 220 Hz @ 35% + noise 0.008 (clearly changed)
-//   strong: pitch 1.28 + ring 180 Hz @ 60% + noise 0.012 (robotic)
+//   medium: pitch 1.18 + ring 320 Hz @ 30% + noise 0.008 (clearly changed)
+//   strong: pitch 1.30 + ring 350 Hz @ 40% + noise 0.012 (robotic)
+//
+// NOTE on ring modulation: the carrier frequency must stay ABOVE the
+// human voice fundamental range (85-255 Hz). At 180-220 Hz the sidebands
+// overlap the speech spectrum and the speech-to-text model hears
+// nonsense — verified on device (see v0.9.2 test round).
 //
 // Input/output: 16-bit PCM WAV files (the format AudioRecorder produces
 // with codec audio/PCM + container wav). Mono and stereo are supported;

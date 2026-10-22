@@ -5,6 +5,19 @@ All notable changes to Skrynja will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.3] - 2026-10-22
+Skrynja 0.9.3 — Fix: "strong" anonymization broke speech-to-text (ring modulation carrier inside the voice range).
+
+### Fixed
+- **Ring modulation carrier moved above the voice fundamental range.**
+  The v0.9.2 "strong" preset (180 Hz @ 60%) and "medium" (220 Hz @ 35%)
+  used a carrier inside the 85–255 Hz fundamental range of the human
+  voice; the sidebands overlapped the speech spectrum and the STT model
+  transcribed nonsense. New values, verified against on-device tests:
+  - Medium: ring 320 Hz @ 30% (was 220 Hz @ 35%)
+  - Strong: ring 350 Hz @ 40%, pitch 1.30 (was 180 Hz @ 60%, pitch 1.28)
+- Unit test expectation for the strong preset updated (24614 bytes).
+
 ## [0.9.2] - 2026-10-22
 Skrynja 0.9.2 — Stronger voice anonymization (F18b): strength presets + ring modulation.
 
@@ -14,10 +27,20 @@ Skrynja 0.9.2 — Stronger voice anonymization (F18b): strength presets + ring m
 - **Anonymization strength presets** replace the raw pitch slider
   (Settings → Voice input → "Anonymization strength"):
   - **Subtle** — small pitch shift (1.10) + faint noise. Still sounds like you.
-  - **Medium** (default) — pitch shift (1.18) + ring modulation at 220 Hz
-    (35% depth) + noise. Clearly a changed voice.
-  - **Strong** — heavy pitch shift (1.28) + ring modulation at 180 Hz
-    (60% depth) + more noise. Robotic.
+  - **Medium** (default) — pitch shift (1.18) + ring modulation at 320 Hz
+    (30% depth) + noise. Clearly a changed voice.
+  - **Strong** — heavy pitch shift (1.30) + ring modulation at 350 Hz
+    (40% depth) + more noise. Robotic.
+
+### Fixed (after first on-device test)
+- **"Strong" destroyed speech-to-text**: the first preset used ring
+  modulation at 180 Hz with 60% depth. That carrier sits inside the
+  fundamental range of the human voice (85–255 Hz), and the sidebands
+  overlapped the speech spectrum — the model transcribed nonsense
+  ("Spark, anonymous, ein SM" instead of the spoken Danish sentence).
+  The carrier frequency now stays above the voice range: Medium uses
+  320 Hz @ 30%, Strong uses 350 Hz @ 40% (pitch raised to 1.30). Medium
+  was also retuned from 220 Hz to 320 Hz for the same reason.
 - **Ring modulation** as a new DSP effect in `VoiceAnonymizer`
   (`ringModulate()`): multiplies the signal with a slow carrier wave,
   destroying the natural harmonic structure of the voice — the classic
