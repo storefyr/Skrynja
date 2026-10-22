@@ -215,6 +215,7 @@ Dialog {
                     Repeater {
                         model: [
                             { name: "English", value: "en" },
+                            { name: "Dansk", value: "da" },
                             { name: "Français", value: "fr" },
                             { name: "Deutsch", value: "de" },
                             { name: "Español", value: "es" },

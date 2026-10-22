@@ -6,7 +6,7 @@ QT += network multimedia
 
 # Version is passed by the spec file (%qmake5 VERSION=%{version})
 isEmpty(VERSION) {
-    VERSION = 0.8.10
+    VERSION = 0.8.11
 }
 DEFINES += APP_VERSION=\\\"$$VERSION\\\"
 
@@ -54,6 +54,7 @@ SAILFISHAPP_ICONS = 86x86 108x108 128x128 172x172
 CONFIG += sailfishapp_i18n
 
 TRANSLATIONS += translations/harbour-skrynja-en.ts \
+                translations/harbour-skrynja-da.ts \
                 translations/harbour-skrynja-fr.ts \
                 translations/harbour-skrynja-de.ts \
                 translations/harbour-skrynja-es.ts \

@@ -1104,8 +1104,13 @@ Page {
             // Now it is safe to read the file and transcribe.
             transcribingWatchdog.stop()
             if (chatPage.transcribing && chatPage.recordingPath !== "") {
+                // The interface language is the best guess for the spoken
+                // language: it tells the model which language to expect,
+                // which skips detection and improves accuracy.
+                var lang = settingsManager.language
+                if (lang === "nb_NO") lang = "nb"
                 mistralApi.transcribeAudio(settingsManager.apiKey,
-                                            chatPage.recordingPath)
+                                            chatPage.recordingPath, lang)
             }
         }
     }
@@ -1113,9 +1118,11 @@ Page {
     // F18: Watchdog — if "Transcribing..." lasts too long, reset the UI.
     // Covers cases where both the recorder 'stopped' signal and the HTTP
     // timeout fail to fire (e.g. QAudioRecorder hangs before stop()).
+    // 120 s: transcription is a batch job; the C++ HTTP timeout (90 s)
+    // fires first with a proper error, this is the last-resort backstop.
     Timer {
         id: transcribingWatchdog
-        interval: 35000
+        interval: 120000
         repeat: false
         onTriggered: {
             if (chatPage.transcribing) {

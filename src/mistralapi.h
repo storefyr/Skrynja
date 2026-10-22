@@ -79,9 +79,11 @@ public:
                                  const QString &imagePath);
     // F18: Transcribes an audio file using Mistral's audio transcription API
     // (POST /v1/audio/transcriptions). Emits transcriptionReady(text) or
-    // transcriptionFailed().
+    // transcriptionFailed(). languageHint is an ISO 639-1 code ("da", "en",
+    // ...); empty lets the model detect the language itself.
     Q_INVOKABLE void transcribeAudio(const QString &apiKey,
-                                     const QString &audioPath);
+                                     const QString &audioPath,
+                                     const QString &languageHint = QString());
     // A writable path for a temporary audio recording.
     Q_INVOKABLE QString tempAudioPath() const;
     Q_INVOKABLE void cancelRequest();
@@ -235,6 +237,9 @@ private:
                              int maxTokens,
                              const QString &imageFileId = QString()) const;
     QString turnPath(const QString &remoteConversationId) const;
+    // F18: the audio transcription model id (Voxtral 3 batch model, the
+    // first Mistral transcription model with Danish support).
+    static QString transcriptionModelId();
     // Starts the reconcile GET before an append is retried.
     void startReconcile();
     // True when the remote history already contains the pending user turn.

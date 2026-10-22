@@ -128,8 +128,12 @@ MistralAPI::MistralAPI(QObject *parent)
     connect(m_requestTimer, &QTimer::timeout,
             this, &MistralAPI::sendPendingChatRequest);
 
+    // Generous on purpose: audio transcription is a batch job, and speech
+    // on a less common language can take a while to process. The QML
+    // watchdog (120 s) stays above this so the C++ timer is the one that
+    // fires first with a proper error message.
     m_transcriptionTimer->setSingleShot(true);
-    m_transcriptionTimer->setInterval(30000);
+    m_transcriptionTimer->setInterval(90000);
     connect(m_transcriptionTimer, &QTimer::timeout,
             this, &MistralAPI::onTranscriptionTimeout);
 
@@ -858,6 +862,16 @@ void MistralAPI::onImageUploadFinished()
 
 // ---------------------------------------------------------------- F18 voice input
 
+// The transcription model is a constant: Voxtral 3 (voxtral-mini-transcribe-3-0,
+// launched 2026-10-20) is the first Mistral transcription model that supports
+// Danish and the other smaller EU languages. The previous alias
+// voxtral-mini-latest resolves to Voxtral Mini Transcribe 2, which covers
+// only 13 languages and neither fails fast nor transcribes Danish speech.
+QString MistralAPI::transcriptionModelId()
+{
+    return QStringLiteral("voxtral-mini-transcribe-3-0");
+}
+
 QString MistralAPI::tempAudioPath() const
 {
     // A unique path inside the app's cache directory for the next recording.
@@ -868,7 +882,8 @@ QString MistralAPI::tempAudioPath() const
             + QString::number(QDateTime::currentMSecsSinceEpoch()) + ".wav";
 }
 
-void MistralAPI::transcribeAudio(const QString &apiKey, const QString &audioPath)
+void MistralAPI::transcribeAudio(const QString &apiKey, const QString &audioPath,
+                                 const QString &languageHint)
 {
     if ((apiKey.isEmpty() && m_keyRequired) || m_baseUrl.isEmpty()) {
         emit transcriptionFailed(tr("No API key configured"));
@@ -894,7 +909,7 @@ void MistralAPI::transcribeAudio(const QString &apiKey, const QString &audioPath
     }
 
     // Multipart upload to the Audio Transcriptions API.
-    // POST /v1/audio/transcriptions with model=voxtral-mini-latest.
+    // POST /v1/audio/transcriptions with the Voxtral 3 batch model.
     QHttpMultiPart *multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
 
     QHttpPart filePart;
@@ -908,8 +923,18 @@ void MistralAPI::transcribeAudio(const QString &apiKey, const QString &audioPath
     QHttpPart modelPart;
     modelPart.setHeader(QNetworkRequest::ContentDispositionHeader,
                         QVariant("form-data; name=\"model\""));
-    modelPart.setBody("voxtral-mini-latest");
+    modelPart.setBody(transcriptionModelId().toUtf8());
     multiPart->append(modelPart);
+
+    // A language hint skips detection and improves accuracy, especially for
+    // shorter utterances. "auto" means: let the model detect it.
+    if (languageHint != "auto" && !languageHint.isEmpty()) {
+        QHttpPart languagePart;
+        languagePart.setHeader(QNetworkRequest::ContentDispositionHeader,
+                               QVariant("form-data; name=\"language\""));
+        languagePart.setBody(languageHint.toUtf8());
+        multiPart->append(languagePart);
+    }
 
     QNetworkRequest request(endpoint("/audio/transcriptions"));
     if (!apiKey.isEmpty()) {

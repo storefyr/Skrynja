@@ -427,6 +427,7 @@ QStringList SettingsManager::availableLanguages() const
     // Codes must match the translations/harbour-skrynja-<code>.ts file names
     return QStringList()
         << "en"
+        << "da"
         << "fr"
         << "de"
         << "es"

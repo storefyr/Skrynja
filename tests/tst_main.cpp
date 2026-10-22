@@ -803,6 +803,16 @@ private slots:
         QVERIFY(api.throttleDelayMs() > 0);
     }
 
+    // F18: the transcription model must be the Voxtral 3 batch model. The
+    // previous alias voxtral-mini-latest resolves to Voxtral Mini Transcribe
+    // 2, which supports only 13 languages — Danish is not among them, so
+    // Danish speech failed or hung. Voxtral 3 covers 50+ languages.
+    void transcriptionModelSupportsDanish()
+    {
+        QCOMPARE(MistralAPI::transcriptionModelId(),
+                 QString("voxtral-mini-transcribe-3-0"));
+    }
+
     // F17: parseRemoteConversations handles the bare-array top-level shape
     // that the live API returns (not wrapped in {"data": [...]}).
     void parseRemoteConversationsHandlesBareArray()
@@ -2118,6 +2128,24 @@ private slots:
         QCOMPARE(settings.chatStyle(), QString("bubbles"));
 
         settings.setChatStyle("flat");
+    }
+
+    // F18: Danish must be a selectable interface language, and it must map
+    // to a translation file that exists.
+    void danishIsAnAvailableLanguage()
+    {
+        SettingsManager settings;
+        const QStringList languages = settings.availableLanguages();
+        QVERIFY(languages.contains(QString("da")));
+
+        settings.setLanguage("da");
+        QCOMPARE(settings.language(), QString("da"));
+
+        // The spoken-language hint derived from the interface language is
+        // a plain ISO 639-1 code the transcription API accepts.
+        QCOMPARE(settings.language().left(2), QString("da"));
+
+        settings.setLanguage("en");
     }
 
     void webSearchTogglePersists()

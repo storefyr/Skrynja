@@ -5,6 +5,30 @@ All notable changes to Skrynja will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.11] - 2026-10-22
+Skrynja 0.8.11 — Fix: voice transcription works for Danish speakers.
+
+### Fixed
+- **Transcription model**: switched from `voxtral-mini-latest` (which
+  resolves to Voxtral Mini Transcribe 2, supporting only 13 languages —
+  Danish is not one of them) to `voxtral-mini-transcribe-3-0` (Voxtral 3,
+  launched 2026-10-20, 50+ languages including Danish). Danish speech
+  previously failed or hung until the timeout.
+- **HTTP timeout**: raised the transcription request timeout from 30 s to
+  90 s. Transcription is a batch job; shorter clips finish in a few
+  seconds, but longer recordings on a less common language can take longer.
+- **QML watchdog**: raised `transcribingWatchdog` from 35 s to 120 s so it
+  stays above the C++ timeout and acts only as a last-resort backstop.
+
+### Added
+- **Language hint**: the spoken language is now sent to the transcription
+  API (`language` form field), derived from the app's interface language.
+  This skips language detection and improves accuracy, especially for
+  short utterances. `nb_NO` maps to `nb`.
+- **Danish interface language**: `da` added to the language list, with a
+  new `translations/harbour-skrynja-da.ts` (currently untranslated strings
+  fall back to English).
+
 ## [0.8.10] - 2026-10-21
 Skrynja 0.8.10 — Fix: QML watchdog guarantees "Transcribing..." never hangs.
 
