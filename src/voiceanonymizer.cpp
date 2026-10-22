@@ -218,38 +218,6 @@ QByteArray VoiceAnonymizer::addNoise(const QByteArray &pcm16, double level)
     return out;
 }
 
-QByteArray VoiceAnonymizer::ringModulate(const QByteArray &pcm16,
-                                         quint32 sampleRate,
-                                         double frequency,
-                                         double depth)
-{
-    if (depth <= 0.0 || sampleRate == 0 || frequency <= 0.0) {
-        return pcm16;  // no-op
-    }
-    QByteArray out = pcm16;  // copy; modified IN PLACE below
-    const int count = out.size() / 2;
-    char *d = out.data();
-    const double w = 2.0 * M_PI * frequency / double(sampleRate);
-    for (int i = 0; i < count; ++i) {
-        const qint16 s = static_cast<qint16>(readU16(d + i * 2));
-        // Carrier in [1-depth, 1]: depth 1.0 gives full ring modulation.
-        const double carrier = 1.0 - depth + depth * qCos(w * i);
-        const double v = s * carrier;
-        const qint16 sv = static_cast<qint16>(qBound(-32768.0, v, 32767.0));
-        d[i * 2] = static_cast<char>(sv & 0xFF);
-        d[i * 2 + 1] = static_cast<char>((sv >> 8) & 0xFF);
-    }
-    return out;
-}
-
-VoiceAnonymizer::Strength VoiceAnonymizer::strengthFromString(const QString &name)
-{
-    const QString n = name.toLower().trimmed();
-    if (n == "subtle") return Subtle;
-    if (n == "strong") return Strong;
-    return Medium;  // "medium" and anything unknown
-}
-
 QByteArray VoiceAnonymizer::spectralTilt(const QByteArray &pcm16,
                                          quint32 sampleRate,
                                          double tilt)
@@ -400,68 +368,26 @@ bool VoiceAnonymizer::anonymize(const QString &inputFile,
     return true;
 }
 
-bool VoiceAnonymizer::anonymizeWithStrength(const QString &inputFile,
-                                            const QString &outputFile,
-                                            Strength strength,
-                                            QString *errorMessage)
+QString VoiceAnonymizer::anonymizeFile(const QString &inputFile,
+                                       const QString &outputFile)
 {
     seedRandOnce();
 
-    // Strength presets: pitch factor, spectral tilt, telephone band
-    // limiting and white-noise level. Chosen so that each step is a
-    // clearly audible change while transcription stays accurate.
-    //
-    // NOTE (v0.9.6): ring modulation is no longer used in any preset.
-    // On-device testing (v0.9.2–v0.9.5) showed it kept raising the
-    // transcription error rate even with a carrier above the voice range,
-    // because it destroys the harmonic structure that STT models rely on.
-    // Spectral tilt changes the timbre just as clearly but keeps the
-    // harmonics intact — STT models handle it far better.
+    // The single fixed pipeline (on by default since v0.9.7): pitch ~1.24,
+    // spectral tilt -0.55, telephone-band limiting and 1.2% noise.
     //
     // Anti-voiceprint jitter: pitch, tilt and noise level are varied by a
     // few percent per recording, so no two anonymized files share the same
     // transformation — averaging or inverting across recordings fails.
-    // The jitter is small enough to stay STT-safe.
-    double pitchFactor = 1.10;
-    double tilt = 0.0;
-    bool bandLimited = false;
-    double noiseLevel = 0.005;
-    switch (strength) {
-    case Subtle:
-        pitchFactor = 1.10;
-        noiseLevel = 0.005;
-        break;
-    case Medium:
-        pitchFactor = 1.18;
-        tilt = -0.35;       // darker timbre, "radio voice"
-        noiseLevel = 0.008;
-        break;
-    case Strong:
-        // Maximum effort: more pitch shift, stronger tilt, telephone-band
-        // limiting (strips the out-of-speech-band spectral detail
-        // voiceprint systems use) and more noise. Even this can reduce
-        // transcription accuracy — Medium is the recommended level.
-        pitchFactor = 1.24;
-        tilt = -0.55;
-        bandLimited = true;
-        noiseLevel = 0.012;
-        break;
-    }
-
-    // Per-recording jitter (±3% on pitch/noise/tilt).
-    pitchFactor = qBound(1.05, pitchFactor * uniformRand(0.97, 1.03), 1.30);
-    noiseLevel = qMax(0.0, noiseLevel * uniformRand(0.97, 1.03));
-    if (tilt != 0.0) {
-        tilt = qBound(-0.70, tilt * uniformRand(0.97, 1.03), -0.15);
-    }
+    // The jitter is small enough to stay STT-safe (verified on device).
+    double pitchFactor = qBound(1.05, 1.24 * uniformRand(0.97, 1.03), 1.30);
+    double tilt = qBound(-0.70, -0.55 * uniformRand(0.97, 1.03), -0.15);
+    const double noiseLevel = qMax(0.0, 0.012 * uniformRand(0.97, 1.03));
 
     const WavData wav = readWav(inputFile);
     if (!wav.valid) {
-        if (errorMessage) {
-            *errorMessage = tr("Not a 16-bit PCM WAV file");
-        }
         qWarning() << "VoiceAnonymizer: cannot parse" << inputFile;
-        return false;
+        return tr("Not a 16-bit PCM WAV file");
     }
 
     qWarning() << "VoiceAnonymizer: loaded" << inputFile
@@ -469,43 +395,21 @@ bool VoiceAnonymizer::anonymizeWithStrength(const QString &inputFile,
                << wav.pcm.size() << "bytes PCM";
 
     QByteArray processed = wav.pcm;
-    if (!qFuzzyCompare(pitchFactor, 1.0)) {
-        processed = shiftPitch(processed, pitchFactor);
-    }
-    if (tilt != 0.0) {
-        processed = spectralTilt(processed, wav.sampleRate, tilt);
-    }
-    if (bandLimited) {
-        processed = bandLimit(processed, wav.sampleRate);
-    }
-    if (noiseLevel > 0.0) {
-        processed = addNoise(processed, noiseLevel);
-    }
+    processed = shiftPitch(processed, pitchFactor);
+    processed = spectralTilt(processed, wav.sampleRate, tilt);
+    processed = bandLimit(processed, wav.sampleRate);
+    processed = addNoise(processed, noiseLevel);
 
     if (!writeWav(outputFile, wav.channels, wav.sampleRate, processed)) {
-        if (errorMessage) {
-            *errorMessage = tr("Could not write the anonymized recording");
-        }
         qWarning() << "VoiceAnonymizer: cannot write" << outputFile;
-        return false;
+        return tr("Could not write the anonymized recording");
     }
 
     qWarning() << "VoiceAnonymizer: wrote" << outputFile
                << QFileInfo(outputFile).size() << "bytes"
-               << "(strength" << strength
-               << ", pitch" << pitchFactor
+               << "(pitch" << pitchFactor
                << ", tilt" << tilt
-               << (bandLimited ? ", band-limited" : "")
+               << ", band-limited"
                << ", noise" << noiseLevel << ")";
-    return true;
-}
-
-QString VoiceAnonymizer::anonymizeFile(const QString &inputFile,
-                                       const QString &outputFile,
-                                       const QString &strength)
-{
-    QString error;
-    const bool ok = anonymizeWithStrength(inputFile, outputFile,
-                                          strengthFromString(strength), &error);
-    return ok ? QString() : error;
+    return QString();
 }

@@ -9,7 +9,6 @@ Dialog {
     property var availableModelsList: settingsManager.availableModels()
     property var chatStyleList: settingsManager.availableChatStyles()
     property var autoTitleModeList: settingsManager.availableAutoTitleModes()
-    property var voiceStrengthList: settingsManager.availableVoiceAnonymizationStrengths()
     property bool revealKey: false
 
     canAccept: true
@@ -31,10 +30,6 @@ Dialog {
         settingsManager.webSearch = webSearchSwitch.checked
 
         settingsManager.voiceAnonymization = anonymizeVoiceSwitch.checked
-        if (voiceStrengthComboBox.currentItem) {
-            settingsManager.voiceAnonymizationStrength =
-                    voiceStrengthComboBox.currentItem.strengthValue
-        }
 
         if (chatStyleComboBox.currentItem) {
             settingsManager.chatStyle = chatStyleComboBox.currentItem.styleValue
@@ -460,7 +455,7 @@ Dialog {
                 wrapMode: Text.WordWrap
             }
 
-            // Voice Input Section (F18 anonymization, experimental)
+            // Voice Input Section (F18 anonymization, on by default)
             SectionHeader {
                 text: qsTr("Voice input")
             }
@@ -468,45 +463,8 @@ Dialog {
             TextSwitch {
                 id: anonymizeVoiceSwitch
                 text: qsTr("Anonymize voice")
-                description: qsTr("Process your recording on the device before it is sent for transcription, so you are harder to identify by voice. Nothing is sent to Mistral until the anonymized file is ready.")
+                description: qsTr("Your recording is processed on the device before it is sent for transcription, so you are harder to identify by voice: the pitch is shifted, the timbre darkened and the audio band-limited. Nothing is sent to Mistral until the anonymized file is ready. On by default — disable only if you experience problems.")
                 checked: settingsManager.voiceAnonymization
-            }
-
-            ComboBox {
-                id: voiceStrengthComboBox
-                label: qsTr("Anonymization strength")
-                width: parent.width
-                visible: anonymizeVoiceSwitch.checked
-
-                menu: ContextMenu {
-                    Repeater {
-                        model: settingsPage.voiceStrengthList
-
-                        MenuItem {
-                            text: settingsPage.voiceStrengthLabel(modelData)
-                            property string strengthValue: modelData
-                        }
-                    }
-                }
-
-                Component.onCompleted: {
-                    var index = settingsPage.voiceStrengthList.indexOf(
-                                settingsManager.voiceAnonymizationStrength)
-                    currentIndex = index >= 0 ? index : 1
-                }
-            }
-
-            Label {
-                x: Theme.horizontalPageMargin
-                width: parent.width - 2 * Theme.horizontalPageMargin
-                visible: anonymizeVoiceSwitch.checked
-                text: voiceStrengthComboBox.currentItem
-                      ? settingsPage.voiceStrengthDescription(
-                            voiceStrengthComboBox.currentItem.strengthValue)
-                      : ""
-                font.pixelSize: Theme.fontSizeExtraSmall
-                color: Theme.secondaryColor
-                wrapMode: Text.WordWrap
             }
 
             // System Prompt Section
@@ -687,22 +645,6 @@ Dialog {
         case "ai": return qsTr("Best titles, but one extra request per conversation. Free tiers count those.")
         case "off": return qsTr("Conversations keep their first question as a title and stay uncategorized.")
         default: return qsTr("Titles and categories worked out on the phone. Costs nothing, no request sent.")
-        }
-    }
-
-    function voiceStrengthLabel(strength) {
-        switch (strength) {
-        case "subtle": return qsTr("Subtle")
-        case "strong": return qsTr("Strong")
-        default: return qsTr("Medium")
-        }
-    }
-
-    function voiceStrengthDescription(strength) {
-        switch (strength) {
-        case "subtle": return qsTr("Slight pitch shift and faint background noise. Still sounds like you.")
-        case "strong": return qsTr("Maximum anonymization: strong pitch shift, darkened timbre, telephone-band filtering and more noise. Pitch and noise vary slightly per recording so averaging cannot undo them. May reduce transcription accuracy.")
-        default: return qsTr("Pitch shift plus a darkened timbre. Recommended for everyday use.")
         }
     }
 

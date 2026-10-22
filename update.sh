@@ -6,7 +6,7 @@
 
 set -e
 
-VERSION="${1:-0.9.6}"
+VERSION="${1:-0.9.7}"
 
 # Auto-detect the device architecture unless overridden as the 2nd argument
 if [ -n "$2" ]; then

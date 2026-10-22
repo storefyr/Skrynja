@@ -5,6 +5,34 @@ All notable changes to Skrynja will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.7] - 2026-10-22
+Skrynja 0.9.7 — Voice anonymization is now ON BY DEFAULT, with a single fixed level.
+
+### Changed
+- **Anonymization is on by default.** The toggle in Settings → Voice input
+  now starts enabled. Disable it only if you experience transcription
+  problems. A stored value (including an explicit "off") is respected.
+- **The strength selector is gone.** After on-device testing converged on
+  one level, the subtle/medium/strong presets and the ComboBox were
+  removed. Every anonymized recording uses the same fixed pipeline:
+  pitch shift (~1.24) + spectral tilt (−0.55) + telephone-band limiting
+  (300–3400 Hz) + noise (1.2%), jittered per recording.
+- The UI description now says plainly what happens and that the feature
+  is on by default.
+
+### Removed
+- `VoiceAnonymizer::Strength` enum, `strengthFromString()`,
+  `anonymizeWithStrength()` and the `ringModulate()` DSP primitive (ring
+  modulation broke transcription too often to ship; see v0.9.2–v0.9.6).
+- `SettingsManager::voiceAnonymizationStrength` and
+  `availableVoiceAnonymizationStrengths()`.
+- Legacy settings keys `voice/pitchFactor` (0.9.1) and
+  `voice/anonymizationStrength` (0.9.2–0.9.6) are removed on load.
+
+### Tests
+- Updated: default-on persistence, legacy-key cleanup, fixed-pipeline
+  round-trip (length range), per-recording jitter, wrapper signature.
+
 ## [0.9.6] - 2026-10-22
 Skrynja 0.9.6 — Voice anonymization: ring modulation removed from presets, replaced by spectral tilt.
 

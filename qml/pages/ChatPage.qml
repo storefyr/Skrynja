@@ -1117,10 +1117,10 @@ Page {
                 var lang = settingsManager.language
                 if (lang === "nb_NO") lang = "nb"
 
-                // F18 anonymization (experimental): if enabled, process
-                // the recording locally (pitch shift, optional ring
-                // modulation, noise — depending on the strength preset)
-                // before it leaves the device, so the speaker is harder to
+                // F18 anonymization (on by default): if enabled, process
+                // the recording locally (fixed pipeline: pitch shift,
+                // darkened timbre, telephone-band limiting, noise) before
+                // it leaves the device, so the speaker is harder to
                 // identify from their voice. On any failure we fall back to
                 // the original recording — privacy must never block
                 // transcription.
@@ -1133,8 +1133,7 @@ Page {
                     var anonPath = chatPage.recordingPath.replace(/\.wav$/i, "-anon.wav")
                     var err = voiceAnonymizer.anonymizeFile(
                                 chatPage.recordingPath,
-                                anonPath,
-                                settingsManager.voiceAnonymizationStrength)
+                                anonPath)
                     if (err === "") {
                         uploadPath = anonPath
                         console.warn("Voice anonymization applied: " + anonPath)
