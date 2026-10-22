@@ -5,10 +5,10 @@ All notable changes to Skrynja will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] — experimental voice anonymization (test branch)
-Skrynja — Experiment: anonymize your voice before it leaves the device.
+## [0.9.1] - 2026-10-22
+Skrynja 0.9.1 — Experimental voice anonymization (F18b): anonymize your voice before it leaves the device.
 
-**Status: test branch `vibe/f18-voice-anonymization-b6c41e` — not released.**
+**Experimental feature — opt-in via Settings → Voice input → "Anonymize voice".**
 
 ### Added
 - **Voice anonymization (F18b, experimental)**: a new "Voice input" section
