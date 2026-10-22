@@ -928,6 +928,90 @@ Page {
                                                  : settingsManager.systemPrompt
     }
 
+    // F19: the function tool schemas for agent mode, as a JS array the
+    // C++ side accepts as QJsonArray. Built here because QJsonArray is not
+    // directly constructible from QML; the shapes mirror AgentTools.
+    function agentToolsSchema() {
+        var tools = []
+        tools.push({
+            "type": "function",
+            "function": {
+                "name": "read_file",
+                "description": "Read a file from the project. Path is relative to the project root. Returns the file content as text, truncated if very large.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "path": {"type": "string", "description": "Relative path from the project root, e.g. src/mistralapi.cpp"}
+                    },
+                    "required": ["path"]
+                }
+            }
+        })
+        tools.push({
+            "type": "function",
+            "function": {
+                "name": "list_files",
+                "description": "List files in a directory of the project. Paths are relative to the project root. Results are capped at 500 entries.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "path": {"type": "string", "description": "Optional subdirectory relative to the project root. Empty or omitted means the project root."},
+                        "pattern": {"type": "string", "description": "Optional glob filter, e.g. *.qml. Omit to list all files."}
+                    },
+                    "required": []
+                }
+            }
+        })
+        tools.push({
+            "type": "function",
+            "function": {
+                "name": "search_code",
+                "description": "Search for text in the project's source files. Returns matching lines as path:line: content, capped at 100 matches.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "query": {"type": "string", "description": "Text to search for (plain substring match)."},
+                        "path": {"type": "string", "description": "Optional subdirectory relative to the project root. Omit to search the whole project."}
+                    },
+                    "required": ["query"]
+                }
+            }
+        })
+        tools.push({
+            "type": "function",
+            "function": {
+                "name": "edit_file",
+                "description": "Replace an exact, unique snippet of text in a file. old_text must appear exactly once; use more context if it does not.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "path": {"type": "string", "description": "Relative path from the project root, e.g. src/mistralapi.cpp"},
+                        "old_text": {"type": "string", "description": "Exact text to replace. Must match the file exactly, including whitespace and indentation. Must be unique in the file."},
+                        "new_text": {"type": "string", "description": "Replacement text."}
+                    },
+                    "required": ["path", "old_text", "new_text"]
+                }
+            }
+        })
+        if (settingsManager.agentRunCommand) {
+            tools.push({
+                "type": "function",
+                "function": {
+                    "name": "run_command",
+                    "description": "Run a shell command in the project directory and return its output and exit code. Use for builds, tests and git.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "command": {"type": "string", "description": "Shell command to run with the project root as working directory, e.g. qmake && make. Output is truncated."}
+                        },
+                        "required": ["command"]
+                    }
+                }
+            })
+        }
+        return tools
+    }
+
     function dispatchRequest() {
         var content = conversationManager.pendingUserContent()
         var imagePath = conversationManager.pendingUserImagePath()
@@ -961,16 +1045,34 @@ Page {
         // The Conversations API is stateful: the first turn creates the remote
         // conversation (model, system prompt and web search are locked there),
         // later turns only append the new message.
-        mistralApi.sendMessage(settingsManager.apiKey,
-                               activeModel,
-                               effectiveSystemPrompt(),
-                               content,
-                               imagePath,
-                               settingsManager.webSearch,
-                               conversationManager.remoteConversationId(),
-                               settingsManager.temperature,
-                               settingsManager.maxTokens,
-                               imageFileId)
+        // F19: in agent mode the create body also declares the local function
+        // tools; tools are create-time only, so only a fresh conversation
+        // (empty remote id) gets them.
+        if (settingsManager.agentEnabled
+                && conversationManager.remoteConversationId() === "") {
+            mistralApi.sendMessageWithTools(settingsManager.apiKey,
+                                            activeModel,
+                                            effectiveSystemPrompt(),
+                                            content,
+                                            imagePath,
+                                            settingsManager.webSearch,
+                                            conversationManager.remoteConversationId(),
+                                            agentToolsSchema(),
+                                            settingsManager.temperature,
+                                            settingsManager.maxTokens,
+                                            imageFileId)
+        } else {
+            mistralApi.sendMessage(settingsManager.apiKey,
+                                   activeModel,
+                                   effectiveSystemPrompt(),
+                                   content,
+                                   imagePath,
+                                   settingsManager.webSearch,
+                                   conversationManager.remoteConversationId(),
+                                   settingsManager.temperature,
+                                   settingsManager.maxTokens,
+                                   imageFileId)
+        }
     }
 
     function sendMessage() {

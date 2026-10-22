@@ -204,7 +204,8 @@ QByteArray MistralAPI::buildTurnBody(const QString &modelName,
                                      bool isCreate,
                                      double temperature,
                                      int maxTokens,
-                                     const QString &imageFileId) const
+                                     const QString &imageFileId,
+                                     const QJsonArray &agentTools) const
 {
     // The user message as a MessageInputEntry. content is a plain string for
     // text, a chunk list when an image is attached.
@@ -262,11 +263,18 @@ QByteArray MistralAPI::buildTurnBody(const QString &modelName,
         if (!systemPrompt.trimmed().isEmpty()) {
             requestBody["instructions"] = systemPrompt.trimmed();
         }
+        // The tools array merges the built-in web_search with the local
+        // function tools of agent mode (F19). Both are create-time only.
+        QJsonArray tools;
         if (webSearch) {
-            QJsonArray tools;
             QJsonObject webSearchTool;
             webSearchTool["type"] = "web_search";
             tools.append(webSearchTool);
+        }
+        for (const QJsonValue &tool : agentTools) {
+            tools.append(tool);
+        }
+        if (!tools.isEmpty()) {
             requestBody["tools"] = tools;
         }
     }
@@ -296,6 +304,23 @@ void MistralAPI::sendMessage(const QString &apiKey,
                                double temperature,
                                int maxTokens,
                                const QString &imageFileId)
+{
+    sendMessageWithTools(apiKey, modelName, systemPrompt, userContent,
+                         imagePath, webSearch, remoteConversationId,
+                         QJsonArray(), temperature, maxTokens, imageFileId);
+}
+
+void MistralAPI::sendMessageWithTools(const QString &apiKey,
+                                        const QString &modelName,
+                                        const QString &systemPrompt,
+                                        const QString &userContent,
+                                        const QString &imagePath,
+                                        bool webSearch,
+                                        const QString &remoteConversationId,
+                                        const QJsonArray &agentTools,
+                                        double temperature,
+                                        int maxTokens,
+                                        const QString &imageFileId)
 {
     if (m_isBusy) {
         qWarning() << "Request already in progress";
@@ -330,13 +355,16 @@ void MistralAPI::sendMessage(const QString &apiKey,
     m_streamDone = false;
     m_pendingSources.clear();
     m_pendingThinking.clear();
+    m_pendingFunctionCalls.clear();
+    m_pendingAgentTools = agentTools;
 
     // Kept whole: a rate-limited request has to go out again byte for byte,
     // and the caller must not have to know that it ever came back.
     m_pendingApiKey = apiKey;
     m_pendingBody = buildTurnBody(modelName, systemPrompt, userContent,
                                   imagePath, webSearch, isCreate,
-                                  temperature, maxTokens, imageFileId);
+                                  temperature, maxTokens, imageFileId,
+                                  agentTools);
     m_pendingRemoteId = remoteConversationId;
     m_pendingUserContent = userContent;
     m_pendingImageFileId = imageFileId;
@@ -349,6 +377,72 @@ void MistralAPI::sendMessage(const QString &apiKey,
     emit messageSent();
 
     queueChatRequest(0);
+}
+
+QByteArray MistralAPI::buildFunctionResultsBody(const QVariantList &results)
+{
+    // Each result is {"tool_call_id": "...", "result": "<json string>"}.
+    // The wire format is a FunctionResultEntry per result:
+    // {"object":"entry","type":"function.result","tool_call_id":"...","result":"..."}
+    QJsonArray inputs;
+    for (const QVariant &v : results) {
+        const QVariantMap map = v.toMap();
+        QJsonObject entry;
+        entry["object"] = "entry";
+        entry["type"] = "function.result";
+        entry["tool_call_id"] = map["tool_call_id"].toString();
+        entry["result"] = map["result"].toString();
+        inputs.append(entry);
+    }
+    QJsonObject body;
+    body["inputs"] = inputs;
+    body["stream"] = true;
+    return QJsonDocument(body).toJson(QJsonDocument::Compact);
+}
+
+void MistralAPI::appendFunctionResults(const QString &apiKey,
+                                         const QString &remoteConversationId,
+                                         const QVariantList &results)
+{
+    // The tool loop: a function.result append is just another streaming POST
+    // to the same conversation. The follow-up stream can produce more
+    // function.call.delta events, which parseStreamLine collects again, so
+    // the loop is driven by the caller (ConversationManager) up to the cap.
+    if (m_isBusy) {
+        qWarning() << "Cannot append function results: request in progress";
+        return;
+    }
+    if (apiKey.isEmpty() && m_keyRequired) {
+        setError(tr("Missing API key. Please configure your API key in settings."));
+        return;
+    }
+    if (remoteConversationId.isEmpty() || results.isEmpty()) {
+        return;
+    }
+
+    setIsBusy(true);
+    setError(QString());
+    m_streamBuffer.clear();
+    m_currentEvent.clear();
+    m_timedOut = false;
+    m_streamStarted = false;
+    m_streamDone = false;
+    m_pendingSources.clear();
+    m_pendingThinking.clear();
+    m_pendingFunctionCalls.clear();
+
+    m_pendingApiKey = apiKey;
+    m_pendingBody = buildFunctionResultsBody(results);
+    m_pendingRemoteId = remoteConversationId;
+
+    // The throttle gate applies to tool-result appends too: the model may
+    // chain several calls, and each one costs a request.
+    const int wait = throttleDelayMs();
+    if (wait > 0) {
+        QTimer::singleShot(wait, this, &MistralAPI::sendPendingChatRequest);
+        return;
+    }
+    sendPendingChatRequest();
 }
 
 void MistralAPI::queueChatRequest(int extraDelayMs)
@@ -391,6 +485,7 @@ void MistralAPI::forgetPendingRequest()
     m_pendingRemoteId.clear();
     m_pendingUserContent.clear();
     m_pendingImageFileId.clear();
+    m_pendingAgentTools = QJsonArray();
     m_retryCount = 0;
 }
 
@@ -1634,6 +1729,31 @@ void MistralAPI::parseStreamLine(const QString &event, const QString &jsonData)
         return;
     }
 
+    if (event == "function.call.delta") {
+        // F19: the model wants a local tool. Arguments arrive as JSON string
+        // fragments across several deltas; accumulate by tool_call_id until
+        // conversation.response.done, then hand the complete calls over.
+        const QJsonDocument doc = QJsonDocument::fromJson(jsonData.toUtf8());
+        const QJsonObject obj = doc.object();
+        const QString toolCallId = obj["tool_call_id"].toString();
+        if (toolCallId.isEmpty()) {
+            return;
+        }
+        QVariantMap call = m_pendingFunctionCalls.value(toolCallId).toMap();
+        if (call.isEmpty()) {
+            call["name"] = obj["name"].toString();
+            call["arguments"] = QString();
+        }
+        // The first delta carries the name and the opening of the arguments;
+        // later deltas carry fragments. Append whatever arrived.
+        call["arguments"] = call["arguments"].toString()
+                + obj["arguments"].toString();
+        m_pendingFunctionCalls.insert(toolCallId, call);
+        // Show activity so the user sees what the agent is doing.
+        emit toolActivity(obj["name"].toString());
+        return;
+    }
+
     if (event == "conversation.response.done") {
         m_streamDone = true;
         // Thinking is emitted first: it belongs to the same answer and the
@@ -1651,6 +1771,36 @@ void MistralAPI::parseStreamLine(const QString &event, const QString &jsonData)
         if (!usage.isEmpty()) {
             emit usageReceived(usage["prompt_tokens"].toInt(),
                                usage["completion_tokens"].toInt());
+        }
+        // F19: a done event with pending function calls means the model
+        // asked for tools. Hand the complete calls to the manager, which
+        // executes them and appends the results; the follow-up stream is a
+        // new request, so the calls are cleared here.
+        if (!m_pendingFunctionCalls.isEmpty()) {
+            QVariantList calls;
+            const QList<QString> ids = m_pendingFunctionCalls.keys();
+            for (const QString &id : ids) {
+                const QVariantMap call = m_pendingFunctionCalls.value(id).toMap();
+                QVariantMap entry;
+                entry["tool_call_id"] = id;
+                entry["name"] = call["name"].toString();
+                // Parse the accumulated arguments string. When the model
+                // sent no arguments (a parameterless call), default to an
+                // empty object so the tool sees valid JSON.
+                const QString argsJson = call["arguments"].toString();
+                QJsonParseError parseError;
+                const QJsonDocument argsDoc = QJsonDocument::fromJson(
+                            argsJson.toUtf8(), &parseError);
+                if (parseError.error == QJsonParseError::NoError
+                        && argsDoc.isObject()) {
+                    entry["arguments"] = argsDoc.object().toVariantMap();
+                } else {
+                    entry["arguments"] = QVariantMap();
+                }
+                calls.append(entry);
+            }
+            m_pendingFunctionCalls.clear();
+            emit functionCallRequested(calls);
         }
         return;
     }
@@ -1684,6 +1834,8 @@ void MistralAPI::parseStreamLine(const QString &event, const QString &jsonData)
             parseStreamLine("tool.execution.delta", jsonData);
         } else if (type == "tool.execution.done") {
             parseStreamLine("tool.execution.done", jsonData);
+        } else if (type == "function.call.delta") {
+            parseStreamLine("function.call.delta", jsonData);
         } else if (type == "error") {
             parseStreamLine("error", jsonData);
         }

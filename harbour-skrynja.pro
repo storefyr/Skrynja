@@ -19,7 +19,8 @@ SOURCES += src/harbour-skrynja.cpp \
     src/categories.cpp \
     src/providers.cpp \
     src/audiorecorder.cpp \
-    src/voiceanonymizer.cpp
+    src/voiceanonymizer.cpp \
+    src/agenttools.cpp
 
 HEADERS += src/mistralapi.h \
     src/conversationmodel.h \
@@ -29,7 +30,8 @@ HEADERS += src/mistralapi.h \
     src/categories.h \
     src/providers.h \
     src/audiorecorder.h \
-    src/voiceanonymizer.h
+    src/voiceanonymizer.h \
+    src/agenttools.h
 
 DISTFILES += qml/harbour-skrynja.qml \
     qml/cover/CoverPage.qml \
