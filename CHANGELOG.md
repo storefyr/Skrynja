@@ -30,6 +30,16 @@ Skrynja — Experiment: anonymize your voice before it leaves the device.
   WAV round-trip, garbage/missing-file rejection, settings persistence,
   pitch clamping).
 
+### Fixed (after first on-device test)
+- **Anonymization never actually ran**: `ChatPage.qml` called
+  `VoiceAnonymizer::anonymize(...)` with a `QString*` out-parameter.
+  QML cannot pass `QString*` to C++ ("Unknown method parameter type:
+  QString*"), so the call threw, `ok` was falsy, and the app silently
+  fell back to the original recording — the user heard their normal
+  voice. Added a QML-friendly wrapper `anonymizeFile()` that returns
+  the error as a `QString` (empty on success). ChatPage now calls the
+  wrapper and shows a notification if anonymization fails.
+
 ## [0.8.13] - 2026-10-22
 Skrynja 0.8.13 — Fix: recorder never recorded — wrong codec + broken signal connects.
 

@@ -236,3 +236,14 @@ bool VoiceAnonymizer::anonymize(const QString &inputFile,
                << "(pitch" << pitchFactor << ", noise" << noiseLevel << ")";
     return true;
 }
+
+QString VoiceAnonymizer::anonymizeFile(const QString &inputFile,
+                                       const QString &outputFile,
+                                       double pitchFactor,
+                                       double noiseLevel)
+{
+    QString error;
+    const bool ok = anonymize(inputFile, outputFile,
+                              pitchFactor, noiseLevel, &error);
+    return ok ? QString() : error;
+}

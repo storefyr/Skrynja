@@ -2492,6 +2492,31 @@ private slots:
                                       1.15, 0.005, &err));
         QVERIFY(!err.isEmpty());
     }
+
+    // F18b: the QML-facing wrapper returns "" on success and a non-empty
+    // error string on failure. This is the method ChatPage.qml actually
+    // calls — anonymize() itself takes a QString* which QML cannot pass.
+    void anonymizeFileWrapperReturnsEmptyOnSuccess()
+    {
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        const QString in = dir.filePath("in.wav");
+        const QString out = dir.filePath("out.wav");
+        QVERIFY(!writeTestWav(in, 16000).isEmpty());
+
+        VoiceAnonymizer anonymizer;
+        const QString err = anonymizer.anonymizeFile(in, out, 1.25, 0.005);
+        QCOMPARE(err, QString());
+        QVERIFY(QFile::exists(out));
+    }
+
+    void anonymizeFileWrapperReturnsErrorOnFailure()
+    {
+        VoiceAnonymizer anonymizer;
+        const QString err = anonymizer.anonymizeFile("/nonexistent/in.wav",
+                                                     "/nonexistent/out.wav");
+        QVERIFY(!err.isEmpty());
+    }
 };
 
 class TestProviders : public QObject

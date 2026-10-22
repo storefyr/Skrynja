@@ -1122,21 +1122,26 @@ Page {
                 // speaker is harder to identify from their voice. On any
                 // failure we fall back to the original recording — privacy
                 // must never block transcription.
+                // NOTE: must call anonymizeFile() (returns error as QString),
+                // NOT anonymize() — QML cannot pass a QString* parameter, so
+                // anonymize() throws "Unknown method parameter type" and the
+                // call never reaches C++.
                 var uploadPath = chatPage.recordingPath
                 if (settingsManager.voiceAnonymization) {
                     var anonPath = chatPage.recordingPath.replace(/\.wav$/i, "-anon.wav")
-                    var err = ""
-                    var ok = voiceAnonymizer.anonymize(chatPage.recordingPath,
-                                                       anonPath,
-                                                       settingsManager.voicePitchFactor,
-                                                       0.005,   // subtle noise
-                                                       err)
-                    if (ok) {
+                    var err = voiceAnonymizer.anonymizeFile(chatPage.recordingPath,
+                                                            anonPath,
+                                                            settingsManager.voicePitchFactor,
+                                                            0.005)   // subtle noise
+                    if (err === "") {
                         uploadPath = anonPath
                         console.warn("Voice anonymization applied: " + anonPath)
                     } else {
                         console.warn("Voice anonymization failed (" + err
                                      + "), sending original recording")
+                        errorNotification.previewSummary = qsTr("Voice anonymization failed")
+                        errorNotification.previewBody = err
+                        errorNotification.publish()
                     }
                 }
 

@@ -32,15 +32,24 @@ class VoiceAnonymizer : public QObject
 public:
     explicit VoiceAnonymizer(QObject *parent = 0);
 
-    // Anonymize inputFile into outputFile.
+    // Anonymize inputFile into outputFile. C++ API.
     // pitchFactor: 1.0 = unchanged, > 1.0 = higher voice, < 1.0 = lower.
     // noiseLevel: 0.0 = off, up to ~0.02 is subtle (2% of full scale).
     // Returns true on success; on failure returns false and sets *errorMessage.
-    Q_INVOKABLE bool anonymize(const QString &inputFile,
-                               const QString &outputFile,
-                               double pitchFactor = 1.15,
-                               double noiseLevel = 0.005,
-                               QString *errorMessage = 0);
+    bool anonymize(const QString &inputFile,
+                   const QString &outputFile,
+                   double pitchFactor = 1.15,
+                   double noiseLevel = 0.005,
+                   QString *errorMessage = 0);
+
+    // QML-friendly wrapper: returns an empty string on success, otherwise
+    // a human-readable error message. QML cannot call methods that take
+    // QString* parameters ("Unknown method parameter type: QString*"), so
+    // the QML integration must use this variant.
+    Q_INVOKABLE QString anonymizeFile(const QString &inputFile,
+                                      const QString &outputFile,
+                                      double pitchFactor = 1.15,
+                                      double noiseLevel = 0.005);
 
     // Pure DSP helpers, exposed for unit tests (no file I/O).
     static QByteArray shiftPitch(const QByteArray &pcm16, double factor);
