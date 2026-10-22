@@ -13,7 +13,7 @@
 #include <QImage>
 #include <QJsonDocument>
 #include <QPair>
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QSaveFile>
 #include <QSet>
 #include <QStandardPaths>
@@ -356,7 +356,7 @@ bool ConversationManager::isSafeId(const QString &id)
     if (id.isEmpty() || id.length() > 64) {
         return false;
     }
-    return !id.contains(QRegExp("[^a-zA-Z0-9-]"));
+    return !id.contains(QRegularExpression("[^a-zA-Z0-9-]"));
 }
 
 QString ConversationManager::conversationFilePath(const QString &id) const
@@ -1282,8 +1282,8 @@ QString ConversationManager::exportConversation(const QString &conversationId) c
 
     // Filesystem-safe slug from the title
     QString slug = title.toLower();
-    slug.replace(QRegExp("[^a-z0-9]+"), "-");
-    slug.replace(QRegExp("(^-+|-+$)"), "");
+    slug.replace(QRegularExpression("[^a-z0-9]+"), "-");
+    slug.replace(QRegularExpression("(^-+|-+$)"), "");
     if (slug.length() > 40) {
         slug = slug.left(40);
     }
@@ -1482,7 +1482,7 @@ QVariantMap ConversationManager::getFunStats() const
     QVariantMap stats;
 
     // Common words not worth counting (French + English, all >= 4 chars)
-    static const QSet<QString> stopWords = QSet<QString>::fromList(QString(
+    static const QStringList stopWordList = QString(
         "dans avec pour vous nous votre plus mais tout tous toute toutes elle elles cette comme "
         "aussi être fait faire peut cela sont donc entre sans sous vers leurs leur notre deux "
         "trois bien très voici ainsi alors avoir même mêmes autres autre chaque quand quelques "
@@ -1490,7 +1490,8 @@ QVariantMap ConversationManager::getFunStats() const
         "them then than when what also more some such only very into over each other about "
         "would could should there their these those been does just like make made need want "
         "know time using used use example based here most however through while where because")
-        .split(' '));
+        .split(' ');
+    static const QSet<QString> stopWords(stopWordList.begin(), stopWordList.end());
 
     QHash<QString, int> wordCounts;
     int longestUserChars = 0;
@@ -1525,7 +1526,7 @@ QVariantMap ConversationManager::getFunStats() const
                 }
             } else {
                 const QStringList words = msg.content.toLower().split(
-                            QRegExp(QString::fromUtf8("[^a-zà-öø-ÿ]+")), QString::SkipEmptyParts);
+                            QRegularExpression(QString::fromUtf8("[^a-zà-öø-ÿ]+")), Qt::SkipEmptyParts);
                 for (const QString &word : words) {
                     if (word.length() >= 4 && !stopWords.contains(word)) {
                         wordCounts[word]++;

@@ -1,7 +1,7 @@
 #include "categories.h"
 
 #include <QHash>
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QSet>
 
 namespace {
@@ -193,11 +193,12 @@ const int KEYWORD_COUNT = int(sizeof(KEYWORDS) / sizeof(KEYWORDS[0]));
 // Words that appear in almost every prompt; matching them tells us nothing.
 QSet<QString> buildStopWords()
 {
-    return QSet<QString>::fromList(QString(
+    const QStringList list = QString(
         "the and for you your with this that have from what when where which "
         "please tell give make want know like just about into over than "
         "les des une pour vous avec dans que qui est sur pas plus mais tout "
-        "peux peut fais faire donne dis mon mes ton tes son ses par").split(' '));
+        "peux peut fais faire donne dis mon mes ton tes son ses par").split(' ');
+    return QSet<QString>(list.begin(), list.end());
 }
 
 // Accent-insensitive lowercase word list, so "réponse" matches "reponse".
@@ -213,7 +214,7 @@ QStringList normalizedWords(const QString &text)
         normalized.replace(from.at(i), to.at(i));
     }
 
-    return normalized.split(QRegExp("[^a-z0-9]+"), QString::SkipEmptyParts);
+    return normalized.split(QRegularExpression("[^a-z0-9]+"), Qt::SkipEmptyParts);
 }
 
 }
@@ -257,7 +258,7 @@ QString classify(const QString &text)
         for (int i = 0; i < KEYWORD_COUNT; ++i) {
             const QString id = QString::fromLatin1(KEYWORDS[i].id);
             const QStringList words =
-                    QString::fromLatin1(KEYWORDS[i].words).split(' ', QString::SkipEmptyParts);
+                    QString::fromLatin1(KEYWORDS[i].words).split(' ', Qt::SkipEmptyParts);
             for (const QString &word : words) {
                 if (word.length() < 3 || stopWords.contains(word)) {
                     continue;

@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE TS>
+<?xml version='1.0' encoding='utf-8'?>
 <TS version="2.1" language="da">
 <context>
     <name>Categories</name>
@@ -219,9 +218,7 @@
     <message numerus="yes">
         <source>Context limited: %n older message(s) not sent</source>
         <translation>
-            <numerusform>Context limited: %n older message(s) not sent</numerusform>
-            <numerusform>Context limited: %n older message(s) not sent</numerusform>
-        </translation>
+            <numerusform>Begrænset kontekst: %n ældre besked ikke sendt</numerusform><numerusform>Begrænset kontekst: %n ældre beskeder ikke sendt</numerusform></translation>
     </message>
     <message>
         <source>Tokens: %1 total</source>
@@ -241,23 +238,17 @@
     <message numerus="yes">
         <source>%n day(s)</source>
         <translation>
-            <numerusform>%n day</numerusform>
-            <numerusform>%n days</numerusform>
-        </translation>
+            <numerusform>%n dag</numerusform><numerusform>%n dage</numerusform></translation>
     </message>
     <message numerus="yes">
         <source>%n hour(s)</source>
         <translation>
-            <numerusform>%n hour</numerusform>
-            <numerusform>%n hours</numerusform>
-        </translation>
+            <numerusform>%n time</numerusform><numerusform>%n timer</numerusform></translation>
     </message>
     <message numerus="yes">
         <source>%n minute(s)</source>
         <translation>
-            <numerusform>%n minute</numerusform>
-            <numerusform>%n minutes</numerusform>
-        </translation>
+            <numerusform>%n minut</numerusform><numerusform>%n minutter</numerusform></translation>
     </message>
     <message>
         <source>Assistant</source>
@@ -317,23 +308,17 @@
     <message numerus="yes">
         <source>%n conversation(s)</source>
         <translation>
-            <numerusform>%n conversation</numerusform>
-            <numerusform>%n conversations</numerusform>
-        </translation>
+            <numerusform>%n samtale</numerusform><numerusform>%n samtaler</numerusform></translation>
     </message>
     <message numerus="yes">
         <source>%n match(es)</source>
         <translation>
-            <numerusform>%n match</numerusform>
-            <numerusform>%n matches</numerusform>
-        </translation>
+            <numerusform>%n match</numerusform><numerusform>%n match</numerusform></translation>
     </message>
     <message numerus="yes">
         <source>%n message(s)</source>
         <translation>
-            <numerusform>%n message</numerusform>
-            <numerusform>%n messages</numerusform>
-        </translation>
+            <numerusform>%n besked</numerusform><numerusform>%n beskeder</numerusform></translation>
     </message>
     <message>
         <source>Activity - last 14 days</source>
@@ -406,9 +391,7 @@
     <message numerus="yes">
         <source>%n conversation(s) relabelled</source>
         <translation>
-            <numerusform>%n conversation(s) relabelled</numerusform>
-            <numerusform>%n conversation(s) relabelled</numerusform>
-        </translation>
+            <numerusform>%n samtale omdøbt</numerusform><numerusform>%n samtaler omdøbt</numerusform></translation>
     </message>
     <message>
         <source>Nothing to relabel</source>
@@ -534,9 +517,7 @@
     <message numerus="yes">
         <source>%n message(s)</source>
         <translation>
-            <numerusform>%n message</numerusform>
-            <numerusform>%n messages</numerusform>
-        </translation>
+            <numerusform>%n besked</numerusform><numerusform>%n beskeder</numerusform></translation>
     </message>
     <message>
         <source>No conversation</source>
@@ -545,9 +526,7 @@
     <message numerus="yes">
         <source>%n conversation(s)</source>
         <translation>
-            <numerusform>%n conversation</numerusform>
-            <numerusform>%n conversations</numerusform>
-        </translation>
+            <numerusform>%n samtale</numerusform><numerusform>%n samtaler</numerusform></translation>
     </message>
     <message>
         <source>Tokens this month: %1</source>
@@ -953,9 +932,7 @@
     <message numerus="yes">
         <source>%n message(s)</source>
         <translation>
-            <numerusform>%n message</numerusform>
-            <numerusform>%n messages</numerusform>
-        </translation>
+            <numerusform>%n besked</numerusform><numerusform>%n beskeder</numerusform></translation>
     </message>
     <message>
         <source>Messages kept</source>
@@ -1067,9 +1044,7 @@
     <message numerus="yes">
         <source>%n character(s)</source>
         <translation>
-            <numerusform>%n character</numerusform>
-            <numerusform>%n characters</numerusform>
-        </translation>
+            <numerusform>%n tegn</numerusform><numerusform>%n tegn</numerusform></translation>
     </message>
     <message>
         <source>AI: %1 chars</source>
@@ -1315,5 +1290,33 @@
         <source>Counted from the answers themselves. Answers received before this app recorded models appear under their provider only.</source>
         <translation>Counted from the answers themselves. Answers received before this app recorded models appear under their provider only.</translation>
     </message>
-</context>
+<message><source>(%1 characters)</source><translation>(%1 tegn)</translation></message><message><source>1. Paste your Mistral API key in Settings
+2. Pick a model
+3. Start chatting!</source><translation>1. Indtast din Mistral API-nøgle i Indstillinger
+2. Vælg en model
+3. Begynd at chatte!</translation></message><message><source>Already attached</source><translation>Allerede tilsluttet</translation></message><message><source>Archived — deleted on another device</source><translation>Arkiveret — slettet på en anden enhed</translation></message><message><source>Archived — deleted on another device. Sending a message starts a new conversation.</source><translation>Arkiveret — slettet på en anden enhed. Hvis du sender en besked, starter en ny samtale.</translation></message><message><source>Attach all</source><translation>Tilslut alle</translation></message><message><source>Attach remote conversation</source><translation>Tilslut ekstern samtale</translation></message><message><source>Attaching %1 of %2...</source><translation>Tilslutter %1 af %2...</translation></message><message><source>Conversations stored on Mistral's servers. Attach one to continue it here.</source><translation>Samtaler gemmes på Mistrals servere. Tilslut en for at fortsætte den her.</translation></message><message><source>Conversations you create on other devices appear here</source><translation>Samtaler, du opretter på andre enheder, vises her</translation></message><message><source>Could not attach conversation.</source><translation>Kunne ikke tilslutte samtalen.</translation></message><message><source>Could not fetch messages for this conversation.</source><translation>Kunne ikke hente beskeder for denne samtale.</translation></message><message><source>Could not fetch remote conversations. Check your API key.</source><translation>Kunne ikke hente eksterne samtaler. Tjek din API-nøgle.</translation></message><message><source>Counted from the answers themselves. Answers received before this app recorded models are not counted.</source><translation>Talt ud fra svarene selv. Svar modtaget før denne app begyndte at registrere modeller tælles ikke med.</translation></message><message><source>Default (%1)</source><translation>Standard (%1)</translation></message><message><source>Default model</source><translation>Standardmodel</translation></message><message><source>Delete all archived</source><translation>Slet alle arkiverede</translation></message><message><source>Deleting archived conversations</source><translation>Sletter arkiverede samtaler</translation></message><message><source>Enter your Mistral API key to get started</source><translation>Indtast din Mistral API-nøgle for at komme i gang</translation></message><message><source>Estimate based on public list prices, in US dollars. Only usage recorded by this app is counted - check your Mistral console for exact billing.</source><translation>Skøn baseret på offentlige listepriser i amerikanske dollars. Kun forbrug registreret af denne app tælles med - tjek din Mistral-konsol for nøjagtig fakturering.</translation></message><message><source>Fixed when the conversation was created</source><translation>Låst da samtalen blev oprettet</translation></message><message><source>Hide reasoning</source><translation>Skjul ræsonnement</translation></message><message><source>Hosted in France (EU)</source><translation>Hostet i Frankrig (EU)</translation></message><message><source>Instruction sent when a conversation is created</source><translation>Instruktion sendes når en samtale oprettes</translation></message><message><source>Interrupted</source><translation>Afbrudt</translation></message><message><source>Let the model search the web while answering. Applied when a conversation is created and cannot be changed afterwards.</source><translation>Lad modellen søge på nettet mens den svarer. Gælder når en samtale oprettes og kan ikke ændres bagefter.</translation></message><message><source>Mistral AI API key</source><translation>Mistral AI API-nøgle</translation></message><message><source>Mistral AI. Skrynja uses Mistral's Conversations API, which is what makes web search possible. Several models are available, including free-tier ones.</source><translation>Mistral AI. Skrynja bruger Mistrals Conversations API, som er det der gør web-søgning mulig. Flere modeller er tilgængelige, inklusiv gratis.</translation></message><message><source>Models</source><translation>Modeller</translation></message><message><source>No remote conversations</source><translation>Ingen eksterne samtaler</translation></message><message><source>Powered by Mistral AI • MIT License</source><translation>Drevet af Mistral AI • MIT-licens</translation></message><message><source>Recording failed</source><translation>Optagelse mislykkedes</translation></message><message><source>Recording... tap mic to stop</source><translation>Optager... tryk på mikrofonen for at stoppe</translation></message><message><source>Refresh</source><translation>Opdater</translation></message><message><source>Remote Conversations</source><translation>Eksterne samtaler</translation></message><message><source>Searching the web…</source><translation>Søger på nettet…</translation></message><message><source>Show reasoning</source><translation>Vis ræsonnement</translation></message><message><source>Tap to attach</source><translation>Tryk for at tilslutte</translation></message><message><source>The key is stored scrambled in an owner-only file on this device and is only ever sent to api.mistral.ai.</source><translation>Nøglen gemmes krypteret i en fil kun ejeren kan læse på denne enhed og sendes kun nogensinde til api.mistral.ai.</translation></message><message><source>The transcription took too long. Please try again.</source><translation>Transskriptionen tog for lang tid. Prøv igen.</translation></message><message><source>Transcribing...</source><translation>Transskriberer...</translation></message><message><source>Transcription failed</source><translation>Transskription mislykkedes</translation></message><message><source>Untitled conversation</source><translation>Unavngiven samtale</translation></message><message><source>Uploading image...</source><translation>Uploader billede...</translation></message><message><source>Uploading image…</source><translation>Uploader billede…</translation></message><message><source>Used for new conversations; fixed once created</source><translation>Bruges til nye samtaler; låst når de er oprettet</translation></message><message><source>Voice anonymization failed</source><translation>Stemme-anonymisering mislykkedes</translation></message><message><source>Voice input</source><translation>Stemmeinput</translation></message><message><source>Web search</source><translation>Websøgning</translation></message><message><source>Working (%1)…</source><translation>Arbejder (%1)…</translation></message><message><source>Anonymize voice</source><translation>Anonymiser stemme</translation></message><message><source>Your recording is processed on the device before it is sent for transcription, so you are harder to identify by voice: the pitch is shifted, the timbre darkened and the audio band-limited. Nothing is sent to Mistral until the anonymized file is ready. On by default — disable only if you experience problems.</source><translation>Din optagelse behandles på enheden før den sendes til transskription, så du er sværere at genkende på stemmen: tonelejet skiftes, klangen mørknes og lydbåndet begrænses. Intet sendes til Mistral før den anonymiserede fil er klar. Tændt som standard — slå kun fra hvis du oplever problemer.</translation></message><message><source>• A copy of your conversations is stored locally on your device
+• The conversation history also lives on Mistral's servers (required by the Conversations API)
+• Your API key is stored scrambled
+• No sync with any web interface</source><translation>• En kopi af dine samtaler gemmes lokalt på din enhed
+• Samtalehistorikken ligger også på Mistrals servere (krævet af Conversations API)
+• Din API-nøgle gemmes krypteret
+• Ingen synkronisering med nogen webgrænseflade</translation></message><message><source>• Conversations copied locally on your device
+• History also stored on Mistral's servers (Conversations API)
+• No sync with any web interface
+• Uses your own Mistral account</source><translation>• Samtaler kopieres lokalt på din enhed
+• Historik gemmes også på Mistrals servere (Conversations API)
+• Ingen synkronisering med nogen webgrænseflade
+• Bruger din egen Mistral-konto</translation></message><message><source>Archived â deleted on another device</source><translation>Arkiveret — slettet på en anden enhed</translation></message><message><source>Archived â deleted on another device. Sending a message starts a new conversation.</source><translation>Arkiveret — slettet på en anden enhed. Hvis du sender en besked, starter en ny samtale.</translation></message><message><source>Powered by Mistral AI â¢ MIT License</source><translation>Drevet af Mistral AI • MIT-licens</translation></message><message><source>Searching the webâ¦</source><translation>Søger på nettet…</translation></message><message><source>To get an API key, visit console.mistral.ai</source><translation>For at få en API-nøgle, besøg console.mistral.ai</translation></message><message><source>Uploading imageâ¦</source><translation>Uploader billede…</translation></message><message><source>Working (%1)â¦</source><translation>Arbejder (%1)…</translation></message><message><source>â¢ A copy of your conversations is stored locally on your device
+â¢ The conversation history also lives on Mistral's servers (required by the Conversations API)
+â¢ Your API key is stored scrambled
+â¢ No sync with any web interface</source><translation>• En kopi af dine samtaler gemmes lokalt på din enhed
+• Samtalehistorikken ligger også på Mistrals servere (krævet af Conversations API)
+• Din API-nøgle gemmes krypteret
+• Ingen synkronisering med nogen webgrænseflade</translation></message><message><source>â¢ Conversations copied locally on your device
+â¢ History also stored on Mistral's servers (Conversations API)
+â¢ No sync with any web interface
+â¢ Uses your own Mistral account</source><translation>• Samtaler kopieres lokalt på din enhed
+• Historik gemmes også på Mistrals servere (Conversations API)
+• Ingen synkronisering med nogen webgrænseflade
+• Bruger din egen Mistral-konto</translation></message><message><source>Estimate based on public list prices, in US dollars. Only usage recorded by this app is counted - check your Mistral console for the real invoice.</source><translation>Skøn baseret på offentlige listepriser i amerikanske dollars. Kun forbrug registreret af denne app tælles med — tjek din Mistral-konsol for den rigtige faktura.</translation></message></context>
 </TS>

@@ -279,7 +279,7 @@ QByteArray VoiceAnonymizer::bandLimit(const QByteArray &pcm16, quint32 sampleRat
     };
     const double nyquist = sampleRate / 2.0;
     auto makeBiquad = [nyquist, sampleRate](double f0, bool highpass) {
-        Biquad bq = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+        Biquad bq = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
         if (f0 <= 0.0) return bq;
         if (f0 >= 0.45 * nyquist) f0 = 0.45 * nyquist;  // stay stable
         const double w0 = 2.0 * M_PI * f0 / double(sampleRate);

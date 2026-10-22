@@ -5,6 +5,30 @@ All notable changes to Skrynja will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.8] - 2026-10-22
+Skrynja 0.9.8 — Maintenance: complete Danish translations, zero build warnings, roadmap cleanup.
+
+### Fixed
+- **Danish translations complete**: all 271 UI strings now have Danish
+  translations (was 216, with 12 empty plural forms). Added translations
+  for all voice input/anonymization strings, remote conversations,
+  stats, first-launch dialog and settings descriptions. Filled the 12
+  empty plural forms (dag/dage, time/timer, minut/minutter, besked/
+  beskeder, samtale/samtaler, tegn, etc.).
+- **Zero compiler warnings**: fixed `-Wreorder` (member initialization
+  order in `SettingsManager`) and `-Wmissing-field-initializers`
+  (`Biquad` struct in `VoiceAnonymizer::bandLimit`).
+- **CHANGELOG**: removed the mangled, empty `[Unreleased]` section
+  (leftover from the fork rewrite, all on broken lines) and fixed the
+  stale `nicosouv/harbour-skrynja` link references at the bottom to
+  `storefyr/Skrynja`.
+
+### Changed
+- **ROADMAP**: F12 (privacy notice) marked done — the first-launch
+  dialog, Settings and README already document server-side history.
+- Deleted 6 stale local branches and 1 stale remote branch
+  (`vibe/fix-fase7-send-regression-36446a`).
+
 ## [0.9.7] - 2026-10-22
 Skrynja 0.9.7 — Voice anonymization is now ON BY DEFAULT, with a single fixed level.
 
@@ -607,21 +631,6 @@ model fixed per conversation, reasoning model support.
 - `StatsPage.qml`: restored the `Column` wrapper around the per-model
   answers section.
 
-## [Unreleased]
-
-### Changed- **Reasoning models show their thinking.** `type: "thinking"` chunks  are accumulated during streaming and attached to the assistant message  as a `thinking` field, rendered collapsed under the answer in  `MessageBubble` (tap "Show reasoning" to expand). Persisted in the  conversation JSON alongside `sources`.- **Web search sources are shown and persisted.** `tool.execution.finished`  events are parsed for `web_search` result URLs, deduplicated, attached to  the assistant message and rendered as tappable source chips in  `MessageBubble`. Sources survive save/reload via a new `sources` field on  each message.- **Settings: "Web search" toggle replaces "Limit conversation context".** The  context limit is gone (server-side history); web search is a create-time  option, so the description says so.
-- **System prompt description** now says "when a conversation is created" instead  of "before every conversation".
-
-### Removed- `SettingsManager::contextMessageLimit` and its Settings UI. The Conversations  API keeps the history server-side; there is nothing to trim locally.- **Per-message and per-conversation model override.** `nextMessageModel`,  the ChatPage quick model switcher, `ModelSelector.qml` and the model  ComboBox in `ConversationSettingsPage` are gone. The model is chosen  when a conversation is created (`createNewConversation(model)`) and  fixed for its life — the Conversations API locks it server-side.  `SettingsManager::nextMessageModel` and its QSettings key are removed.- **Multi-provider registry.** `Providers::all()/byId()/isValid()/defaultId()`  and the `Provider` struct are gone; `providers.cpp` now only holds the  Mistral constants and the catalogue filters (`isChatModelId`,  `looksLikeVisionModel`). Per-provider keys, base URLs and model caches are  removed from `SettingsManager` and the Settings UI — the Conversations API  exists only on Mistral.- `ProviderBadge.qml` and `ProvidersUi.js` deleted; `MessageBubble` and  `StatsPage` show the model name only.
-
-### Fixed- `ChatPage.qml`: repaired brace balance broken during the Conversations API  rewrite (extra `}` after the attached-image preview closed the input Column  early, leaving the rest of the page outside the root item).- `SettingsManager::migrateToSingleProvider()` no longer deletes the migrated  `apiKeyEnc`/`modelName`/`models` keys it just wrote, so a SailCat upgrade  keeps its configured key and model.- `StatsPage.qml`: restored the `Column` wrapper around the per-model answers  section; removing the provider column had left the page brace-imbalanced.
-
-### Tests- Unit tests rewritten for the Conversations API: typed SSE events  (`message.output.delta`, `conversation.response.done`, `conversation.created`,  `tool.execution.started`, `error`), create-vs-append request bodies, image chunk  encoding, reconcile check (`remoteHasUserMessage`), title output parsing, and  `%23stream` URL encoding.
-- `remoteConversationId` round-trip test: the id reported by  `conversation.created` is persisted on the conversation and survives a reload.
-- `pendingUserContent` / `pendingUserImagePath` accessor tests.
-- `buildTurnBodyWithImage` skips gracefully on hosts without a JPEG image plugin.
-
-
 ## [0.1.0] - 2026-10-20
 
 Skrynja is a fork of [SailCat](https://github.com/nicosouv/harbour-sailcat),
@@ -1008,5 +1017,4 @@ changelog and describe versions released under the SailCat name.
 
 ---
 
-[Unreleased]: https://github.com/nicosouv/harbour-skrynja/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/nicosouv/harbour-skrynja/releases/tag/v1.0.0
+[1.0.0]: https://github.com/storefyr/Skrynja/releases/tag/v1.0.0

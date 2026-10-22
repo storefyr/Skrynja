@@ -26,7 +26,7 @@ specs in `docs/features/` remain as historical reference; the ones marked **remo
 | F9 | Remove context-limit trimming (`buildApiMessages`, `trimmedMessageCount`, trim indicator) | — | done (unreleased) |
 | F10 | Model fixed per conversation; remove `nextMessageModel` and per-conversation model override | — | done |
 | F11 | Remove edit & regenerate (entry-level restart deferred) | — | done (unreleased) |
-| F12 | Privacy notice in UI + docs (history lives on Mistral's servers) | — | todo |
+| F12 | Privacy notice in UI + docs (history lives on Mistral's servers) | — | done (first-launch dialog + Settings + README "Security & Privacy") |
 | F13 | Unit tests: `%23stream` URL building, SSE event parser, reconcile, dirty/restart | — | done (unreleased) |
 | F14 | Vision via `MessageInputEntry` chunks (text + file), image uploaded to `/v1/files` once server-side | — | done |
 | F15 | Reasoning models: `content` arrives as a chunk list (thinking + text) — parse and render both | — | done |

@@ -138,11 +138,11 @@ private:
     double m_temperature;
     int m_maxTokens;
     QString m_systemPrompt;
-    bool m_webSearch;
     QString m_chatStyle;
     QString m_autoTitleMode;
     bool m_showTimestamps;
     bool m_enterKeySends;
+    bool m_webSearch;
     bool m_voiceAnonymization;
 
     QStringList m_cachedModels;

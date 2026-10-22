@@ -59,8 +59,8 @@ SettingsManager::SettingsManager(QObject *parent)
     , m_autoTitleMode("local")
     , m_showTimestamps(true)
     , m_enterKeySends(false)
-    , m_voiceAnonymization(true)
     , m_webSearch(false)
+    , m_voiceAnonymization(true)
     , m_modelSwitches(0)
 {
     loadSettings();
