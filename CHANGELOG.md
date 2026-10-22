@@ -5,6 +5,36 @@ All notable changes to Skrynja will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.2] - 2026-10-22
+Skrynja 0.9.2 — Stronger voice anonymization (F18b): strength presets + ring modulation.
+
+**Experimental — test branch `vibe/f18b-strong-anonymization-b6c41e`.**
+
+### Added
+- **Anonymization strength presets** replace the raw pitch slider
+  (Settings → Voice input → "Anonymization strength"):
+  - **Subtle** — small pitch shift (1.10) + faint noise. Still sounds like you.
+  - **Medium** (default) — pitch shift (1.18) + ring modulation at 220 Hz
+    (35% depth) + noise. Clearly a changed voice.
+  - **Strong** — heavy pitch shift (1.28) + ring modulation at 180 Hz
+    (60% depth) + more noise. Robotic.
+- **Ring modulation** as a new DSP effect in `VoiceAnonymizer`
+  (`ringModulate()`): multiplies the signal with a slow carrier wave,
+  destroying the natural harmonic structure of the voice — the classic
+  "robot voice" effect, much harder to recognize than a plain pitch shift.
+- New `VoiceAnonymizer::anonymizeWithStrength()` C++ API and
+  `strengthFromString()` mapping; the QML-facing `anonymizeFile()` now
+  takes a strength name ("subtle"/"medium"/"strong").
+- New setting `voiceAnonymizationStrength` (default "medium").
+  The 0.9.1 setting `voice/pitchFactor` (raw double) is migrated to the
+  closest preset once and removed.
+- 5 new unit tests (ring modulation no-op/changes/silence, strength
+  mapping, strength round-trip, strength persistence, legacy migration).
+
+### Changed
+- Settings → Voice input: the "Voice pitch" slider is replaced by an
+  "Anonymization strength" combo box with a description per preset.
+
 ## [0.9.1] - 2026-10-22
 Skrynja 0.9.1 — Experimental voice anonymization (F18b): anonymize your voice before it leaves the device.
 

@@ -2220,45 +2220,79 @@ private slots:
         }
     }
 
-    // F18 anonymization: the toggle and pitch factor persist across reloads,
-    // default to off / 1.15, and the factor is clamped to a sane range.
+    // F18 anonymization: the toggle and strength preset persist across
+    // reloads, default to off / "medium", and unknown strengths are
+    // normalized to "medium".
     void voiceAnonymizationSettingsPersist()
     {
         {
             SettingsManager settings;
-            QCOMPARE(settings.voiceAnonymization(), false); // default off
-            QCOMPARE(settings.voicePitchFactor(), 1.15);   // default pitch
+            QCOMPARE(settings.voiceAnonymization(), false);   // default off
+            QCOMPARE(settings.voiceAnonymizationStrength(), QString("medium"));
             settings.setVoiceAnonymization(true);
-            settings.setVoicePitchFactor(0.9);
+            settings.setVoiceAnonymizationStrength("strong");
             QCOMPARE(settings.voiceAnonymization(), true);
-            QCOMPARE(settings.voicePitchFactor(), 0.9);
+            QCOMPARE(settings.voiceAnonymizationStrength(), QString("strong"));
         }
         // Reread from disk: both survive a reload
         {
             SettingsManager reopened;
             QCOMPARE(reopened.voiceAnonymization(), true);
-            QCOMPARE(reopened.voicePitchFactor(), 0.9);
+            QCOMPARE(reopened.voiceAnonymizationStrength(), QString("strong"));
             reopened.setVoiceAnonymization(false);
-            reopened.setVoicePitchFactor(1.15);
+            reopened.setVoiceAnonymizationStrength("medium");
         }
         {
             SettingsManager reopened;
             QCOMPARE(reopened.voiceAnonymization(), false);
-            QCOMPARE(reopened.voicePitchFactor(), 1.15);
+            QCOMPARE(reopened.voiceAnonymizationStrength(), QString("medium"));
         }
     }
 
-    // F18 anonymization: the pitch factor is clamped to [0.8, 1.25].
-    void voicePitchFactorIsClamped()
+    // F18 anonymization: only the three known strength presets are accepted.
+    void voiceAnonymizationStrengthIsNormalized()
     {
         SettingsManager settings;
-        settings.setVoicePitchFactor(2.0);
-        QCOMPARE(settings.voicePitchFactor(), 1.25);
-        settings.setVoicePitchFactor(0.1);
-        QCOMPARE(settings.voicePitchFactor(), 0.8);
-        settings.setVoicePitchFactor(1.15);
-        QCOMPARE(settings.voicePitchFactor(), 1.15);
-        settings.setVoicePitchFactor(1.15); // no-op, no crash
+        settings.setVoiceAnonymizationStrength("subtle");
+        QCOMPARE(settings.voiceAnonymizationStrength(), QString("subtle"));
+        settings.setVoiceAnonymizationStrength("STRONG");  // case-insensitive
+        QCOMPARE(settings.voiceAnonymizationStrength(), QString("strong"));
+        settings.setVoiceAnonymizationStrength("ultra");   // unknown -> medium
+        QCOMPARE(settings.voiceAnonymizationStrength(), QString("medium"));
+        settings.setVoiceAnonymizationStrength("");        // empty -> medium
+        QCOMPARE(settings.voiceAnonymizationStrength(), QString("medium"));
+        settings.setVoiceAnonymizationStrength("medium");  // no-op, no crash
+        QCOMPARE(settings.voiceAnonymizationStrength(), QString("medium"));
+    }
+
+    // F18 anonymization: the legacy 0.9.1 setting "voice/pitchFactor" (a
+    // raw double) is migrated to the closest strength preset and the old
+    // key is removed.
+    void voicePitchFactorMigratesToStrength()
+    {
+        {
+            SettingsManager settings;
+            settings.setVoiceAnonymizationStrength("subtle");
+        }
+        {
+            // Simulate a 0.9.1 install: write the old key directly.
+            QSettings raw(skrynjaSettingsPath("Skrynja"), QSettings::NativeFormat);
+            raw.setValue("voice/pitchFactor", 1.28);
+            raw.sync();
+        }
+        {
+            SettingsManager settings;
+            // 1.28 is above the "medium" threshold -> "strong"
+            QCOMPARE(settings.voiceAnonymizationStrength(), QString("strong"));
+        }
+        {
+            QSettings raw(skrynjaSettingsPath("Skrynja"), QSettings::NativeFormat);
+            // The old key must be gone after the migration.
+            QVERIFY(!raw.contains("voice/pitchFactor"));
+            raw.remove("voice/anonymizationStrength");
+            raw.remove("voice/anonymization");
+            raw.sync();
+        }
     }
 
     void savedPromptsRoundTrip()
@@ -2493,9 +2527,100 @@ private slots:
         QVERIFY(!err.isEmpty());
     }
 
-    // F18b: the QML-facing wrapper returns "" on success and a non-empty
-    // error string on failure. This is the method ChatPage.qml actually
-    // calls — anonymize() itself takes a QString* which QML cannot pass.
+    // Ring modulation with depth 0 is a no-op.
+    void ringModulationZeroDepthIsNoOp()
+    {
+        QByteArray pcm;
+        for (int i = 0; i < 500; ++i) {
+            pcm.append(static_cast<char>(i & 0xFF));
+            pcm.append(static_cast<char>((i >> 8) & 0xFF));
+        }
+        QCOMPARE(VoiceAnonymizer::ringModulate(pcm, 16000, 220.0, 0.0), pcm);
+        // Invalid parameters are also a no-op.
+        QCOMPARE(VoiceAnonymizer::ringModulate(pcm, 0, 220.0, 0.5), pcm);
+        QCOMPARE(VoiceAnonymizer::ringModulate(pcm, 16000, 0.0, 0.5), pcm);
+    }
+
+    // Ring modulation changes the samples but keeps the length, and a
+    // silent input stays silent (0 * carrier = 0).
+    void ringModulationChangesSamplesKeepsLength()
+    {
+        QByteArray pcm;
+        for (int i = 0; i < 4000; ++i) {
+            const qint16 v = static_cast<qint16>(qSin(i / 20.0) * 10000);
+            pcm.append(static_cast<char>(v & 0xFF));
+            pcm.append(static_cast<char>((v >> 8) & 0xFF));
+        }
+        QCOMPARE(pcm.size(), 8000);
+        const QByteArray mod = VoiceAnonymizer::ringModulate(pcm, 16000, 220.0, 0.6);
+        QCOMPARE(mod.size(), pcm.size());
+        QVERIFY(mod != pcm);
+
+        QByteArray silence(8000, '\0');
+        QCOMPARE(VoiceAnonymizer::ringModulate(silence, 16000, 220.0, 1.0), silence);
+    }
+
+    // Strength names map to the right presets; unknown names fall back to
+    // Medium.
+    void strengthFromStringMapping()
+    {
+        QCOMPARE(VoiceAnonymizer::strengthFromString("subtle"),
+                 VoiceAnonymizer::Subtle);
+        QCOMPARE(VoiceAnonymizer::strengthFromString("Medium"),
+                 VoiceAnonymizer::Medium);
+        QCOMPARE(VoiceAnonymizer::strengthFromString("STRONG"),
+                 VoiceAnonymizer::Strong);
+        QCOMPARE(VoiceAnonymizer::strengthFromString("ultra"),
+                 VoiceAnonymizer::Medium);
+        QCOMPARE(VoiceAnonymizer::strengthFromString(""),
+                 VoiceAnonymizer::Medium);
+    }
+
+    // Full round-trip with a strength preset: output is a valid WAV, and
+    // "strong" (pitch 1.28) shortens the audio more than "subtle" (1.10).
+    void anonymizeWithStrengthRoundTrip()
+    {
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        const QString in = dir.filePath("in.wav");
+        QVERIFY(!writeTestWav(in, 16000).isEmpty());
+
+        VoiceAnonymizer anonymizer;
+        QString err;
+
+        const QString outSubtle = dir.filePath("subtle.wav");
+        QVERIFY(anonymizer.anonymizeWithStrength(in, outSubtle,
+                                                 VoiceAnonymizer::Subtle, &err));
+        const QString outStrong = dir.filePath("strong.wav");
+        QVERIFY(anonymizer.anonymizeWithStrength(in, outStrong,
+                                                 VoiceAnonymizer::Strong, &err));
+
+        auto dataSize = [](const QString &path) -> quint32 {
+            QFile f(path);
+            if (!f.open(QIODevice::ReadOnly)) return 0;
+            const QByteArray wav = f.readAll();
+            f.close();
+            if (wav.size() < 44 || !wav.startsWith("RIFF")) return 0;
+            return (static_cast<quint8>(wav[40]))
+                 | (static_cast<quint32>(static_cast<quint8>(wav[41])) << 8)
+                 | (static_cast<quint32>(static_cast<quint8>(wav[42])) << 16)
+                 | (static_cast<quint32>(static_cast<quint8>(wav[43])) << 24);
+        };
+        // 16000 / 1.10 = 14545 samples = 29090 bytes (subtle)
+        QCOMPARE(dataSize(outSubtle), 29090u);
+        // 16000 / 1.28 = 12500 samples = 25000 bytes (strong, shorter)
+        QCOMPARE(dataSize(outStrong), 25000u);
+        // The stronger preset must change the audio more: different payload.
+        QFile fSub(outSubtle), fStr(outStrong);
+        QVERIFY(fSub.open(QIODevice::ReadOnly));
+        QVERIFY(fStr.open(QIODevice::ReadOnly));
+        QVERIFY(fSub.readAll() != fStr.readAll());
+    }
+
+    // F18b: the QML-facing wrapper takes a strength name, returns "" on
+    // success and a non-empty error string on failure. This is the method
+    // ChatPage.qml actually calls — anonymize() itself takes a QString*
+    // which QML cannot pass.
     void anonymizeFileWrapperReturnsEmptyOnSuccess()
     {
         QTemporaryDir dir;
@@ -2505,7 +2630,7 @@ private slots:
         QVERIFY(!writeTestWav(in, 16000).isEmpty());
 
         VoiceAnonymizer anonymizer;
-        const QString err = anonymizer.anonymizeFile(in, out, 1.25, 0.005);
+        const QString err = anonymizer.anonymizeFile(in, out, "medium");
         QCOMPARE(err, QString());
         QVERIFY(QFile::exists(out));
     }
@@ -2514,7 +2639,8 @@ private slots:
     {
         VoiceAnonymizer anonymizer;
         const QString err = anonymizer.anonymizeFile("/nonexistent/in.wav",
-                                                     "/nonexistent/out.wav");
+                                                     "/nonexistent/out.wav",
+                                                     "strong");
         QVERIFY(!err.isEmpty());
     }
 };

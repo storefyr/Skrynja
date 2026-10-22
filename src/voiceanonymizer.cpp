@@ -4,6 +4,7 @@
 #include <QFileInfo>
 #include <QDebug>
 #include <QtGlobal>
+#include <QtMath>
 #include <cstdlib>
 
 VoiceAnonymizer::VoiceAnonymizer(QObject *parent)
@@ -192,6 +193,38 @@ QByteArray VoiceAnonymizer::addNoise(const QByteArray &pcm16, double level)
     return out;
 }
 
+QByteArray VoiceAnonymizer::ringModulate(const QByteArray &pcm16,
+                                         quint32 sampleRate,
+                                         double frequency,
+                                         double depth)
+{
+    if (depth <= 0.0 || sampleRate == 0 || frequency <= 0.0) {
+        return pcm16;  // no-op
+    }
+    QByteArray out = pcm16;  // copy; modified IN PLACE below
+    const int count = out.size() / 2;
+    char *d = out.data();
+    const double w = 2.0 * M_PI * frequency / double(sampleRate);
+    for (int i = 0; i < count; ++i) {
+        const qint16 s = static_cast<qint16>(readU16(d + i * 2));
+        // Carrier in [1-depth, 1]: depth 1.0 gives full ring modulation.
+        const double carrier = 1.0 - depth + depth * qCos(w * i);
+        const double v = s * carrier;
+        const qint16 sv = static_cast<qint16>(qBound(-32768.0, v, 32767.0));
+        d[i * 2] = static_cast<char>(sv & 0xFF);
+        d[i * 2 + 1] = static_cast<char>((sv >> 8) & 0xFF);
+    }
+    return out;
+}
+
+VoiceAnonymizer::Strength VoiceAnonymizer::strengthFromString(const QString &name)
+{
+    const QString n = name.toLower().trimmed();
+    if (n == "subtle") return Subtle;
+    if (n == "strong") return Strong;
+    return Medium;  // "medium" and anything unknown
+}
+
 // ---------------------------------------------------------------------------
 // File-level anonymization
 // ---------------------------------------------------------------------------
@@ -237,13 +270,84 @@ bool VoiceAnonymizer::anonymize(const QString &inputFile,
     return true;
 }
 
+bool VoiceAnonymizer::anonymizeWithStrength(const QString &inputFile,
+                                            const QString &outputFile,
+                                            Strength strength,
+                                            QString *errorMessage)
+{
+    // Strength presets: pitch factor, ring modulation (frequency in Hz,
+    // depth 0..1) and white-noise level. Chosen so that each step is a
+    // clearly audible change while transcription stays accurate.
+    double pitchFactor = 1.10;
+    double ringFreq = 0.0;
+    double ringDepth = 0.0;
+    double noiseLevel = 0.005;
+    switch (strength) {
+    case Subtle:
+        pitchFactor = 1.10;
+        noiseLevel = 0.005;
+        break;
+    case Medium:
+        pitchFactor = 1.18;
+        ringFreq = 220.0;
+        ringDepth = 0.35;
+        noiseLevel = 0.008;
+        break;
+    case Strong:
+        pitchFactor = 1.28;
+        ringFreq = 180.0;
+        ringDepth = 0.60;
+        noiseLevel = 0.012;
+        break;
+    }
+
+    const WavData wav = readWav(inputFile);
+    if (!wav.valid) {
+        if (errorMessage) {
+            *errorMessage = tr("Not a 16-bit PCM WAV file");
+        }
+        qWarning() << "VoiceAnonymizer: cannot parse" << inputFile;
+        return false;
+    }
+
+    qWarning() << "VoiceAnonymizer: loaded" << inputFile
+               << wav.channels << "ch" << wav.sampleRate << "Hz"
+               << wav.pcm.size() << "bytes PCM";
+
+    QByteArray processed = wav.pcm;
+    if (!qFuzzyCompare(pitchFactor, 1.0)) {
+        processed = shiftPitch(processed, pitchFactor);
+    }
+    if (ringDepth > 0.0) {
+        processed = ringModulate(processed, wav.sampleRate, ringFreq, ringDepth);
+    }
+    if (noiseLevel > 0.0) {
+        processed = addNoise(processed, noiseLevel);
+    }
+
+    if (!writeWav(outputFile, wav.channels, wav.sampleRate, processed)) {
+        if (errorMessage) {
+            *errorMessage = tr("Could not write the anonymized recording");
+        }
+        qWarning() << "VoiceAnonymizer: cannot write" << outputFile;
+        return false;
+    }
+
+    qWarning() << "VoiceAnonymizer: wrote" << outputFile
+               << QFileInfo(outputFile).size() << "bytes"
+               << "(strength" << strength
+               << ", pitch" << pitchFactor
+               << ", ring" << ringFreq << "Hz @" << ringDepth
+               << ", noise" << noiseLevel << ")";
+    return true;
+}
+
 QString VoiceAnonymizer::anonymizeFile(const QString &inputFile,
                                        const QString &outputFile,
-                                       double pitchFactor,
-                                       double noiseLevel)
+                                       const QString &strength)
 {
     QString error;
-    const bool ok = anonymize(inputFile, outputFile,
-                              pitchFactor, noiseLevel, &error);
+    const bool ok = anonymizeWithStrength(inputFile, outputFile,
+                                          strengthFromString(strength), &error);
     return ok ? QString() : error;
 }

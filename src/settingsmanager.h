@@ -25,11 +25,12 @@ class SettingsManager : public QObject
     Q_PROPERTY(QString autoTitleMode READ autoTitleMode WRITE setAutoTitleMode NOTIFY autoTitleModeChanged)
     Q_PROPERTY(bool showTimestamps READ showTimestamps WRITE setShowTimestamps NOTIFY showTimestampsChanged)
     Q_PROPERTY(bool enterKeySends READ enterKeySends WRITE setEnterKeySends NOTIFY enterKeySendsChanged)
-    // F18 voice anonymization (experimental): pitch-shift the recording
+    // F18 voice anonymization (experimental): process the recording
     // before it is sent for transcription, so the speaker is harder to
     // identify from their voice. Off by default.
     Q_PROPERTY(bool voiceAnonymization READ voiceAnonymization WRITE setVoiceAnonymization NOTIFY voiceAnonymizationChanged)
-    Q_PROPERTY(double voicePitchFactor READ voicePitchFactor WRITE setVoicePitchFactor NOTIFY voicePitchFactorChanged)
+    // Anonymization strength preset: "subtle", "medium" or "strong".
+    Q_PROPERTY(QString voiceAnonymizationStrength READ voiceAnonymizationStrength WRITE setVoiceAnonymizationStrength NOTIFY voiceAnonymizationStrengthChanged)
     Q_PROPERTY(QVariantList savedPrompts READ savedPrompts NOTIFY savedPromptsChanged)
     Q_PROPERTY(QString appVersion READ appVersion CONSTANT)
 
@@ -58,8 +59,8 @@ public:
 
     bool voiceAnonymization() const;
     void setVoiceAnonymization(bool enabled);
-    double voicePitchFactor() const;
-    void setVoicePitchFactor(double factor);
+    QString voiceAnonymizationStrength() const;
+    void setVoiceAnonymizationStrength(const QString &strength);
 
     QString chatStyle() const;
     void setChatStyle(const QString &style);
@@ -92,6 +93,7 @@ public:
     Q_INVOKABLE QStringList availableLanguages() const;
     Q_INVOKABLE QStringList availableChatStyles() const;
     Q_INVOKABLE QStringList availableAutoTitleModes() const;
+    Q_INVOKABLE QStringList availableVoiceAnonymizationStrengths() const;
     Q_INVOKABLE bool isVisionModel(const QString &modelId) const;
     Q_INVOKABLE void updateModelCache(const QVariantList &models);
     Q_INVOKABLE bool modelCacheStale() const;
@@ -128,7 +130,7 @@ signals:
     void enterKeySendsChanged();
     void savedPromptsChanged();
     void voiceAnonymizationChanged();
-    void voicePitchFactorChanged();
+    void voiceAnonymizationStrengthChanged();
 
 private:
     QSettings m_settings;
@@ -144,7 +146,7 @@ private:
     bool m_showTimestamps;
     bool m_enterKeySends;
     bool m_voiceAnonymization;
-    double m_voicePitchFactor;
+    QString m_voiceAnonymizationStrength;
     QStringList m_cachedModels;
     QStringList m_cachedVisionModels;
     QVariantList m_savedPrompts;

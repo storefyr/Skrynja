@@ -60,7 +60,7 @@ SettingsManager::SettingsManager(QObject *parent)
     , m_showTimestamps(true)
     , m_enterKeySends(false)
     , m_voiceAnonymization(false)
-    , m_voicePitchFactor(1.15)
+    , m_voiceAnonymizationStrength("medium")
     , m_webSearch(false)
     , m_modelSwitches(0)
 {
@@ -192,21 +192,24 @@ void SettingsManager::setVoiceAnonymization(bool enabled)
     }
 }
 
-double SettingsManager::voicePitchFactor() const
+QString SettingsManager::voiceAnonymizationStrength() const
 {
-    return m_voicePitchFactor;
+    return m_voiceAnonymizationStrength;
 }
 
-void SettingsManager::setVoicePitchFactor(double factor)
+void SettingsManager::setVoiceAnonymizationStrength(const QString &strength)
 {
-    // Clamp to a sane range: 0.8 (noticeably lower) .. 1.25 (higher).
-    // 1.0 means "no pitch change".
-    if (factor < 0.8) factor = 0.8;
-    if (factor > 1.25) factor = 1.25;
-    if (!qFuzzyCompare(m_voicePitchFactor, factor)) {
-        m_voicePitchFactor = factor;
+    // Only the three known presets are accepted; anything else resets to
+    // the default "medium".
+    QString normalized = strength.toLower().trimmed();
+    if (normalized != "subtle" && normalized != "medium"
+            && normalized != "strong") {
+        normalized = "medium";
+    }
+    if (m_voiceAnonymizationStrength != normalized) {
+        m_voiceAnonymizationStrength = normalized;
         saveSettings();
-        emit voicePitchFactorChanged();
+        emit voiceAnonymizationStrengthChanged();
     }
 }
 
@@ -371,6 +374,14 @@ QStringList SettingsManager::availableAutoTitleModes() const
         << "local"  // first question as title, category from the local classifier
         << "ai"     // one extra request per conversation, best titles
         << "off";   // no title, no category
+}
+
+QStringList SettingsManager::availableVoiceAnonymizationStrengths() const
+{
+    return QStringList()
+        << "subtle"   // mild: small pitch shift + subtle noise
+        << "medium"   // pitch shift + ring modulation + noise
+        << "strong";  // heavy pitch shift + strong ring modulation ("robot voice")
 }
 
 QStringList SettingsManager::availableChatStyles() const
@@ -541,7 +552,22 @@ void SettingsManager::loadSettings()
     }
     m_showTimestamps = m_settings.value("ui/showTimestamps", true).toBool();
     m_voiceAnonymization = m_settings.value("voice/anonymization", false).toBool();
-    m_voicePitchFactor = m_settings.value("voice/pitchFactor", 1.15).toDouble();
+    // 0.9.1 stored a raw pitch factor under "voice/pitchFactor". Migrate it
+    // to the strength preset: <= 1.12 -> subtle, <= 1.22 -> medium, else
+    // strong. The old key is removed afterwards.
+    if (m_settings.contains("voice/pitchFactor")) {
+        const double oldFactor = m_settings.value("voice/pitchFactor", 1.15).toDouble();
+        m_voiceAnonymizationStrength = oldFactor <= 1.12 ? "subtle"
+                                    : oldFactor <= 1.22 ? "medium"
+                                                        : "strong";
+        m_settings.remove("voice/pitchFactor");
+    } else {
+        m_voiceAnonymizationStrength =
+                m_settings.value("voice/anonymizationStrength", "medium").toString();
+    }
+    if (!availableVoiceAnonymizationStrengths().contains(m_voiceAnonymizationStrength)) {
+        m_voiceAnonymizationStrength = "medium";
+    }
     // 2.3.1 stored "ui/enterKeySends" = true for everyone, chosen or not.
     // A new key resets it once so Enter goes back to inserting a new line.
     m_settings.remove("ui/enterKeySends");
@@ -652,7 +678,7 @@ void SettingsManager::saveSettings()
     m_settings.setValue("ui/showTimestamps", m_showTimestamps);
     m_settings.setValue("ui/enterSends", m_enterKeySends);
     m_settings.setValue("voice/anonymization", m_voiceAnonymization);
-    m_settings.setValue("voice/pitchFactor", m_voicePitchFactor);
+    m_settings.setValue("voice/anonymizationStrength", m_voiceAnonymizationStrength);
     m_settings.sync();
     secureSettingsFile();
 }

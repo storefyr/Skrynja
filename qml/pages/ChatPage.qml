@@ -1117,11 +1117,13 @@ Page {
                 var lang = settingsManager.language
                 if (lang === "nb_NO") lang = "nb"
 
-                // F18 anonymization (experimental): if enabled, pitch-shift
-                // the recording locally before it leaves the device, so the
-                // speaker is harder to identify from their voice. On any
-                // failure we fall back to the original recording — privacy
-                // must never block transcription.
+                // F18 anonymization (experimental): if enabled, process
+                // the recording locally (pitch shift, optional ring
+                // modulation, noise — depending on the strength preset)
+                // before it leaves the device, so the speaker is harder to
+                // identify from their voice. On any failure we fall back to
+                // the original recording — privacy must never block
+                // transcription.
                 // NOTE: must call anonymizeFile() (returns error as QString),
                 // NOT anonymize() — QML cannot pass a QString* parameter, so
                 // anonymize() throws "Unknown method parameter type" and the
@@ -1129,10 +1131,10 @@ Page {
                 var uploadPath = chatPage.recordingPath
                 if (settingsManager.voiceAnonymization) {
                     var anonPath = chatPage.recordingPath.replace(/\.wav$/i, "-anon.wav")
-                    var err = voiceAnonymizer.anonymizeFile(chatPage.recordingPath,
-                                                            anonPath,
-                                                            settingsManager.voicePitchFactor,
-                                                            0.005)   // subtle noise
+                    var err = voiceAnonymizer.anonymizeFile(
+                                chatPage.recordingPath,
+                                anonPath,
+                                settingsManager.voiceAnonymizationStrength)
                     if (err === "") {
                         uploadPath = anonPath
                         console.warn("Voice anonymization applied: " + anonPath)
