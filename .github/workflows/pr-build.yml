@@ -84,11 +84,15 @@ jobs:
             | json_get sha || true)
           echo "Branch SHA: ${BRANCH_SHA:-<new branch>}"
 
-          # 2. Upload RPM as a git blob via the API
-          BLOB_JSON=$(base64 -w0 "$RPM_FILE" | sed 's/+/ /g' | \
-            awk '{printf "{\"content\":\"%s\",\"encoding\":\"base64\"}", $0}')
+          # 2. Upload RPM as a git blob via the API (base64 in a temp file
+          #    to avoid "Argument list too long" - the RPM is ~330 KB)
+          base64 -w0 "$RPM_FILE" > /tmp/rpm.b64
+          printf '{"content":"' > /tmp/blob.json
+          cat /tmp/rpm.b64 >> /tmp/blob.json
+          printf '","encoding":"base64"}' >> /tmp/blob.json
           BLOB_SHA=$(curl -sf -X POST -H "$AUTH" -H "Content-Type: application/json" \
-            -d "$BLOB_JSON" "${API}/git/blobs" | json_get sha)
+            -d @/tmp/blob.json "${API}/git/blobs" | json_get sha)
+          rm -f /tmp/rpm.b64 /tmp/blob.json
           echo "Blob SHA: ${BLOB_SHA}"
 
           # 3. Create a tree with just the RPM file
