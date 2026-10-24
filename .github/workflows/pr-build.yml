@@ -9,6 +9,9 @@ on:
 env:
   SAILFISH_RELEASE: '4.5.0.18'
 
+permissions:
+  contents: write
+
 jobs:
   unit-tests:
     name: "Unit tests"
@@ -62,28 +65,71 @@ jobs:
 
       - name: Push RPM to pr-rpm branch
         if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           PR_NUM=${{ github.event.pull_request.number }}
           BRANCH="pr-${PR_NUM}-rpm"
           RPM_FILE=$(ls RPMS/harbour-skrynja-*.rpm | head -1)
           RPM_NAME=$(basename "$RPM_FILE")
+          API_URL="https://api.github.com/repos/${{ github.repository }}"
 
-          # Clone or create the pr-rpm branch (orphan, single file)
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          if git ls-remote --exit-code origin "refs/heads/${BRANCH}" >/dev/null 2>&1; then
-            git fetch origin "${BRANCH}"
-            git checkout "${BRANCH}"
-            rm -f harbour-skrynja-*.rpm
+          # Get the SHA of the pr-rpm branch head (if it exists)
+          BRANCH_SHA=$(curl -sf -H "Authorization: token ${GH_TOKEN}" \
+            "${API_URL}/git/ref/heads/${BRANCH}" \
+            | tr ',' '\n' | grep '"sha"' | head -1 | cut -d'"' -f4 || true)
+
+          # Get the tree SHA of that commit
+          if [ -n "$BRANCH_SHA" ]; then
+            TREE_SHA=$(curl -sf -H "Authorization: token ${GH_TOKEN}" \
+              "${API_URL}/git/commits/${BRANCH_SHA}" \
+              | tr ',' '\n' | grep '"tree"' | head -1 | cut -d'"' -f4)
           else
-            git checkout --orphan "${BRANCH}"
-            git rm -rf . 2>/dev/null || true
+            # No existing branch - create a root commit with empty tree
+            TREE_SHA=$(echo -n "" | git hash-object -t tree /dev/stdin)
           fi
 
-          cp "$RPM_FILE" "${RPM_NAME}"
-          git add "${RPM_NAME}"
-          git commit -m "RPM for PR #${PR_NUM} (aarch64) - ${{ github.sha }}" || true
-          git push origin "${BRANCH}"
+          # Upload the RPM as a blob
+          BLOB_SHA=$(git hash-object -w "$RPM_FILE")
+
+          # Create a new tree with just the RPM
+          TREE_JSON=$(printf '{"base_tree":"%s","tree":[{"path":"%s","mode":"100644","type":"blob","sha":"%s"}]}' \
+            "$TREE_SHA" "$RPM_NAME" "$BLOB_SHA")
+          NEW_TREE_SHA=$(curl -sf -X POST -H "Authorization: token ${GH_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "$TREE_JSON" \
+            "${API_URL}/git/trees" \
+            | tr ',' '\n' | grep '"sha"' | head -1 | cut -d'"' -f4)
+
+          # Create the commit
+          if [ -n "$BRANCH_SHA" ]; then
+            COMMIT_JSON=$(printf '{"message":"RPM for PR #%s (aarch64) - %s","tree":"%s","parents":["%s"]}' \
+              "$PR_NUM" "${{ github.sha }}" "$NEW_TREE_SHA" "$BRANCH_SHA")
+          else
+            COMMIT_JSON=$(printf '{"message":"RPM for PR #%s (aarch64) - %s","tree":"%s"}' \
+              "$PR_NUM" "${{ github.sha }}" "$NEW_TREE_SHA")
+          fi
+          NEW_COMMIT_SHA=$(curl -sf -X POST -H "Authorization: token ${GH_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "$COMMIT_JSON" \
+            "${API_URL}/git/commits" \
+            | tr ',' '\n' | grep '"sha"' | head -1 | cut -d'"' -f4)
+
+          # Update (or create) the branch ref
+          if [ -n "$BRANCH_SHA" ]; then
+            curl -sf -X PATCH -H "Authorization: token ${GH_TOKEN}" \
+              -H "Content-Type: application/json" \
+              -d "{\"sha\":\"${NEW_COMMIT_SHA}\"}" \
+              "${API_URL}/git/refs/heads/${BRANCH}"
+          else
+            curl -sf -X POST -H "Authorization: token ${GH_TOKEN}" \
+              -H "Content-Type: application/json" \
+              -d "{\"ref\":\"refs/heads/${BRANCH}\",\"sha\":\"${NEW_COMMIT_SHA}\"}" \
+              "${API_URL}/git/refs"
+          fi
+
           echo "RPM pushed to branch: ${BRANCH}"
           echo "Download: https://raw.githubusercontent.com/${{ github.repository }}/${BRANCH}/${RPM_NAME}"
