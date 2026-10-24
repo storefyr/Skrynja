@@ -2202,6 +2202,17 @@ private slots:
         settings.setLanguage("en");
     }
 
+    // Only English and Danish are shipped (2026-10-24): the other seven
+    // languages were dropped to reduce maintenance. The list must stay
+    // exactly ["en", "da"] — the ComboBox in SettingsPage and the
+    // TRANSLATIONS list in the .pro file depend on this order.
+    void onlyEnglishAndDanishAreAvailable()
+    {
+        SettingsManager settings;
+        QCOMPARE(settings.availableLanguages(),
+                 QStringList() << "en" << "da");
+    }
+
     void webSearchTogglePersists()
     {
         {

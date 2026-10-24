@@ -56,11 +56,4 @@ SAILFISHAPP_ICONS = 86x86 108x108 128x128 172x172
 CONFIG += sailfishapp_i18n
 
 TRANSLATIONS += translations/harbour-skrynja-en.ts \
-                translations/harbour-skrynja-da.ts \
-                translations/harbour-skrynja-fr.ts \
-                translations/harbour-skrynja-de.ts \
-                translations/harbour-skrynja-es.ts \
-                translations/harbour-skrynja-fi.ts \
-                translations/harbour-skrynja-it.ts \
-                translations/harbour-skrynja-nb_NO.ts \
-                translations/harbour-skrynja-sv.ts
+                translations/harbour-skrynja-da.ts
