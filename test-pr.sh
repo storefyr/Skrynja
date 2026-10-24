@@ -29,9 +29,11 @@ echo ""
 # --- Step 1: Find the RPM filename on the branch ---
 echo "--- Step 1: Looking up RPM on branch ${BRANCH} ---"
 # List the branch contents via the GitHub API (no auth needed for public repos)
-RPM_NAME=$(curl -sf "https://api.github.com/repos/${REPO}/contents/?ref=${BRANCH}" \
+CONTENTS_JSON=$(curl -sf "https://api.github.com/repos/${REPO}/contents/?ref=${BRANCH}")
+RPM_NAME=$(echo "$CONTENTS_JSON" \
     | tr ',' '\n' \
-    | grep '"name":"harbour-skrynja-.*\.rpm"' \
+    | grep '"name":"harbour-skrynja-' \
+    | grep '\.rpm"' \
     | head -1 \
     | cut -d'"' -f4)
 
