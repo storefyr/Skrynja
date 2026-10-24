@@ -6,9 +6,9 @@
 #   sh test-pr.sh <pr-number>              # e.g. sh test-pr.sh 11
 #   sh test-pr.sh <pr-number> <run-id>     # pin a specific CI run
 #
-# Requirements: curl, jq, devel-su
-# The GitHub CLI (gh) is NOT needed on the device - the artifact download URL is
-# resolved via the public GitHub API using curl.
+# Requirements: curl, devel-su (both preinstalled on Sailfish OS)
+# jq is optional: without it, the script falls back to sed/awk parsing.
+# The GitHub CLI (gh) is NOT needed - everything uses curl + the public API.
 
 set -e
 
@@ -33,9 +33,30 @@ echo ""
 # --- Step 1: Find the latest successful PR CI run ---
 if [ -z "$RUN_ID" ]; then
     echo "--- Step 1: Finding latest CI run for PR #${PR} ---"
-    RUN_ID=$(curl -sf "https://api.github.com/repos/${REPO}/actions/runs?event=pull_request&per_page=30" \
-        | jq -r --arg pr "${PR}" \
+    RUNS_JSON=$(curl -sf "https://api.github.com/repos/${REPO}/actions/runs?event=pull_request&per_page=30")
+    if command -v jq >/dev/null 2>&1; then
+        RUN_ID=$(echo "$RUNS_JSON" | jq -r --arg pr "${PR}" \
             '[.workflow_runs[] | select(.head_branch != null and .pull_requests[0].number == ($pr|tonumber) and .conclusion == "success")] | first | .id // empty')
+    else
+        # Fallback without jq (POSIX awk): strip envelope, split on run
+        # boundaries, match PR number + success + head_branch.
+        # The first match is the latest run (GitHub returns newest first).
+        RUN_ID=$(echo "$RUNS_JSON" \
+            | sed 's/^.*"workflow_runs":\[//' \
+            | sed 's/},{"id":/\n/g' \
+            | awk -v pr="$PR" '
+                /^{"id":/ {
+                    line = $0
+                    sub(/^{"id":/, "", line)
+                    match(line, /^[0-9]+/)
+                    cur_id = substr(line, 1, RLENGTH)
+                    has_pr = (line ~ ("\"number\":" pr ",")) ? 1 : 0
+                    has_succ = (line ~ /"conclusion":"success"/) ? 1 : 0
+                    has_br = (line ~ /"head_branch":"/) ? 1 : 0
+                    if (has_pr && has_succ && has_br) { print cur_id; exit }
+                }
+            ')
+    fi
     if [ -z "$RUN_ID" ] || [ "$RUN_ID" = "null" ]; then
         echo "ERROR: No successful CI run found for PR #${PR}." >&2
         echo "Has the PR build finished? Check the Actions tab." >&2
@@ -48,9 +69,32 @@ fi
 
 # --- Step 2: Find the RPM artifact in the run ---
 echo "--- Step 2: Finding RPM artifact ---"
-ARTIFACT_INFO=$(curl -sf "https://api.github.com/repos/${REPO}/actions/runs/${RUN_ID}/artifacts?per_page=100" \
-    | jq -r --arg prefix "${ARTIFACT_PREFIX}${PR}" \
+ARTIFACTS_JSON=$(curl -sf "https://api.github.com/repos/${REPO}/actions/runs/${RUN_ID}/artifacts?per_page=100")
+if command -v jq >/dev/null 2>&1; then
+    ARTIFACT_INFO=$(echo "$ARTIFACTS_JSON" | jq -r --arg prefix "${ARTIFACT_PREFIX}${PR}" \
         '[.artifacts[] | select(.name | startswith($prefix))] | first | "\(.id) \(.name)"')
+else
+    # Fallback without jq (POSIX awk): strip envelope, split on artifact
+    # boundaries, match name prefix.
+    ARTIFACT_INFO=$(echo "$ARTIFACTS_JSON" \
+        | sed 's/^.*"artifacts":\[//' \
+        | sed 's/},{"id":/\n/g' \
+        | awk -v prefix="${ARTIFACT_PREFIX}${PR}" '
+            /^{"id":/ {
+                line = $0
+                sub(/^{"id":/, "", line)
+                match(line, /^[0-9]+/)
+                cur_id = substr(line, 1, RLENGTH)
+                if (index(line, "\"name\":\"" prefix) > 0) {
+                    if (match(line, /"name":"[^"]*"/)) {
+                        name = substr(line, RSTART + 8, RLENGTH - 9)
+                    }
+                    print cur_id " " name
+                    exit
+                }
+            }
+        ')
+fi
 ARTIFACT_ID=$(echo "$ARTIFACT_INFO" | awk '{print $1}')
 ARTIFACT_NAME=$(echo "$ARTIFACT_INFO" | awk '{print $2}')
 
@@ -76,8 +120,12 @@ if command -v unzip >/dev/null 2>&1; then
     unzip -o artifact.zip
 elif command -v busybox >/dev/null 2>&1; then
     busybox unzip -o artifact.zip
+elif command -v python3 >/dev/null 2>&1; then
+    python3 -c "import zipfile; zipfile.ZipFile('artifact.zip').extractall('.')"
 else
-    echo "ERROR: No unzip available. Install it or extract manually." >&2
+    echo "ERROR: No unzip/busybox/python3 available." >&2
+    echo "Extract manually: unzip ${TMP_DIR}/artifact.zip -d ${TMP_DIR}/" >&2
+    echo "Then install: devel-su pkcon install-local ${TMP_DIR}/harbour-skrynja-*.rpm" >&2
     exit 1
 fi
 

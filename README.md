@@ -194,10 +194,13 @@ cd tests && qmake tests.pro && make && ./tst_skrynja
 
 ### Testing a PR on device
 
-Every PR build uploads an aarch64 RPM artifact. Install it directly on your Jolla Phone with one command (no manual download needed):
+Every PR build uploads an aarch64 RPM artifact. Download the script directly on your Jolla Phone and run it — no computer needed:
 
 ```bash
-# Copy test-pr.sh to your device, then:
+# One-time: download the script (from the PR branch)
+curl -LO https://raw.githubusercontent.com/storefyr/Skrynja/feature/cancel-voice-recording/test-pr.sh
+
+# Then for each PR:
 sh test-pr.sh 11        # latest successful build of PR #11
 ```
 

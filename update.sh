@@ -1,8 +1,12 @@
 #!/bin/sh
-# Skrynja update script - run on the Sailfish OS device
-# Usage: sh update.sh [version]
-# Example: sh update.sh 0.9.1
-# Default: latest release from GitHub
+# Skrynja update script - run on the Sailfish OS device (Jolla Phone 2026, aarch64)
+# Downloads and installs the latest release RPM.
+#
+# Usage:
+#   sh update.sh              # latest release
+#   sh update.sh 0.9.8        # specific version
+#
+# Requirements: curl, devel-su (both preinstalled on Sailfish OS)
 
 set -e
 
@@ -12,8 +16,13 @@ ARCH="aarch64"
 if [ -n "$1" ]; then
     VERSION="$1"
 else
+    # grep/sed only - no jq needed
     VERSION=$(curl -sf "https://api.github.com/repos/storefyr/Skrynja/releases/latest" \
-        | grep -o '"tag_name": *"[^"]*"' | head -1 | cut -d'"' -f4 | sed 's/^v//')
+        | tr ',' '\n' \
+        | grep '"tag_name"' \
+        | head -1 \
+        | cut -d'"' -f4 \
+        | sed 's/^v//')
     if [ -z "$VERSION" ]; then
         echo "ERROR: Could not fetch latest version from GitHub." >&2
         echo "Usage: sh update.sh <version>" >&2
