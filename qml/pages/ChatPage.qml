@@ -1135,7 +1135,6 @@ Page {
                 // language: it tells the model which language to expect,
                 // which skips detection and improves accuracy.
                 var lang = settingsManager.language
-                if (lang === "nb_NO") lang = "nb"
 
                 // F18 anonymization (on by default): if enabled, process
                 // the recording locally (fixed pipeline: pitch shift,

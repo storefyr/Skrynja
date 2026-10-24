@@ -5,6 +5,14 @@ All notable changes to Skrynja will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- **Translations**: dropped all languages except English and Danish
+  (removed de, es, fi, fr, it, nb_NO, sv `.ts` files, ComboBox entries,
+  and `availableLanguages()` codes). Only the languages actually used
+  are shipped.
+
 ## [0.9.8] - 2026-10-22
 Skrynja 0.9.8 — Maintenance: complete Danish translations, zero build warnings, roadmap cleanup.
 

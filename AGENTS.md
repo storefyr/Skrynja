@@ -87,10 +87,10 @@ All C++ classes are exposed to QML as context properties: `mistralApi`, `convers
 
 ## Translations
 
-`translations/harbour-skrynja-<code>.ts`, one per entry in `SettingsManager::availableLanguages()`:
-en, fr, de, es, fi, it, nb_NO, sv. Adding a language means adding the `.ts` file, the code in
-`availableLanguages()`, the `TRANSLATIONS` list in the `.pro`, and the entry in the SettingsPage
-language ComboBox — the ComboBox order must match `availableLanguages()`.
+Only **English (en)** and **Danish (da)** are shipped. `translations/harbour-skrynja-<code>.ts`,
+one per entry in `SettingsManager::availableLanguages()`. Adding a language means adding the
+`.ts` file, the code in `availableLanguages()`, the `TRANSLATIONS` list in the `.pro`, and the
+entry in the SettingsPage language ComboBox — the ComboBox order must match `availableLanguages()`.
 
 ## Build & Test
 

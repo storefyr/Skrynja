@@ -217,14 +217,7 @@ Dialog {
                     Repeater {
                         model: [
                             { name: "English", value: "en" },
-                            { name: "Dansk", value: "da" },
-                            { name: "Français", value: "fr" },
-                            { name: "Deutsch", value: "de" },
-                            { name: "Español", value: "es" },
-                            { name: "Suomi", value: "fi" },
-                            { name: "Italiano", value: "it" },
-                            { name: "Norsk bokmål", value: "nb_NO" },
-                            { name: "Svenska", value: "sv" }
+                            { name: "Dansk", value: "da" }
                         ]
 
                         MenuItem {
