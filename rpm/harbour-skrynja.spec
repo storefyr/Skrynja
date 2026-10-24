@@ -3,7 +3,7 @@ Summary:    Client de chat IA pour Sailfish OS avec recherche web
 Version:    0.9.8
 Release:    1
 Group:      Applications/Internet
-License:    MIT
+License:    GPL-3.0-only
 URL:        https://github.com/storefyr/Skrynja
 Source0:    %{name}-%{version}.tar.bz2
 Requires:   sailfishsilica-qt5 >= 0.10.9

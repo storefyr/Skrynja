@@ -847,8 +847,8 @@
         <translation>Persoona</translation>
     </message>
     <message>
-        <source>Powered by %1 • MIT License</source>
-        <translation>Taustalla %1 • MIT-lisenssi</translation>
+        <source>Powered by %1 • GPL-3.0 License</source>
+        <translation>Taustalla %1 • GPL-3.0-lisenssi</translation>
     </message>
     <message>
         <source>Skrynja is an elegant chat client for Mistral AI and other OpenAI-compatible providers, designed for Sailfish OS.</source>

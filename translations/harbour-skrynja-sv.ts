@@ -791,8 +791,8 @@
         <translation>Välj modell att använda</translation>
     </message>
     <message>
-        <source>Powered by %1 • MIT License</source>
-        <translation>Drivs av %1 • MIT-licens</translation>
+        <source>Powered by %1 • GPL-3.0 License</source>
+        <translation>Drivs av %1 • GPL-3.0-licens</translation>
     </message>
     <message>
         <source>Made with &lt;3 for Sailfish OS</source>
