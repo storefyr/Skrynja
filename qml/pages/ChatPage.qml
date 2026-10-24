@@ -127,9 +127,6 @@ Page {
             }
         }
 
-        // The two pulleys used to carry the same seven entries, which made both
-        // of them a wall of text. They are split by what they act on: the top
-        // one leaves this conversation, the bottom one acts on it.
         PullDownMenu {
             MenuItem {
                 text: qsTr("Pinned messages")
@@ -142,23 +139,6 @@ Page {
             MenuItem {
                 text: qsTr("Settings & About")
                 onClicked: pageStack.push(Qt.resolvedUrl("SettingsPage.qml"))
-            }
-        }
-
-        PushUpMenu {
-            MenuItem {
-                text: qsTr("Conversation settings")
-                onClicked: chatPage.openConversationSettings()
-            }
-            MenuItem {
-                text: qsTr("Export conversation")
-                enabled: conversationModel.count > 0
-                onClicked: chatPage.exportCurrentConversation()
-            }
-            MenuItem {
-                text: qsTr("New conversation")
-                enabled: conversationModel.count > 0
-                onClicked: chatPage.startNewConversation()
             }
         }
 
@@ -707,11 +687,6 @@ Page {
     }
 
     Notification {
-        id: exportNotification
-        appName: "Skrynja"
-    }
-
-    Notification {
         id: errorNotification
         appName: "Skrynja"
     }
@@ -1041,12 +1016,6 @@ Page {
         messageInput.focus = true
     }
 
-    function startNewConversation() {
-        // The model is fixed at creation: pick the global default now.
-        conversationManager.createNewConversation(
-                    settingsManager.resolveModel(settingsManager.modelName))
-    }
-
     function openPinned() {
         conversationManager.saveCurrentConversation()
         pageStack.push(Qt.resolvedUrl("PinnedMessagesPage.qml"), { chatPage: chatPage })
@@ -1054,28 +1023,6 @@ Page {
 
     function openPromptLibrary() {
         pageStack.push(Qt.resolvedUrl("PromptLibraryPage.qml"), { chatPage: chatPage })
-    }
-
-    // Same destination as swiping forward, kept in the pulley for discovery
-    function openConversationSettings() {
-        conversationManager.saveCurrentConversation()
-        if (pageStack.nextPage(chatPage) !== null) {
-            pageStack.navigateForward()
-        } else {
-            pageStack.push(Qt.resolvedUrl("ConversationSettingsPage.qml"))
-        }
-    }
-
-    function exportCurrentConversation() {
-        var path = conversationManager.exportConversation(conversationManager.currentConversationId())
-        if (path !== "") {
-            exportNotification.previewSummary = qsTr("Conversation exported")
-            exportNotification.previewBody = path
-        } else {
-            exportNotification.previewSummary = qsTr("Export failed")
-            exportNotification.previewBody = ""
-        }
-        exportNotification.publish()
     }
 
     // F18: Transcription result handler.
