@@ -78,7 +78,7 @@ harbour-skrynja/
 
 Dans Qt Creator :
 - Build > Configure Project
-- Sélectionner les kits Sailfish (armv7hl, aarch64, i486)
+- Sélectionner le kit Sailfish (aarch64 — Jolla Phone 2026)
 
 #### 3. Builder
 
@@ -90,7 +90,7 @@ Ou en ligne de commande :
 
 ```bash
 # Utiliser sfdk (Sailfish SDK)
-sfdk config target=SailfishOS-5.0.0.43-armv7hl
+sfdk config target=SailfishOS-5.0.0.43-aarch64
 sfdk build
 ```
 
@@ -120,7 +120,7 @@ docker run --rm -it \
   bash
 
 # Builder
-mb2 -t SailfishOS-5.0.0.43-armv7hl build
+mb2 -t SailfishOS-5.0.0.43-aarch64 build
 
 # Le RPM est dans RPMS/
 ```
@@ -135,9 +135,9 @@ git tag v1.0.0
 git push origin v1.0.0
 
 # Les workflows vont :
-# 1. Builder pour armv7hl, aarch64, i486
+# 1. Builder pour aarch64 (Jolla Phone 2026)
 # 2. Générer un changelog depuis les commits
-# 3. Créer une release GitHub avec les 3 RPMs
+# 3. Créer une release GitHub avec le RPM aarch64
 # 4. Publier automatiquement
 ```
 
@@ -290,7 +290,7 @@ User Input → ChatPage.sendMessage()
 ```bash
 # Vérifier que le kit Sailfish est bien configuré
 sfdk tools list
-sfdk config target=SailfishOS-5.0.0.43-armv7hl
+sfdk config target=SailfishOS-5.0.0.43-aarch64
 ```
 
 ### RPM non généré
@@ -298,7 +298,7 @@ sfdk config target=SailfishOS-5.0.0.43-armv7hl
 ```bash
 # Vérifier le .spec et .yaml
 cat rpm/harbour-skrynja.spec
-mb2 -t SailfishOS-5.0.0.43-armv7hl build --verbose
+mb2 -t SailfishOS-5.0.0.43-aarch64 build --verbose
 ```
 
 ### Émulateur ne démarre pas
@@ -345,7 +345,7 @@ journalctl -f | grep qml
 
 ```bash
 # Builder seulement pour une archi
-sfdk config target=SailfishOS-5.0.0.43-armv7hl
+sfdk config target=SailfishOS-5.0.0.43-aarch64
 sfdk build
 
 # Pas de clean

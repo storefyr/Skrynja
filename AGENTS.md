@@ -94,11 +94,13 @@ language ComboBox — the ComboBox order must match `availableLanguages()`.
 
 ## Build & Test
 
+**Target device: Jolla Phone (2026) — aarch64 only.** CI builds a single RPM for aarch64. Do not build or test for armv7hl or i486.
+
 ```bash
 # Docker build (no SDK needed) — this is the reliable way to verify compilation
 docker run --rm -it -v $(pwd):/home/sailfish/src -w /home/sailfish/src \
   coderus/sailfishos-platform-sdk:5.0.0.43 \
-  mb2 -t SailfishOS-5.0.0.43-armv7hl build
+  mb2 -t SailfishOS-5.0.0.43-aarch64 build
 ```
 
 Unit tests live in `tests/` (QtTest, no Silica dependency — the C++ classes are pure Qt). They run in CI on plain Ubuntu Qt and block releases. Locally:
@@ -115,7 +117,7 @@ New source files must be added to `harbour-skrynja.pro` (SOURCES/HEADERS) and ne
 
 - **Everything in English**: code, comments, commit messages, tags, docs.
 - **Commits**: one-liner, very concise, conventional prefix (`feat:`, `fix:`, `chore:`). No emoji, no "Co-authored-by" or AI attribution lines.
-- **Tags/releases**: semver `vX.Y.Z`, starting at `v0.1.0` for Skrynja (the SailCat 2.x history stays with SailCat). Pushing a tag triggers the release CI (`.github/workflows/build-docker.yml`), which builds armv7hl/aarch64/i486 and creates the GitHub release. Bump the version in `rpm/harbour-skrynja.spec` and `harbour-skrynja.yaml` when releasing.
+- **Tags/releases**: semver `vX.Y.Z`, starting at `v0.1.0` for Skrynja (the SailCat 2.x history stays with SailCat). Pushing a tag triggers the release CI (`.github/workflows/build-docker.yml`), which builds aarch64 only and creates the GitHub release. Bump the version in `rpm/harbour-skrynja.spec` and `harbour-skrynja.yaml` when releasing.
 - Match existing code style: 4-space indent in C++ and QML, Qt naming (`m_` member prefix, camelCase).
 
 ## Working Style

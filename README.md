@@ -173,16 +173,16 @@ git push origin v0.1.0
 ```
 
 The **build-docker.yml** workflow:
-- ✅ Builds for armv7hl, aarch64, and i486
+- ✅ Builds for aarch64 (Jolla Phone 2026)
 - ✅ Generates changelog from commits
-- ✅ Creates GitHub release with RPMs
+- ✅ Creates GitHub release with the RPM
 - ✅ Publishes automatically
 
 Compiled RPMs are available in [Releases](https://github.com/storefyr/Skrynja/releases).
 
 ### PR Validation
 
-Pull Requests are automatically validated with the **pr-build.yml** workflow that builds for armv7hl and runs the unit test suite.
+Pull Requests are automatically validated with the **pr-build.yml** workflow that builds for aarch64 and runs the unit test suite.
 
 ### Tests
 
