@@ -113,6 +113,23 @@ When changing `src/` behavior, extend `tests/tst_main.cpp` accordingly. QML is t
 
 New source files must be added to `harbour-skrynja.pro` (SOURCES/HEADERS) and new QML files to the `OTHER_FILES`/install sections. New user-visible strings must use `qsTr()`.
 
+### Device scripts (run on the Jolla Phone)
+
+| Script | Purpose |
+|--------|---------|
+| `test-pr.sh <N>` | Download and install the aarch64 RPM for PR #N from the `pr-<N>-rpm` branch |
+| `update.sh [version]` | Download and install the latest (or given) release RPM |
+
+Both scripts use only `curl` (preinstalled on Sailfish OS). They must NOT call the GitHub API — see the rule below.
+
+### External API calls from device scripts — avoid
+
+**GitHub API calls are rate-limited** (60 req/hour unauthenticated) and **Actions artifacts require authentication** to download. Do not use `api.github.com` or Actions artifact URLs in device scripts. Instead:
+
+- CI pushes PR RPMs to a `pr-<N>-rpm` git branch with a **fixed filename** (`skrynja-pr<N>.rpm`).
+- Device scripts download directly from `raw.githubusercontent.com/<repo>/<branch>/<fixed-name>` — no API, no auth, no rate limit.
+- Prefer a known/fixed path over an API lookup when the filename can be controlled on the producer side.
+
 ## Conventions
 
 - **Everything in English**: code, comments, commit messages, tags, docs.
