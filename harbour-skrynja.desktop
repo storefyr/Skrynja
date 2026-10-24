@@ -4,7 +4,7 @@ X-Nemo-Application-Type=silica-qt5
 Name=Skrynja
 Icon=harbour-skrynja
 Exec=harbour-skrynja
-Comment=Le Chat de Mistral AI avec recherche web
+Comment=Chat med Mistral AI med websøgning
 Categories=Network;Chat;
 
 [X-Sailjail]
