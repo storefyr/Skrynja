@@ -68,67 +68,63 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -e
           PR_NUM=${{ github.event.pull_request.number }}
           BRANCH="pr-${PR_NUM}-rpm"
           RPM_FILE=$(ls RPMS/harbour-skrynja-*.rpm | head -1)
           RPM_NAME=$(basename "$RPM_FILE")
-          API_URL="https://api.github.com/repos/${{ github.repository }}"
+          API="https://api.github.com/repos/${{ github.repository }}"
+          AUTH="Authorization: token ${GH_TOKEN}"
 
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # Helper: extract first value of a JSON key (no jq needed)
+          json_get() { tr ',' '\n' | grep "\"$1\"" | head -1 | cut -d'"' -f4; }
 
-          # Get the SHA of the pr-rpm branch head (if it exists)
-          BRANCH_SHA=$(curl -sf -H "Authorization: token ${GH_TOKEN}" \
-            "${API_URL}/git/ref/heads/${BRANCH}" \
-            | tr ',' '\n' | grep '"sha"' | head -1 | cut -d'"' -f4 || true)
+          # 1. Get existing branch head (empty if branch does not exist)
+          BRANCH_SHA=$(curl -s -H "$AUTH" "${API}/git/ref/heads/${BRANCH}" \
+            | json_get sha || true)
+          echo "Branch SHA: ${BRANCH_SHA:-<new branch>}"
 
-          # Get the tree SHA of that commit
+          # 2. Upload RPM as a git blob via the API
+          BLOB_JSON=$(base64 -w0 "$RPM_FILE" | sed 's/+/ /g' | \
+            awk '{printf "{\"content\":\"%s\",\"encoding\":\"base64\"}", $0}')
+          BLOB_SHA=$(curl -sf -X POST -H "$AUTH" -H "Content-Type: application/json" \
+            -d "$BLOB_JSON" "${API}/git/blobs" | json_get sha)
+          echo "Blob SHA: ${BLOB_SHA}"
+
+          # 3. Create a tree with just the RPM file
           if [ -n "$BRANCH_SHA" ]; then
-            TREE_SHA=$(curl -sf -H "Authorization: token ${GH_TOKEN}" \
-              "${API_URL}/git/commits/${BRANCH_SHA}" \
-              | tr ',' '\n' | grep '"tree"' | head -1 | cut -d'"' -f4)
+            TREE_JSON=$(printf '{"tree":[{"path":"%s","mode":"100644","type":"blob","sha":"%s"}]}' \
+              "$RPM_NAME" "$BLOB_SHA")
           else
-            # No existing branch - create a root commit with empty tree
-            TREE_SHA=$(echo -n "" | git hash-object -t tree /dev/stdin)
+            TREE_JSON=$(printf '{"tree":[{"path":"%s","mode":"100644","type":"blob","sha":"%s"}]}' \
+              "$RPM_NAME" "$BLOB_SHA")
           fi
+          NEW_TREE_SHA=$(curl -sf -X POST -H "$AUTH" -H "Content-Type: application/json" \
+            -d "$TREE_JSON" "${API}/git/trees" | json_get sha)
+          echo "Tree SHA: ${NEW_TREE_SHA}"
 
-          # Upload the RPM as a blob
-          BLOB_SHA=$(git hash-object -w "$RPM_FILE")
-
-          # Create a new tree with just the RPM
-          TREE_JSON=$(printf '{"base_tree":"%s","tree":[{"path":"%s","mode":"100644","type":"blob","sha":"%s"}]}' \
-            "$TREE_SHA" "$RPM_NAME" "$BLOB_SHA")
-          NEW_TREE_SHA=$(curl -sf -X POST -H "Authorization: token ${GH_TOKEN}" \
-            -H "Content-Type: application/json" \
-            -d "$TREE_JSON" \
-            "${API_URL}/git/trees" \
-            | tr ',' '\n' | grep '"sha"' | head -1 | cut -d'"' -f4)
-
-          # Create the commit
+          # 4. Create the commit
+          MSG="RPM for PR #${PR_NUM} (aarch64) - ${{ github.sha }}"
           if [ -n "$BRANCH_SHA" ]; then
-            COMMIT_JSON=$(printf '{"message":"RPM for PR #%s (aarch64) - %s","tree":"%s","parents":["%s"]}' \
-              "$PR_NUM" "${{ github.sha }}" "$NEW_TREE_SHA" "$BRANCH_SHA")
+            COMMIT_JSON=$(printf '{"message":"%s","tree":"%s","parents":["%s"]}' \
+              "$MSG" "$NEW_TREE_SHA" "$BRANCH_SHA")
           else
-            COMMIT_JSON=$(printf '{"message":"RPM for PR #%s (aarch64) - %s","tree":"%s"}' \
-              "$PR_NUM" "${{ github.sha }}" "$NEW_TREE_SHA")
+            COMMIT_JSON=$(printf '{"message":"%s","tree":"%s"}' \
+              "$MSG" "$NEW_TREE_SHA")
           fi
-          NEW_COMMIT_SHA=$(curl -sf -X POST -H "Authorization: token ${GH_TOKEN}" \
-            -H "Content-Type: application/json" \
-            -d "$COMMIT_JSON" \
-            "${API_URL}/git/commits" \
-            | tr ',' '\n' | grep '"sha"' | head -1 | cut -d'"' -f4)
+          NEW_COMMIT_SHA=$(curl -sf -X POST -H "$AUTH" -H "Content-Type: application/json" \
+            -d "$COMMIT_JSON" "${API}/git/commits" | json_get sha)
+          echo "Commit SHA: ${NEW_COMMIT_SHA}"
 
-          # Update (or create) the branch ref
+          # 5. Update or create the branch ref
           if [ -n "$BRANCH_SHA" ]; then
-            curl -sf -X PATCH -H "Authorization: token ${GH_TOKEN}" \
-              -H "Content-Type: application/json" \
-              -d "{\"sha\":\"${NEW_COMMIT_SHA}\"}" \
-              "${API_URL}/git/refs/heads/${BRANCH}"
+            curl -sf -X PATCH -H "$AUTH" -H "Content-Type: application/json" \
+              -d "{\"sha\":\"${NEW_COMMIT_SHA}\",\"force\":true}" \
+              "${API}/git/refs/heads/${BRANCH}"
           else
-            curl -sf -X POST -H "Authorization: token ${GH_TOKEN}" \
-              -H "Content-Type: application/json" \
+            curl -sf -X POST -H "$AUTH" -H "Content-Type: application/json" \
               -d "{\"ref\":\"refs/heads/${BRANCH}\",\"sha\":\"${NEW_COMMIT_SHA}\"}" \
-              "${API_URL}/git/refs"
+              "${API}/git/refs"
           fi
 
           echo "RPM pushed to branch: ${BRANCH}"
