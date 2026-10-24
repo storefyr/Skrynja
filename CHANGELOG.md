@@ -5,13 +5,34 @@ All notable changes to Skrynja will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.9.9] - 2026-10-24
+Skrynja 0.9.9 — Cancel voice recording, Danish-only UI, Danish store listing.
+
+### Added
+- **Cancel voice recording (F18d)**: an X button appears next to the microphone
+  while recording. Tapping it stops the recording **without** sending anything
+  to Mistral — no transcription, no message. The audio file is deleted.
+  Tapping the microphone still stops and transcribes as before.
+- **`test-pr.sh`**: one-command device script to download and install the
+  aarch64 RPM for any PR directly on the Jolla Phone. No GitHub UI, no auth,
+  no computer needed. CI pushes PR RPMs to a `pr-<N>-rpm` git branch with a
+  fixed filename (`skrynja-pr<N>.rpm`).
+- **`update.sh` simplified**: aarch64-only, auto-fetches the latest release
+  version from GitHub when no version is given.
 
 ### Changed
+- **Build target**: aarch64 only (Jolla Phone 2026). armv7hl and i486 builds
+  removed from CI and docs.
 - **Translations**: dropped all languages except English and Danish
   (removed de, es, fi, fr, it, nb_NO, sv `.ts` files, ComboBox entries,
   and `availableLanguages()` codes). Only the languages actually used
   are shipped.
+- **RPM package descriptions**: translated from French to Danish
+  (`rpm/harbour-skrynja.spec`, `harbour-skrynja.yaml`, `harbour-skrynja.desktop`).
+
+### Fixed
+- **CI AudioRecorder tests**: install `qtmultimedia5-dev` so the
+  `QAudioRecorder` unit tests compile and run.
 
 ## [0.9.8] - 2026-10-22
 Skrynja 0.9.8 — Maintenance: complete Danish translations, zero build warnings, roadmap cleanup.
