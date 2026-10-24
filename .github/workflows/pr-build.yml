@@ -38,7 +38,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        arch: [armv7hl]
+        arch: [aarch64]
 
     steps:
       - name: Checkout

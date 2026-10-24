@@ -76,17 +76,15 @@ git push origin vX.Y.Z
 
 Une fois le tag poussé, le workflow **build-docker.yml** se déclenche automatiquement :
 
-1. **Build multi-architecture**
-   - armv7hl (Jolla 1, Xperia X, XA2)
-   - aarch64 (Xperia 10 II/III/IV)
-   - i486 (Emulator)
+1. **Build aarch64**
+   - aarch64 (Jolla Phone 2026, Jolla C2, Xperia 10 II/III/IV)
 
 2. **Génération du changelog**
    - Extrait automatiquement les commits depuis le dernier tag
    - Formate en markdown
 
 3. **Création de la Release GitHub**
-   - Attach les 3 RPM packages
+   - Attach le RPM package aarch64
    - Génère des notes de release professionnelles
    - Publie automatiquement (non-draft)
 

@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        arch: [armv7hl, i486, aarch64]
+        arch: [aarch64]
 
     steps:
       - name: Checkout
@@ -137,10 +137,8 @@ jobs:
 
           ### Supported Architectures
           - **aarch64**: Jolla Phone (2026), Jolla C2, Xperia 10, Xperia 10 II, Xperia 10 III, Xperia 10 IV
-          - **armv7hl**: Jolla 1, Jolla C, Xperia X, Xperia XA2
-          - **i486**: Sailfish OS Emulator
 
-          Not sure? Run `uname -m` on the device: `aarch64` → aarch64 RPM, `armv7l` → armv7hl RPM.
+          Not sure? Run `uname -m` on the device: `aarch64` → aarch64 RPM.
 
           ### Install on Device
           ```bash
@@ -184,8 +182,6 @@ jobs:
         with:
           body_path: release_notes.md
           files: |
-            rpms/rpm-armv7hl/*.rpm
-            rpms/rpm-i486/*.rpm
             rpms/rpm-aarch64/*.rpm
           draft: false
           prerelease: false
