@@ -1,252 +1,249 @@
-# Release Guide for Skrynja
+# Udgivelsesguide til Skrynja
 
-Guide pour créer une nouvelle release de Skrynja.
+Guide til at oprette en ny udgivelse af Skrynja.
 
-## Prérequis
+## Forudsætninger
 
-- Accès en écriture au repo GitHub
-- Branche main/master à jour
-- Tous les changements testés localement
+- Skriveadgang til GitHub-repoet
+- main-branchen er opdateret
+- Alle ændringer testet lokalt
 
-## Process de Release
+## Udgivelsesproces
 
-### 1. Préparer le CHANGELOG
+### 1. Forbered CHANGELOG
 
-Mettre à jour `CHANGELOG.md` avec les changements de la version :
+Opdater `CHANGELOG.md` med ændringerne i versionen:
 
 ```markdown
-## [X.Y.Z] - YYYY-MM-DD
+## [X.Y.Z] - ÅÅÅÅ-MM-DD
 
 ### Added
-- Nouvelle fonctionnalité 1
-- Nouvelle fonctionnalité 2
+- Ny funktion 1
+- Ny funktion 2
 
 ### Changed
-- Modification 1
-- Modification 2
+- Ændring 1
+- Ændring 2
 
 ### Fixed
-- Bug fix 1
-- Bug fix 2
+- Fejlrettelse 1
+- Fejlrettelse 2
 ```
 
-### 2. Mettre à jour la version
+### 2. Opdater versionen
 
-Mettre à jour la version dans les fichiers suivants :
+Opdater versionen i følgende filer:
 
-**harbour-skrynja.yaml** (ligne 4):
+**harbour-skrynja.yaml** (linje 4):
 ```yaml
 Version: X.Y.Z
 ```
 
-**rpm/harbour-skrynja.spec** (ligne 4):
+**rpm/harbour-skrynja.spec** (linje 4):
 ```spec
 Version:    X.Y.Z
 ```
 
-**qml/pages/AboutPage.qml** (environ ligne 37):
-```qml
-Label {
-    text: "Version X.Y.Z"
-    ...
-}
+**harbour-skrynja.pro** (fallback-version, omkring linje 10):
+```qmake
+VERSION = X.Y.Z
 ```
 
-### 3. Commit les changements
+Bemærk: Versionen i appen vises i Indstillinger via `settingsManager.appVersion`, som læser `APP_VERSION` defineret i `.pro`-filen — der findes ingen separat `AboutPage.qml`.
+
+### 3. Commit ændringerne
 
 ```bash
-git add CHANGELOG.md harbour-skrynja.yaml rpm/harbour-skrynja.spec qml/pages/AboutPage.qml
+git add CHANGELOG.md harbour-skrynja.yaml harbour-skrynja.pro rpm/harbour-skrynja.spec
 git commit -m "chore: Bump version to X.Y.Z"
 git push origin main
 ```
 
-### 4. Créer et pousser le tag
+### 4. Opret og push tagget
 
 ```bash
-# Créer le tag avec versioning sémantique
+# Opret tagget med semantisk versionering
 git tag -a vX.Y.Z -m "Release vX.Y.Z"
 
-# Pousser le tag vers GitHub
+# Push tagget til GitHub
 git push origin vX.Y.Z
 ```
 
-**⚠️ Format du tag:** Le tag DOIT être au format `vX.Y.Z` (avec le `v` en préfixe) pour déclencher le workflow.
+**⚠️ Tag-format:** Tagget SKAL have formatet `vX.Y.Z` (med `v` foran) for at udløse workflowet.
 
-### 5. GitHub Actions prend le relais
+### 5. GitHub Actions overtager
 
-Une fois le tag poussé, le workflow **build-docker.yml** se déclenche automatiquement :
+Når tagget er pushet, udløses workflowet **build-docker.yml** automatisk:
 
 1. **Build aarch64**
    - aarch64 (Jolla Phone 2026, Jolla C2, Xperia 10 II/III/IV)
 
-2. **Génération du changelog**
-   - Extrait automatiquement les commits depuis le dernier tag
-   - Formate en markdown
+2. **Generering af changelog**
+   - Udtrækker automatisk commits siden seneste tag
+   - Formaterer som markdown
 
-3. **Création de la Release GitHub**
-   - Attach le RPM package aarch64
-   - Génère des notes de release professionnelles
-   - Publie automatiquement (non-draft)
+3. **Oprettelse af GitHub-release**
+   - Vedhæfter aarch64-RPM-pakken
+   - Genererer udgivelsesnoter
+   - Udgiver automatisk (ikke-draft)
 
-### 6. Vérifier la Release
+### 6. Verificer udgivelsen
 
-1. Aller sur [GitHub Releases](https://github.com/storefyr/Skrynja/releases)
-2. Vérifier que la release apparaît avec `vX.Y.Z`
-3. Vérifier que le RPM aarch64 est attaché
-4. Tester le téléchargement du RPM, ou utiliser `sh update.sh X.Y.Z` sur le device
+1. Gå til [GitHub Releases](https://github.com/storefyr/Skrynja/releases)
+2. Verificer at udgivelsen vises med `vX.Y.Z`
+3. Verificer at aarch64-RPM'en er vedhæftet
+4. Test download af RPM'en, eller brug `sh update.sh X.Y.Z` på enheden
 
-### 7. Annoncer la Release
+### 7. Annoncer udgivelsen
 
-Optionnel mais recommandé :
+Valgfrit, men anbefalet:
 
-- **Sailfish Forum**: Poster sur https://forum.sailfishos.org/
-- **Jolla Together**: Partager sur https://together.jolla.com/
+- **Sailfish Forum**: Post på https://forum.sailfishos.org/
+- **Jolla Together**: Del på https://together.jolla.com/
 - **Reddit**: r/SailfishOS
-- **Twitter/Mastodon**: Utiliser #SailfishOS
+- **Mastodon**: Brug #SailfishOS
 
-Template d'annonce :
+Annonceskabelon:
 ```
-🎉 Skrynja vX.Y.Z est disponible !
+🎉 Skrynja vX.Y.Z er udgivet!
 
-🐱⛵ Skrynja est un client natif Sailfish OS pour Le Chat de Mistral AI.
+🐱⛵ Skrynja er en native Sailfish OS-klient til Mistral AI's Le Chat.
 
-✨ Nouveautés :
-- [Liste des features]
+✨ Nyt:
+- [Liste over funktioner]
 
-📥 Télécharger : https://github.com/storefyr/Skrynja/releases/tag/vX.Y.Z
+📥 Download: https://github.com/storefyr/Skrynja/releases/tag/vX.Y.Z
 
 #SailfishOS #MistralAI #OpenSource
 ```
 
-## Versioning Sémantique
+## Semantisk versionering
 
-Skrynja suit le [Semantic Versioning 2.0.0](https://semver.org/):
+Skrynja følger [Semantic Versioning 2.0.0](https://semver.org/):
 
-- **MAJOR** (X.0.0) : Changements incompatibles avec l'API
-- **MINOR** (0.Y.0) : Nouvelles fonctionnalités rétro-compatibles
-- **PATCH** (0.0.Z) : Corrections de bugs rétro-compatibles
+- **MAJOR** (X.0.0): Ændringer, der ikke er bagudkompatible
+- **MINOR** (0.Y.0): Nye, bagudkompatible funktioner
+- **PATCH** (0.0.Z): Bagudkompatible fejlrettelser
 
-### Exemples
+### Eksempler
 
-- `v1.0.0` → `v1.0.1` : Bug fixes seulement
-- `v1.0.1` → `v1.1.0` : Ajout de support d'images, conversations persistantes
-- `v1.1.0` → `v2.0.0` : Changement de structure de données incompatible
+- `v1.0.0` → `v1.0.1`: Kun fejlrettelser
+- `v1.0.1` → `v1.1.0`: Tilføjelse af billedunderstøttelse, persistente samtaler
+- `v1.1.0` → `v2.0.0`: Ændring af datastruktur, der ikke er bagudkompatibel
 
-## Rollback d'une Release
+## Rollback af en udgivelse
 
-Si une release a un problème critique :
+Hvis en udgivelse har et kritisk problem:
 
-### Option 1 : Hotfix rapide (Recommandé)
+### Mulighed 1: Hurtig hotfix (anbefalet)
 
 ```bash
-# Créer une branche hotfix
+# Opret en hotfix-branch
 git checkout -b hotfix/vX.Y.Z+1 vX.Y.Z
 
-# Corriger le bug
-# ... modifications ...
+# Ret fejlen
+# ... ændringer ...
 
 git commit -m "fix: Critical bug in feature X"
 
-# Merger dans main
+# Merge ind i main
 git checkout main
 git merge hotfix/vX.Y.Z+1
 
-# Créer un nouveau tag patch
+# Opret et nyt patch-tag
 git tag -a vX.Y.Z+1 -m "Hotfix vX.Y.Z+1"
 git push origin vX.Y.Z+1
 ```
 
-### Option 2 : Marquer comme pre-release
+### Mulighed 2: Marker som pre-release
 
-1. Aller sur GitHub Releases
-2. Éditer la release problématique
-3. Cocher "Set as a pre-release"
-4. Sauvegarder
+1. Gå til GitHub Releases
+2. Rediger den problematiske udgivelse
+3. Sæt flueben ved "Set as a pre-release"
+4. Gem
 
-### Option 3 : Supprimer la release
+### Mulighed 3: Slet udgivelsen
 
 ```bash
-# Supprimer le tag local
+# Slet tagget lokalt
 git tag -d vX.Y.Z
 
-# Supprimer le tag distant
+# Slet tagget på GitHub
 git push origin :refs/tags/vX.Y.Z
 
-# Supprimer la release sur GitHub (manuellement dans l'UI)
+# Slet udgivelsen på GitHub (manuelt i UI'et)
 ```
 
-⚠️ Éviter de supprimer des releases si des utilisateurs ont déjà téléchargé.
+⚠️ Undgå at slette udgivelser, hvis brugere allerede har downloadet dem.
 
-## Checklist de Release
+## Tjekliste før udgivelse
 
-Utiliser cette checklist avant chaque release :
+Brug denne tjekliste før hver udgivelse:
 
 ```markdown
-## Pre-Release
-- [ ] Tous les tests passent localement
-- [ ] CHANGELOG.md mis à jour
-- [ ] Version bumped dans yaml, spec, et AboutPage.qml
-- [ ] README à jour si nécessaire
-- [ ] Pas de TODO ou FIXME dans le code
-- [ ] Commit "Bump version" créé et poussé
+## Før udgivelse
+- [ ] Alle tests består lokalt
+- [ ] CHANGELOG.md opdateret
+- [ ] Version opdateret i yaml, pro, spec
+- [ ] README opdateret, hvis nødvendigt
+- [ ] Ingen TODO eller FIXME i koden
+- [ ] Commit "Bump version" oprettet og pushet
 
-## Release
-- [ ] Tag créé au format vX.Y.Z
-- [ ] Tag poussé vers GitHub
-- [ ] GitHub Actions workflow déclenché
-- [ ] Tous les builds (3 archs) réussis
+## Udgivelse
+- [ ] Tag oprettet i formatet vX.Y.Z
+- [ ] Tag pushet til GitHub
+- [ ] GitHub Actions workflow udløst
+- [ ] Build (aarch64) gennemført
 
-## Post-Release
-- [ ] Release visible sur GitHub
-- [ ] 3 RPM packages attachés et téléchargeables
-- [ ] Notes de release correctes
-- [ ] RPM testé sur un device
-- [ ] Annonce sur forum/reddit/social media
+## Efter udgivelse
+- [ ] Udgivelse synlig på GitHub
+- [ ] aarch64-RPM vedhæftet og kan downloades
+- [ ] Udgivelsesnoter korrekte
+- [ ] RPM testet på en enhed
+- [ ] Annonceret på forum/reddit/sociale medier
 ```
 
-## Troubleshooting
+## Fejlfinding
 
-### Le workflow ne se déclenche pas
+### Workflowet udløses ikke
 
-**Cause:** Tag ne correspond pas au pattern `v*.*.*`
+**Årsag:** Tagget matcher ikke mønsteret `v*.*.*`
 
-**Solution:**
+**Løsning:**
 ```bash
-git tag -d vX.Y.Z  # Supprimer le tag local
-git tag -a v1.0.0 -m "Release v1.0.0"  # Recréer avec bon format
+git tag -d vX.Y.Z  # Slet det lokale tag
+git tag -a v1.0.0 -m "Release v1.0.0"  # Opret igen med korrekt format
 git push origin v1.0.0
 ```
 
-### Build échoue sur une architecture
+### Build fejler på en arkitektur
 
-**Cause:** Dépendance manquante ou erreur de compilation
+**Årsag:** Manglende afhængighed eller kompileringsfejl
 
-**Solution:**
-1. Vérifier les logs du workflow sur GitHub Actions
-2. Tester localement avec `sfdk build` pour cette arch
-3. Corriger le problème
-4. Créer un hotfix et re-release
+**Løsning:**
+1. Tjek workflow-loggene på GitHub Actions
+2. Test lokalt med `sfdk build` for den arkitektur
+3. Ret problemet
+4. Opret en hotfix og udgiv igen
 
-### RPM généré mais ne s'installe pas
+### RPM genereres, men installeres ikke
 
-**Cause:** Dépendances runtime manquantes dans le .spec
+**Årsag:** Manglende runtime-afhængigheder i .spec-filen
 
-**Solution:**
-1. Ajouter la dépendance dans `rpm/harbour-skrynja.spec`
-2. Bump la version patch
-3. Re-release
+**Løsning:**
+1. Tilføj afhængigheden i `rpm/harbour-skrynja.spec`
+2. Bump patch-versionen
+3. Udgiv igen
 
-## Automatisation Future
+## Fremtidig automatisering
 
-Idées pour améliorer le process :
+Idéer til at forbedre processen:
 
-- [ ] Script `scripts/release.sh` pour automatiser steps 1-4
-- [ ] Pre-commit hook pour vérifier cohérence des versions
-- [ ] Bot Discord/Telegram pour notifications de release
-- [ ] Validation des RPM avant publication (smoke tests)
-- [ ] Mirror sur OpenRepos.net
+- [ ] Script `scripts/release.sh` til at automatisere trin 1-4
+- [ ] Pre-commit hook til at verificere versionskonsistens
+- [ ] Mirror på OpenRepos.net
 
-## Resources
+## Ressourcer
 
 - [GitHub Releases](https://github.com/storefyr/Skrynja/releases)
 - [GitHub Actions Workflows](https://github.com/storefyr/Skrynja/actions)
@@ -255,4 +252,4 @@ Idées pour améliorer le process :
 
 ---
 
-Questions? Ouvrir une issue sur GitHub.
+Spørgsmål? Opret en issue på GitHub.
