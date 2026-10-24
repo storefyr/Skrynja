@@ -60,9 +60,30 @@ jobs:
           echo "✅ Build successful for ${{ matrix.arch }}"
           ls -lh RPMS/*.rpm
 
-      - name: Upload RPM artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: rpm-aarch64-pr${{ github.event.pull_request.number }}
-          path: RPMS/*.rpm
-          retention-days: 7
+      - name: Push RPM to pr-rpm branch
+        if: github.event_name == 'pull_request'
+        run: |
+          PR_NUM=${{ github.event.pull_request.number }}
+          BRANCH="pr-${PR_NUM}-rpm"
+          RPM_FILE=$(ls RPMS/harbour-skrynja-*.rpm | head -1)
+          RPM_NAME=$(basename "$RPM_FILE")
+
+          # Clone or create the pr-rpm branch (orphan, single file)
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          if git ls-remote --exit-code origin "refs/heads/${BRANCH}" >/dev/null 2>&1; then
+            git fetch origin "${BRANCH}"
+            git checkout "${BRANCH}"
+            rm -f harbour-skrynja-*.rpm
+          else
+            git checkout --orphan "${BRANCH}"
+            git rm -rf . 2>/dev/null || true
+          fi
+
+          cp "$RPM_FILE" "${RPM_NAME}"
+          git add "${RPM_NAME}"
+          git commit -m "RPM for PR #${PR_NUM} (aarch64) - ${{ github.sha }}" || true
+          git push origin "${BRANCH}"
+          echo "RPM pushed to branch: ${BRANCH}"
+          echo "Download: https://raw.githubusercontent.com/${{ github.repository }}/${BRANCH}/${RPM_NAME}"
