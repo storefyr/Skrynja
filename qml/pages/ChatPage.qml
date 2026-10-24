@@ -431,6 +431,24 @@ Page {
                     }
                 }
 
+                // F18d: Cancel button — stop the recording and delete the
+                // file without transcribing or sending anything to Mistral.
+                IconButton {
+                    id: cancelRecordingButton
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: chatPage.providerReady && chatPage.recording
+                    icon.source: "image://theme/icon-m-clear"
+                    onClicked: {
+                        chatPage.recording = false
+                        chatPage.transcribing = false
+                        transcribingWatchdog.stop()
+                        globalAudioRecorder.cancel()
+                        if (chatPage.recordingPath !== "") {
+                            chatPage.recordingPath = ""
+                        }
+                    }
+                }
+
                 // F18: Voice input - record, transcribe, fill the input.
                 Item {
                     id: micButton
@@ -520,9 +538,11 @@ Page {
                     width: parent.width - sendButton.width - parent.spacing * 2
                            - (attachButton.visible ? attachButton.width + parent.spacing : 0)
                            - (micButton.visible ? micButton.width + parent.spacing : 0)
+                           - (cancelRecordingButton.visible
+                              ? cancelRecordingButton.width + parent.spacing : 0)
                     height: Math.min(implicitHeight, Theme.itemSizeSmall * 2.5)
                     placeholderText: chatPage.recording
-                                     ? qsTr("Recording... tap mic to stop")
+                                     ? qsTr("Recording... tap mic to send, X to discard")
                                      : (chatPage.transcribing
                                         ? qsTr("Transcribing...")
                                         : (chatPage.uploadingImage

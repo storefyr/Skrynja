@@ -15,6 +15,7 @@
 #include <QImageWriter>
 #include <QSet>
 
+#include "audiorecorder.h"
 #include "categories.h"
 #include "conversationmodel.h"
 #include "conversationmanager.h"
@@ -2761,6 +2762,42 @@ private slots:
     }
 };
 
+class TestAudioRecorder : public QObject
+{
+    Q_OBJECT
+
+private slots:
+    // F18d: cancel() must delete the output file and must not emit
+    // 'stopped' (the caller must never transcribe a cancelled recording).
+    void cancelDeletesFileAndSuppressesStopped()
+    {
+        AudioRecorder recorder;
+        QSignalSpy stoppedSpy(&recorder, SIGNAL(stopped()));
+
+        QString path = QDir::temp().filePath("skrynja-test-cancel.wav");
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("fake wav data");
+        f.close();
+        QVERIFY(QFile::exists(path));
+
+        recorder.setOutputLocation(path);
+        // Not recording: cancel must still delete the file and stay silent.
+        recorder.cancel();
+        QVERIFY(!QFile::exists(path));
+        QCOMPARE(stoppedSpy.count(), 0);
+    }
+
+    // F18d: cancel() with no output location is a safe no-op.
+    void cancelWithoutOutputLocationIsNoOp()
+    {
+        AudioRecorder recorder;
+        QSignalSpy stoppedSpy(&recorder, SIGNAL(stopped()));
+        recorder.cancel();
+        QCOMPARE(stoppedSpy.count(), 0);
+    }
+};
+
 int main(int argc, char *argv[])
 {
     // Redirect QSettings and the conversation files away from the real
@@ -2775,6 +2812,10 @@ int main(int argc, char *argv[])
     app.setApplicationName("Skrynja");
 
     int status = 0;
+    {
+        TestAudioRecorder t;
+        status |= QTest::qExec(&t, argc, argv);
+    }
     {
         TestConversationModel t;
         status |= QTest::qExec(&t, argc, argv);

@@ -18,8 +18,8 @@ Forked from SailCat. The rename is done; the API rewrite is in progress — see
 ### Local Development (with Sailfish SDK)
 
 ```bash
-# Configure target architecture
-sfdk config target=SailfishOS-5.0.0.43-armv7hl
+# Configure target architecture (aarch64 — Jolla Phone 2026)
+sfdk config target=SailfishOS-5.0.0.43-aarch64
 
 # Build the project
 sfdk build
@@ -41,7 +41,7 @@ docker run --rm -it \
   -v $(pwd):/home/sailfish/src \
   -w /home/sailfish/src \
   coderus/sailfishos-platform-sdk:5.0.0.43 \
-  mb2 -t SailfishOS-5.0.0.43-armv7hl build
+  mb2 -t SailfishOS-5.0.0.43-aarch64 build
 
 # RPMs are generated in RPMS/ directory
 ```
@@ -53,7 +53,7 @@ docker run --rm -it \
 git tag v1.0.0
 git push origin v1.0.0
 
-# GitHub Actions builds for armv7hl, aarch64, i486 and creates release
+# GitHub Actions builds for aarch64 (Jolla Phone 2026) and creates release
 # For manual/test builds, use workflow_dispatch (builds with version 0.1.0-dev)
 ```
 
@@ -282,9 +282,9 @@ journalctl -f | grep skrynja
   - Extracts version from `GITHUB_REF` (e.g., `refs/tags/v1.0.0` → `1.0.0`)
   - Uses `0.1.0` for manual builds without tags (RPM forbids `-` in Version)
   - Updates `rpm/harbour-skrynja.spec` with extracted version
-  - Builds for armv7hl, aarch64, i486 in parallel
+  - Builds for aarch64 only (Jolla Phone 2026)
   - Creates GitHub release with changelog (tag builds only)
-- **pr-build.yml** - Validates PRs with armv7hl build
+- **pr-build.yml** - Validates PRs with aarch64 build
 
 ### Important Constraints
 

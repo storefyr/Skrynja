@@ -173,16 +173,16 @@ git push origin v0.1.0
 ```
 
 The **build-docker.yml** workflow:
-- ✅ Builds for armv7hl, aarch64, and i486
+- ✅ Builds for aarch64 (Jolla Phone 2026)
 - ✅ Generates changelog from commits
-- ✅ Creates GitHub release with RPMs
+- ✅ Creates GitHub release with the RPM
 - ✅ Publishes automatically
 
 Compiled RPMs are available in [Releases](https://github.com/storefyr/Skrynja/releases).
 
 ### PR Validation
 
-Pull Requests are automatically validated with the **pr-build.yml** workflow that builds for armv7hl and runs the unit test suite.
+Pull Requests are automatically validated with the **pr-build.yml** workflow that builds for aarch64 and runs the unit test suite.
 
 ### Tests
 
@@ -191,6 +191,20 @@ Backend classes are covered by a QtTest suite (`tests/`) that runs in CI on ever
 ```bash
 cd tests && qmake tests.pro && make && ./tst_skrynja
 ```
+
+### Testing a PR on device
+
+Every PR build pushes the aarch64 RPM to a `pr-<N>-rpm` git branch with a fixed filename. Download the script directly on your Jolla Phone and run it — no computer needed, no GitHub API, no auth:
+
+```bash
+# One-time: download the script (from the PR branch)
+curl -LO https://raw.githubusercontent.com/storefyr/Skrynja/feature/cancel-voice-recording/test-pr.sh
+
+# Then for each PR:
+sh test-pr.sh 11        # downloads + installs the RPM for PR #11
+```
+
+The script downloads directly from `raw.githubusercontent.com` — it does not call the GitHub API (rate-limited) or use Actions artifacts (auth required).
 
 ### For maintainers
 

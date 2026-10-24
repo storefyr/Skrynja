@@ -94,11 +94,13 @@ language ComboBox — the ComboBox order must match `availableLanguages()`.
 
 ## Build & Test
 
+**Target device: Jolla Phone (2026) — aarch64 only.** CI builds a single RPM for aarch64. Do not build or test for armv7hl or i486.
+
 ```bash
 # Docker build (no SDK needed) — this is the reliable way to verify compilation
 docker run --rm -it -v $(pwd):/home/sailfish/src -w /home/sailfish/src \
   coderus/sailfishos-platform-sdk:5.0.0.43 \
-  mb2 -t SailfishOS-5.0.0.43-armv7hl build
+  mb2 -t SailfishOS-5.0.0.43-aarch64 build
 ```
 
 Unit tests live in `tests/` (QtTest, no Silica dependency — the C++ classes are pure Qt). They run in CI on plain Ubuntu Qt and block releases. Locally:
@@ -107,15 +109,32 @@ Unit tests live in `tests/` (QtTest, no Silica dependency — the C++ classes ar
 cd tests && qmake tests.pro && make && ./tst_skrynja
 ```
 
-When changing `src/` behavior, extend `tests/tst_main.cpp` accordingly. QML remains manually tested: hot-deploy without rebuilding via `scp qml/... nemo@<device-ip>:/usr/share/harbour-skrynja/qml/...` then restart the app.
+When changing `src/` behavior, extend `tests/tst_main.cpp` accordingly. QML is tested on device via PR artifacts: copy `test-pr.sh` to the phone and run `sh test-pr.sh <pr-number>` — it downloads and installs the latest aarch64 RPM from the PR's CI build. Quick QML iteration still works via hot-deploy: `scp qml/... nemo@<device-ip>:/usr/share/harbour-skrynja/qml/...` then restart the app.
 
 New source files must be added to `harbour-skrynja.pro` (SOURCES/HEADERS) and new QML files to the `OTHER_FILES`/install sections. New user-visible strings must use `qsTr()`.
+
+### Device scripts (run on the Jolla Phone)
+
+| Script | Purpose |
+|--------|---------|
+| `test-pr.sh <N>` | Download and install the aarch64 RPM for PR #N from the `pr-<N>-rpm` branch |
+| `update.sh [version]` | Download and install the latest (or given) release RPM |
+
+Both scripts use only `curl` (preinstalled on Sailfish OS). They must NOT call the GitHub API — see the rule below.
+
+### External API calls from device scripts — avoid
+
+**GitHub API calls are rate-limited** (60 req/hour unauthenticated) and **Actions artifacts require authentication** to download. Do not use `api.github.com` or Actions artifact URLs in device scripts. Instead:
+
+- CI pushes PR RPMs to a `pr-<N>-rpm` git branch with a **fixed filename** (`skrynja-pr<N>.rpm`).
+- Device scripts download directly from `raw.githubusercontent.com/<repo>/<branch>/<fixed-name>` — no API, no auth, no rate limit.
+- Prefer a known/fixed path over an API lookup when the filename can be controlled on the producer side.
 
 ## Conventions
 
 - **Everything in English**: code, comments, commit messages, tags, docs.
 - **Commits**: one-liner, very concise, conventional prefix (`feat:`, `fix:`, `chore:`). No emoji, no "Co-authored-by" or AI attribution lines.
-- **Tags/releases**: semver `vX.Y.Z`, starting at `v0.1.0` for Skrynja (the SailCat 2.x history stays with SailCat). Pushing a tag triggers the release CI (`.github/workflows/build-docker.yml`), which builds armv7hl/aarch64/i486 and creates the GitHub release. Bump the version in `rpm/harbour-skrynja.spec` and `harbour-skrynja.yaml` when releasing.
+- **Tags/releases**: semver `vX.Y.Z`, starting at `v0.1.0` for Skrynja (the SailCat 2.x history stays with SailCat). Pushing a tag triggers the release CI (`.github/workflows/build-docker.yml`), which builds aarch64 only and creates the GitHub release. Bump the version in `rpm/harbour-skrynja.spec` and `harbour-skrynja.yaml` when releasing.
 - Match existing code style: 4-space indent in C++ and QML, Qt naming (`m_` member prefix, camelCase).
 
 ## Working Style

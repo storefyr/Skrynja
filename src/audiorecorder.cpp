@@ -1,6 +1,7 @@
 #include "audiorecorder.h"
 #include <QStandardPaths>
 #include <QDir>
+#include <QFile>
 #include <QFileInfo>
 #include <QUrl>
 #include <QTimer>
@@ -146,6 +147,23 @@ void AudioRecorder::onStopTimeout()
 void AudioRecorder::pause()
 {
     m_recorder->pause();
+}
+
+void AudioRecorder::cancel()
+{
+    // Stop the recorder without emitting 'stopped': the caller must not
+    // transcribe. The recording file is deleted so it can never leave the
+    // device. Safe to call in any state; a no-op when not recording.
+    qWarning() << "AudioRecorder::cancel() state:" << m_recorder->state();
+    m_stopTimer->stop();
+    m_stoppedEmitted = true;  // suppress the 'stopped' signal from stop()
+    if (m_recorder->state() == QAudioRecorder::RecordingState
+            || m_recorder->state() == QAudioRecorder::PausedState) {
+        m_recorder->stop();
+    }
+    if (!m_outputLocation.isEmpty()) {
+        QFile::remove(m_outputLocation);
+    }
 }
 
 qint64 AudioRecorder::duration() const
