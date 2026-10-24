@@ -192,6 +192,15 @@ Backend classes are covered by a QtTest suite (`tests/`) that runs in CI on ever
 cd tests && qmake tests.pro && make && ./tst_skrynja
 ```
 
+### Testing a PR on device
+
+Every PR build uploads an aarch64 RPM artifact. Install it directly on your Jolla Phone with one command (no manual download needed):
+
+```bash
+# Copy test-pr.sh to your device, then:
+sh test-pr.sh 11        # latest successful build of PR #11
+```
+
 ### For maintainers
 
 See [RELEASE.md](RELEASE.md) for the complete release guide.

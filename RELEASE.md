@@ -92,8 +92,8 @@ Une fois le tag poussé, le workflow **build-docker.yml** se déclenche automati
 
 1. Aller sur [GitHub Releases](https://github.com/storefyr/Skrynja/releases)
 2. Vérifier que la release apparaît avec `vX.Y.Z`
-3. Vérifier que les 3 RPM sont attachés
-4. Tester le téléchargement d'un RPM
+3. Vérifier que le RPM aarch64 est attaché
+4. Tester le téléchargement du RPM, ou utiliser `sh update.sh X.Y.Z` sur le device
 
 ### 7. Annoncer la Release
 

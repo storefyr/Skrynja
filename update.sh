@@ -1,26 +1,24 @@
 #!/bin/sh
 # Skrynja update script - run on the Sailfish OS device
-# Usage: sh update.sh [version] [arch]
+# Usage: sh update.sh [version]
 # Example: sh update.sh 0.9.1
-#          sh update.sh 0.9.1 aarch64   (override auto-detected arch)
+# Default: latest release from GitHub
 
 set -e
 
-VERSION="${1:-0.9.8}"
+# Target device: Jolla Phone (2026) - aarch64 only
+ARCH="aarch64"
 
-# Auto-detect the device architecture unless overridden as the 2nd argument
-if [ -n "$2" ]; then
-    ARCH="$2"
+if [ -n "$1" ]; then
+    VERSION="$1"
 else
-    case "$(uname -m)" in
-        armv7l|armv7hl|armv7*) ARCH="armv7hl" ;;
-        aarch64)               ARCH="aarch64" ;;
-        i?86)                  ARCH="i486" ;;
-        *)
-            echo "Unknown architecture: $(uname -m)" >&2
-            exit 1
-            ;;
-    esac
+    VERSION=$(curl -sf "https://api.github.com/repos/storefyr/Skrynja/releases/latest" \
+        | grep -o '"tag_name": *"[^"]*"' | head -1 | cut -d'"' -f4 | sed 's/^v//')
+    if [ -z "$VERSION" ]; then
+        echo "ERROR: Could not fetch latest version from GitHub." >&2
+        echo "Usage: sh update.sh <version>" >&2
+        exit 1
+    fi
 fi
 
 RPM_NAME="harbour-skrynja-${VERSION}-1.${ARCH}.rpm"
@@ -38,7 +36,7 @@ curl -LO "${DOWNLOAD_URL}"
 echo "Downloaded: ${RPM_NAME}"
 
 echo "--- Step 2: Install new version ---"
-devel-su pkcon install-local "${TMP_DIR}/${RPM_NAME}"
+devel-su pkcon install-local --allow-reinstall "${TMP_DIR}/${RPM_NAME}"
 
 echo "--- Step 3: Clean up ---"
 rm -f "${TMP_DIR}/${RPM_NAME}"

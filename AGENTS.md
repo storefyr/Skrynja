@@ -109,7 +109,7 @@ Unit tests live in `tests/` (QtTest, no Silica dependency — the C++ classes ar
 cd tests && qmake tests.pro && make && ./tst_skrynja
 ```
 
-When changing `src/` behavior, extend `tests/tst_main.cpp` accordingly. QML remains manually tested: hot-deploy without rebuilding via `scp qml/... nemo@<device-ip>:/usr/share/harbour-skrynja/qml/...` then restart the app.
+When changing `src/` behavior, extend `tests/tst_main.cpp` accordingly. QML is tested on device via PR artifacts: copy `test-pr.sh` to the phone and run `sh test-pr.sh <pr-number>` — it downloads and installs the latest aarch64 RPM from the PR's CI build. Quick QML iteration still works via hot-deploy: `scp qml/... nemo@<device-ip>:/usr/share/harbour-skrynja/qml/...` then restart the app.
 
 New source files must be added to `harbour-skrynja.pro` (SOURCES/HEADERS) and new QML files to the `OTHER_FILES`/install sections. New user-visible strings must use `qsTr()`.
 
