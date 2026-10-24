@@ -185,7 +185,7 @@ harbour-skrynja/
 
 ## License
 
-En contribuant, vous acceptez que vos contributions soient sous licence MIT, comme le reste du projet.
+En contribuant, vous acceptez que vos contributions soient sous licence GPL-3.0-only, comme le reste du projet.
 
 ## Questions ?
 
