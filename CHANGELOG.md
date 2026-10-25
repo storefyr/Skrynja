@@ -5,7 +5,8 @@ All notable changes to Skrynja will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.9.10] - 2026-10-25
+Skrynja 0.9.10 — Billigere AI-titler, mindre digest, kategorier fjernet, GPL-3.0.
 
 ### Changed
 - **Cheaper AI titles**: title generation now uses `ministral-3b-2512`
@@ -18,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   settings, the "Question categories" stats section, and the "Auto-label
   conversations" history menu item. Titles are still generated, without a
   category.
+- **README and RELEASE rewritten in Danish**, bottom PushUpMenu removed from
+  ChatPage, license relicensed from MIT to GPL-3.0-only.
 
 ## [0.9.9] - 2026-10-24
 Skrynja 0.9.9 — Cancel voice recording, Danish-only UI, Danish store listing.

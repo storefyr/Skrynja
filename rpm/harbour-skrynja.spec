@@ -1,6 +1,6 @@
 Name:       harbour-skrynja
 Summary:    Chatklient med Mistral AI til Sailfish OS med websøgning
-Version:    0.9.9
+Version:    0.9.10
 Release:    1
 Group:      Applications/Internet
 License:    GPL-3.0-only
