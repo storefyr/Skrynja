@@ -63,10 +63,10 @@ public:
     QString chatStyle() const;
     void setChatStyle(const QString &style);
 
-    // How a conversation gets its title and category after the first answer:
+    // How a conversation gets its title after the first answer:
     // "ai" spends an extra request on it, "local" names it from the question
-    // and classifies it offline, "off" leaves both alone. Free tiers count
-    // requests, and that one is the only call the app makes on its own.
+    // offline, "off" leaves it alone. Free tiers count requests, and that one
+    // is the only call the app makes on its own.
     QString autoTitleMode() const;
     void setAutoTitleMode(const QString &mode);
 

@@ -16,7 +16,6 @@
 #include <QSet>
 
 #include "audiorecorder.h"
-#include "categories.h"
 #include "conversationmodel.h"
 #include "conversationmanager.h"
 #include "mistralapi.h"
@@ -1120,7 +1119,6 @@ private slots:
         model->togglePinned(1);
         manager.saveCurrentConversation();
         manager.updateCurrentConversationTitle("My chat");
-        manager.updateCurrentConversationCategory("code");
 
         // Switch away and back: content must survive the round trip
         manager.createNewConversation();
@@ -1135,7 +1133,6 @@ private slots:
         QCOMPARE(details["title"].toString(), QString("My chat"));
 
         QVariantMap stats = manager.getConversationStatistics(id);
-        QCOMPARE(stats["category"].toString(), QString("code"));
         QCOMPARE(stats["messageCount"].toInt(), 2);
     }
 
@@ -1172,7 +1169,7 @@ private slots:
         QFile file(dir + "/" + id + ".json");
         QVERIFY(file.open(QIODevice::WriteOnly));
         file.write("{\"id\":\"" + id.toUtf8() + "\",\"title\":\"Old chat\","
-                   "\"category\":\"code\",\"createdAt\":1000,\"updatedAt\":2000,"
+                   "\"createdAt\":1000,\"updatedAt\":2000,"
                    "\"messages\":["
                    "{\"role\":\"user\",\"content\":\"q\",\"timestamp\":1000},"
                    "{\"role\":\"assistant\",\"content\":\"a\",\"timestamp\":1001}]}");
@@ -1205,24 +1202,6 @@ private slots:
 
         const QVariantMap labels = manager.getConversationOverrides(id);
         QVERIFY(!labels["title"].toString().isEmpty());
-        // The local classifier had something to work with
-        QCOMPARE(labels["category"].toString(), QString("debugging"));
-    }
-
-    void localLabellingKeepsAChosenCategory()
-    {
-        ConversationManager manager;
-        manager.purgeAllConversations();
-
-        const QString id = manager.currentConversationId();
-        manager.currentConversation()->addUserMessage("A python traceback again");
-        manager.saveCurrentConversation();
-        manager.setConversationCategory(id, "cooking");
-
-        manager.autoLabelConversation(id);
-
-        QCOMPARE(manager.getConversationOverrides(id)["category"].toString(),
-                 QString("cooking"));
     }
 
     void statisticsRankModels()
@@ -1356,65 +1335,6 @@ private slots:
         QVariantList perDay = manager.getStatistics()["tokensPerDay"].toList();
         QCOMPARE(perDay.count(), 14);
         QVERIFY(perDay.last().toInt() >= 40);
-    }
-
-    void categoryCounting()
-    {
-        ConversationManager manager;
-        manager.purgeAllConversations();
-
-        manager.currentConversation()->addUserMessage("write me a poem");
-        manager.saveCurrentConversation();
-        manager.updateCurrentConversationCategory("writing");
-
-        QVariantMap counts = manager.getStatistics()["categoryCounts"].toMap();
-        QCOMPARE(counts["writing"].toInt(), 1);
-    }
-
-    void unknownCategoryFallsBackToClassifier()
-    {
-        ConversationManager manager;
-        manager.purgeAllConversations();
-
-        QString id = manager.currentConversationId();
-        manager.currentConversation()->addUserMessage(
-                    "my python script raises an exception, help me debug the stacktrace");
-        manager.saveCurrentConversation();
-
-        // The model answering "other" must not win over an obvious topic
-        manager.updateCurrentConversationCategory("other");
-        QString category = manager.getConversationStatistics(id)["category"].toString();
-        QVERIFY(category != "other");
-
-        // An unknown label is rejected the same way
-        manager.updateCurrentConversationCategory("not-a-category");
-        QVERIFY(manager.getConversationStatistics(id)["category"].toString() != "not-a-category");
-    }
-
-    void recategorizeOnlyTouchesUnlabelled()
-    {
-        ConversationManager manager;
-        manager.purgeAllConversations();
-
-        QString taggedId = manager.currentConversationId();
-        manager.currentConversation()->addUserMessage("a recipe for bread with a good sauce");
-        manager.saveCurrentConversation();
-        manager.updateCurrentConversationCategory("cooking");
-
-        manager.createNewConversation();
-        QString untaggedId = manager.currentConversationId();
-        manager.currentConversation()->addUserMessage(
-                    "book a flight and a hotel for my trip, I need a visa and an itinerary");
-        manager.saveCurrentConversation();
-
-        QCOMPARE(manager.recategorizeConversations(), 1);
-        QCOMPARE(manager.getConversationStatistics(taggedId)["category"].toString(),
-                 QString("cooking"));
-        QCOMPARE(manager.getConversationStatistics(untaggedId)["category"].toString(),
-                 QString("travel"));
-
-        // Nothing left to do on a second pass
-        QCOMPARE(manager.recategorizeConversations(), 0);
     }
 
     // The remote conversation id is persisted with the conversation and
@@ -2012,48 +1932,6 @@ private slots:
         QVERIFY2(updatedAt >= before,
                  qPrintable(QString("updatedAt %1 should be >= %2")
                             .arg(updatedAt).arg(before)));
-    }
-};
-
-class TestCategories : public QObject
-{
-    Q_OBJECT
-
-private slots:
-    void identifiersAreValidated()
-    {
-        QVERIFY(Categories::isValid("code"));
-        QVERIFY(Categories::isValid("other"));
-        QVERIFY(!Categories::isValid("nonsense"));
-        QVERIFY(!Categories::isValid(""));
-
-        // "other" is offered but must be the last resort
-        QVERIFY(Categories::all().count() > 20);
-        QCOMPARE(Categories::all().last(), QString("other"));
-    }
-
-    void classifiesObviousTopics()
-    {
-        QCOMPARE(Categories::classify(
-                     "write a python function to loop over an array"), QString("code"));
-        QCOMPARE(Categories::classify(
-                     "quelle recette de sauce pour des pates au four"), QString("cooking"));
-        QCOMPARE(Categories::classify(
-                     "translate this sentence into English, traduction"), QString("translation"));
-    }
-
-    void classifierIgnoresAccentsAndCase()
-    {
-        // Same sentence with and without accents must land on the same label
-        QCOMPARE(Categories::classify(QString::fromUtf8("Ma dépense, mon budget et mes impôts")),
-                 Categories::classify("Ma depense, mon budget et mes impots"));
-    }
-
-    void refusesToGuessOnThinInput()
-    {
-        QCOMPARE(Categories::classify(""), QString());
-        QCOMPARE(Categories::classify("   "), QString());
-        QCOMPARE(Categories::classify("ok merci"), QString());
     }
 };
 
@@ -2837,10 +2715,6 @@ int main(int argc, char *argv[])
     }
     {
         TestConversationManager t;
-        status |= QTest::qExec(&t, argc, argv);
-    }
-    {
-        TestCategories t;
         status |= QTest::qExec(&t, argc, argv);
     }
     {

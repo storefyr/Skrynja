@@ -14,7 +14,6 @@ SOURCES += tst_main.cpp \
     ../src/mistralapi.cpp \
     ../src/settingsmanager.cpp \
     ../src/securestore.cpp \
-    ../src/categories.cpp \
     ../src/providers.cpp \
     ../src/voiceanonymizer.cpp
 
@@ -24,6 +23,5 @@ HEADERS += ../src/audiorecorder.h \
     ../src/mistralapi.h \
     ../src/settingsmanager.h \
     ../src/securestore.h \
-    ../src/categories.h \
     ../src/providers.h \
     ../src/voiceanonymizer.h

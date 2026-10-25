@@ -1,6 +1,5 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
-import "../components/Categories.js" as CategoryData
 
 Page {
     id: statsPage
@@ -15,8 +14,6 @@ Page {
                               ? stats.totalUserChars / (stats.totalUserChars + stats.totalAssistantChars) : 0
     property var tokensPerDay: stats.tokensPerDay || []
     property int maxTokensDay: maxOf(tokensPerDay)
-    property var categoryList: buildCategoryList()
-    property int maxCategoryCount: categoryList.length > 0 ? categoryList[0].count : 1
     // Both already sorted most-used first in C++, so [0] is the maximum.
     property var modelAnswers: (stats.modelAnswers || []).slice(0, 6)
     property int maxModelCount: modelAnswers.length > 0 ? modelAnswers[0].count : 1
@@ -82,24 +79,6 @@ Page {
         case 1: return "#ffb74d"
         default: return "#f06292"
         }
-    }
-
-    function buildCategoryList() {
-        var counts = stats.categoryCounts || {}
-        var list = []
-        for (var key in counts) {
-            list.push({ cat: key, count: counts[key] })
-        }
-        list.sort(function(a, b) { return b.count - a.count })
-        return list
-    }
-
-    function categoryColor(cat) {
-        return CategoryData.color(cat)
-    }
-
-    function categoryLabel(cat) {
-        return CategoryData.label(cat)
     }
 
     // Cost is an estimate from a hand-maintained price list, and only covers
@@ -273,60 +252,6 @@ Page {
                         text: qsTr("AI: %1 chars").arg(formatExactTokens(stats.totalAssistantChars || 0))
                         color: Theme.secondaryHighlightColor
                         font.pixelSize: Theme.fontSizeExtraSmall
-                    }
-                }
-            }
-
-            // Question categories
-            SectionHeader {
-                text: qsTr("Question categories")
-                visible: statsPage.categoryList.length > 0
-            }
-
-            Column {
-                x: Theme.horizontalPageMargin
-                width: parent.width - 2 * Theme.horizontalPageMargin
-                spacing: Theme.paddingSmall
-                visible: statsPage.categoryList.length > 0
-
-                Repeater {
-                    model: statsPage.categoryList
-
-                    Item {
-                        width: parent.width
-                        height: Theme.fontSizeSmall + Theme.paddingMedium
-
-                        Label {
-                            id: catNameLabel
-                            anchors.left: parent.left
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: parent.width * 0.3
-                            text: categoryLabel(modelData.cat)
-                            font.pixelSize: Theme.fontSizeExtraSmall
-                            color: Theme.primaryColor
-                            truncationMode: TruncationMode.Fade
-                        }
-
-                        Rectangle {
-                            anchors {
-                                left: catNameLabel.right
-                                leftMargin: Theme.paddingMedium
-                                verticalCenter: parent.verticalCenter
-                            }
-                            height: Theme.paddingMedium
-                            radius: height / 2
-                            color: categoryColor(modelData.cat)
-                            width: (parent.width * 0.5) * statsPage.chartProgress
-                                   * modelData.count / Math.max(1, statsPage.maxCategoryCount)
-                        }
-
-                        Label {
-                            anchors.right: parent.right
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: modelData.count
-                            font.pixelSize: Theme.fontSizeExtraSmall
-                            color: Theme.secondaryColor
-                        }
                     }
                 }
             }

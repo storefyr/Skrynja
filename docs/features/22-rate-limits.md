@@ -51,23 +51,21 @@ banner appear, and then it says what actually happened instead of quoting libcur
 ## Not making the request at all
 
 The one call the app made on its own was title generation: after the first answer it
-sent a digest back to the model and asked for a title and a category. Good titles,
-but on a free tier that is one request per conversation that the user did not ask
-for, and it lands right after the answer - exactly when the per-second window is
-busiest.
+sent a digest back to the model and asked for a title (and previously a category).
+Good titles, but on a free tier that is one request per conversation that the user
+did not ask for, and it lands right after the answer - exactly when the per-second
+window is busiest.
 
 It is now a setting, `generation/autoTitleMode`:
 
 | Mode | Requests | What you get |
 |---|---|---|
-| `local` (default) | none | The first question as the title, the category from the local keyword classifier that already backs "Auto-label conversations" |
-| `ai` | one per conversation | The old behaviour |
-| `off` | none | The first question as the title, no category |
+| `local` (default) | none | The first question as the title |
+| `ai` | one per conversation | A model-generated title (uses the cheap `ministral-3b-2512` model and a small digest, ~500 chars) |
+| `off` | none | The first question as the title |
 
-`ConversationManager::autoLabelConversation()` does the local work. It never
-overwrites a category the user picked by hand - `other` is not a choice, it is what
-the app falls back to. "Suggest a title" in the conversation settings is unaffected:
-an explicit request is still worth a call.
+`ConversationManager::autoLabelConversation()` does the local work. "Suggest a title"
+in the conversation settings is unaffected: an explicit request is still worth a call.
 
 The model catalogue is the other self-made request, and it was already cached for
 24 h per provider.

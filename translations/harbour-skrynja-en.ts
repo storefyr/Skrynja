@@ -453,14 +453,6 @@
         <translation>Conversation title</translation>
     </message>
     <message>
-        <source>Category</source>
-        <translation>Category</translation>
-    </message>
-    <message>
-        <source>Topic</source>
-        <translation>Topic</translation>
-    </message>
-    <message>
         <source>Used by the statistics page</source>
         <translation>Used by the statistics page</translation>
     </message>
@@ -509,8 +501,8 @@
         <translation>Suggest a title</translation>
     </message>
     <message>
-        <source>Reads the conversation and proposes a title and a category.</source>
-        <translation>Reads the conversation and proposes a title and a category.</translation>
+        <source>Reads the conversation and proposes a title.</source>
+        <translation>Reads the conversation and proposes a title.</translation>
     </message>
     <message>
         <source>Answers come from</source>
@@ -1054,12 +1046,12 @@
         <translation>Best titles, but one extra request per conversation. Free tiers count those.</translation>
     </message>
     <message>
-        <source>Conversations keep their first question as a title and stay uncategorized.</source>
-        <translation>Conversations keep their first question as a title and stay uncategorized.</translation>
+        <source>Conversations keep their first question as a title.</source>
+        <translation>Conversations keep their first question as a title.</translation>
     </message>
     <message>
-        <source>Titles and categories worked out on the phone. Costs nothing, no request sent.</source>
-        <translation>Titles and categories worked out on the phone. Costs nothing, no request sent.</translation>
+        <source>Titles worked out on the phone. Costs nothing, no request sent.</source>
+        <translation>Titles worked out on the phone. Costs nothing, no request sent.</translation>
     </message>
 </context>
 <context>
@@ -1130,10 +1122,6 @@
     <message>
         <source>Prompt tokens</source>
         <translation>Prompt tokens</translation>
-    </message>
-    <message>
-        <source>Question categories</source>
-        <translation>Question categories</translation>
     </message>
     <message>
         <source>Records</source>

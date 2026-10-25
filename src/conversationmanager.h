@@ -21,7 +21,6 @@ class MistralAPI;
 struct Conversation {
     QString id;
     QString title;
-    QString category;
     QString provider;       // always "mistral" (kept for the stored format)
     QString model;          // model this conversation was created with
     QString systemPrompt;   // per-conversation system prompt, empty = global
@@ -68,11 +67,8 @@ public:
                                                   const QString &apiKey);
     Q_INVOKABLE void renameConversation(const QString &conversationId, const QString &newTitle);
     Q_INVOKABLE void updateCurrentConversationTitle(const QString &newTitle);
-    Q_INVOKABLE void updateCurrentConversationCategory(const QString &category);
-    Q_INVOKABLE void setConversationCategory(const QString &conversationId, const QString &category);
-    // Title and category without asking a model: the first question makes the
-    // title, the local keyword classifier makes the category. Costs nothing,
-    // which is the whole point when the provider counts requests.
+    // Title without asking a model: the first question makes the title.
+    // Costs nothing, which is the whole point when the provider counts requests.
     Q_INVOKABLE void autoLabelConversation(const QString &conversationId);
     Q_INVOKABLE void saveCurrentConversation();
     Q_INVOKABLE QJsonArray getConversationsList() const;
@@ -132,10 +128,6 @@ public:
     // user message and persists it, so a retry or a later turn references the
     // same server-side file instead of uploading again.
     Q_INVOKABLE void setLastUserImageFileId(const QString &fileId);
-
-    // Re-run the local classifier over every conversation still labelled
-    // "other" or unlabelled. Returns the number of conversations relabelled.
-    Q_INVOKABLE int recategorizeConversations();
 
     // Copy a picked image into the app data directory so the conversation keeps
     // working after the original is deleted from the gallery. Returns the new
@@ -235,8 +227,6 @@ private:
 
     QString generateConversationId() const;
     QString generateConversationTitle(const QList<Message> &messages) const;
-    // The user side of a conversation, clipped, as fed to the classifier.
-    static QString userText(const Conversation &conv);
 
     QString conversationsDir() const;
     QString conversationFilePath(const QString &id) const;

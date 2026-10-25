@@ -272,18 +272,11 @@ Page {
                         width: parent.width
                         spacing: Theme.paddingMedium
 
-                        CategoryChip {
-                            id: categoryChip
-                            category: model.category || ""
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-
                         // Date and size in one label rather than three items
                         // separated by bullets of their own.
                         Label {
                             anchors.verticalCenter: parent.verticalCenter
-                            width: parent.width - (categoryChip.visible
-                                                   ? categoryChip.width + parent.spacing : 0)
+                            width: parent.width
                                    - (matchLabel.visible
                                       ? matchLabel.width + parent.spacing : 0)
                             text: historyPage.formatWhen(model.updatedAt) + "  ·  "
@@ -336,18 +329,6 @@ Page {
                                     settingsManager.apiKey)
                         refreshList()
                     })
-                }
-            }
-            MenuItem {
-                text: qsTr("Auto-label conversations")
-                onClicked: {
-                    var count = conversationManager.recategorizeConversations()
-                    exportNotification.previewSummary = count > 0
-                        ? qsTr("%n conversation(s) relabelled", "", count)
-                        : qsTr("Nothing to relabel")
-                    exportNotification.previewBody = ""
-                    exportNotification.publish()
-                    refreshList()
                 }
             }
             MenuItem {

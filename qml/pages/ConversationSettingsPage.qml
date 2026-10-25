@@ -1,9 +1,8 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
 import "../components"
-import "../components/Categories.js" as Categories
 
-// Per-conversation overrides: title, category and system prompt.
+// Per-conversation overrides: title and system prompt.
 // The model is fixed at creation and cannot be changed here.
 //
 // This is a Page, not a Dialog: it is attached to the chat (one swipe forward)
@@ -27,9 +26,6 @@ Page {
     // rewrite the conversation file and bump its position in the history.
     property string loadedTitle: ""
     property string loadedPrompt: ""
-    property string loadedCategory: ""
-
-    property var categoryOptions: Categories.all()
 
     onStatusChanged: {
         if (status === PageStatus.Activating) {
@@ -91,32 +87,10 @@ Page {
             Label {
                 x: Theme.horizontalPageMargin
                 width: parent.width - 2 * Theme.horizontalPageMargin
-                text: qsTr("Reads the conversation and proposes a title and a category.")
+                text: qsTr("Reads the conversation and proposes a title.")
                 font.pixelSize: Theme.fontSizeExtraSmall
                 color: Theme.secondaryColor
                 wrapMode: Text.WordWrap
-            }
-
-            SectionHeader {
-                text: qsTr("Category")
-            }
-
-            ComboBox {
-                id: categoryCombo
-                width: parent.width
-                label: qsTr("Topic")
-                description: qsTr("Used by the statistics page")
-
-                menu: ContextMenu {
-                    Repeater {
-                        model: conversationSettings.categoryOptions
-
-                        MenuItem {
-                            text: Categories.label(modelData)
-                            property string categoryValue: modelData
-                        }
-                    }
-                }
             }
 
             // The model is fixed at creation (Conversations API locks it
@@ -178,11 +152,6 @@ Page {
             }
             conversationSettings.suggestingTitle = false
             titleField.text = title
-
-            var index = conversationSettings.categoryOptions.indexOf(category)
-            if (index >= 0) {
-                categoryCombo.currentIndex = index
-            }
         }
 
         onTitleGenerationFailed: {
@@ -204,15 +173,10 @@ Page {
 
         loadedTitle = overrides.title || ""
         loadedPrompt = overrides.systemPrompt || ""
-        loadedCategory = overrides.category || "other"
 
         titleField.text = loadedTitle
         usePromptSwitch.checked = loadedPrompt !== ""
         promptArea.text = loadedPrompt
-
-        var categoryIndex = categoryOptions.indexOf(loadedCategory)
-        categoryCombo.currentIndex = categoryIndex >= 0 ? categoryIndex
-                                                        : categoryOptions.length - 1
     }
 
     function apply() {
@@ -222,7 +186,6 @@ Page {
 
         var title = titleField.text.trim()
         var prompt = usePromptSwitch.checked ? promptArea.text.trim() : ""
-        var category = categoryCombo.currentItem ? categoryCombo.currentItem.categoryValue : ""
 
         if (title !== loadedTitle) {
             conversationManager.renameConversation(loadedId, title)
@@ -233,11 +196,6 @@ Page {
             conversationManager.setConversationOverrides(loadedId, prompt)
             loadedPrompt = prompt
         }
-
-        if (category !== "" && category !== loadedCategory) {
-            conversationManager.setConversationCategory(loadedId, category)
-            loadedCategory = category
-        }
     }
 
     function suggestTitle() {
@@ -247,14 +205,11 @@ Page {
         }
 
         suggestingTitle = true
-        // Use the model this conversation was created with.
-        var modelId = conversationManager.conversationModel(loadedId)
-        if (modelId === "") {
-            modelId = settingsManager.modelName
-        }
+        // Always use the cheapest model for title suggestions: never the
+        // conversation's model (which may be large and expensive).
         mistralApi.generateTitle(
                     settingsManager.apiKey,
-                    settingsManager.resolveModel(modelId),
+                    "ministral-3b-2512",
                     digest, loadedId)
     }
 }

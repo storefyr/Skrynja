@@ -105,9 +105,9 @@ namespaces:
    - The request payload is no longer rebuilt per turn: only the new user message is
      sent as `inputs`; history lives server-side. The system prompt travels as
      `instructions` at conversation creation
-   - `autoLabelConversation()` gives a conversation a title and a category without
-     a request, which is what `autoTitleMode` defaults to
-   - Per-conversation overrides: `model` (fixed at creation), `systemPrompt`, `category`, title,
+   - `autoLabelConversation()` gives a conversation a title without a request,
+     which is what `autoTitleMode` defaults to
+   - Per-conversation overrides: `model` (fixed at creation), `systemPrompt`, title,
      web-search toggle. There is no provider override: Mistral AI only
    - Statistics, fun stats, search, markdown export, cost input (`modelUsage`)
 
@@ -136,18 +136,13 @@ Helpers (plain namespaces, not QObjects):
 - **Providers** (`src/providers.*`) - inherited from SailCat; currently still lists
   Mistral AI, Scaleway, OVHcloud, Groq and custom, but only the Mistral catalogue
   parsing is used. The other entries are removed as part of the API rewrite.
-- **Categories** (`src/categories.*`) - the 28 conversation categories and a local
-  keyword classifier used when the model answers "other". Display labels and colors
-  live in `qml/components/Categories.js` and **must stay in sync**. The classifier
-  also backs the default titling mode, so it is no longer only a fallback.
-
 ### Frontend (QML/Silica)
 
 - **qml/pages/ChatPage.qml** - Main conversation interface. Owns the streaming
   throttle (deltas flushed on a 90 ms timer, never per token)
 - **qml/pages/ConversationHistoryPage.qml** - List, search, share, auto-label
 - **qml/pages/ConversationDetailPage.qml** - Read-only view with per-conversation charts
-- **qml/pages/ConversationSettingsPage.qml** - Per-conversation title, category, model, prompt
+- **qml/pages/ConversationSettingsPage.qml** - Per-conversation title, model, prompt
 - **qml/pages/PromptLibraryPage.qml** - Saved prompts
 - **qml/pages/PinnedMessagesPage.qml** - Pinned messages across conversations
 - **qml/pages/SettingsPage.qml** - API key, appearance, generation, update checker
@@ -298,9 +293,7 @@ journalctl -f | grep skrynja
 5. **API key handling** - Never log it, never write it in clear text, never widen the
    permissions of the settings file. One Mistral key; it is only ever sent to
    `api.mistral.ai`. See `src/securestore.*`.
-6. **Category identifiers** - `src/categories.cpp` and `qml/components/Categories.js`
-   hold the same list twice; changing one without the other silently degrades to "Other".
-7. **Never expose a QML role or list key named `model`** - it shadows the delegate's own
+6. **Never expose a QML role or list key named `model`** - it shadows the delegate's own
    model object and turns every other lookup into `undefined`. The message model exposes
    `messageModel`; the conversation list has no such key at all.
 
@@ -308,7 +301,7 @@ journalctl -f | grep skrynja
 ```
 src/                     # C++ backend classes and helpers
 qml/pages/              # Main UI pages
-qml/components/         # Reusable delegates and Categories.js
+qml/components/         # Reusable delegates
 qml/cover/              # Active cover
 tests/                  # QtTest suite, gates CI
 rpm/harbour-skrynja.spec # RPM packaging spec

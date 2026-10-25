@@ -763,7 +763,6 @@ Page {
                 return
             }
             conversationManager.updateCurrentConversationTitle(title)
-            conversationManager.updateCurrentConversationCategory(category)
         }
     }
 
@@ -925,9 +924,13 @@ Page {
 
         var digest = conversationManager.conversationDigest(conversationId)
         if (digest) {
+            // Titles are a one-shot side request: always use the cheapest
+            // model, never the conversation's model (which may be large).
+            // ministral-3b-2512: $0.10/M tokens in+out (vs $0.15/$0.60 for
+            // mistral-small-latest) — ~4x cheaper for a title-only call.
             mistralApi.generateTitle(
                         settingsManager.apiKey,
-                        chatPage.activeModel, digest, conversationId)
+                        "ministral-3b-2512", digest, conversationId)
         }
     }
 

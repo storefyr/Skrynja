@@ -5,6 +5,20 @@ All notable changes to Skrynja will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- **Cheaper AI titles**: title generation now uses `ministral-3b-2512`
+  ($0.10/M tokens) instead of the conversation's active model, and sends a
+  smaller digest (500 chars total, 200 per message instead of 2000/400).
+  The title prompt no longer lists 28 categories, saving ~36 tokens per call.
+- **Categories removed entirely**: `src/categories.{h,cpp}`,
+  `qml/components/Categories.js`, `qml/components/CategoryChip.qml`, the
+  category field in conversations, the category ComboBox in conversation
+  settings, the "Question categories" stats section, and the "Auto-label
+  conversations" history menu item. Titles are still generated, without a
+  category.
+
 ## [0.9.9] - 2026-10-24
 Skrynja 0.9.9 — Cancel voice recording, Danish-only UI, Danish store listing.
 

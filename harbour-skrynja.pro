@@ -16,7 +16,6 @@ SOURCES += src/harbour-skrynja.cpp \
     src/conversationmanager.cpp \
     src/settingsmanager.cpp \
     src/securestore.cpp \
-    src/categories.cpp \
     src/providers.cpp \
     src/audiorecorder.cpp \
     src/voiceanonymizer.cpp
@@ -26,7 +25,6 @@ HEADERS += src/mistralapi.h \
     src/conversationmanager.h \
     src/settingsmanager.h \
     src/securestore.h \
-    src/categories.h \
     src/providers.h \
     src/audiorecorder.h \
     src/voiceanonymizer.h
@@ -46,8 +44,6 @@ DISTFILES += qml/harbour-skrynja.qml \
     qml/components/TypingIndicator.qml \
     qml/components/CountUpLabel.qml \
     qml/components/RatioDonut.qml \
-    qml/components/CategoryChip.qml \
-    qml/components/Categories.js \
     rpm/harbour-skrynja.spec \
     harbour-skrynja.desktop
 

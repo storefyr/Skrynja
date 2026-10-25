@@ -349,9 +349,9 @@ QStringList SettingsManager::availableModels() const
 QStringList SettingsManager::availableAutoTitleModes() const
 {
     return QStringList()
-        << "local"  // first question as title, category from the local classifier
+        << "local"  // first question as title
         << "ai"     // one extra request per conversation, best titles
-        << "off";   // no title, no category
+        << "off";   // no title
 }
 
 QStringList SettingsManager::availableChatStyles() const

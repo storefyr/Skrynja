@@ -636,8 +636,8 @@ Dialog {
     function autoTitleDescription(mode) {
         switch (mode) {
         case "ai": return qsTr("Best titles, but one extra request per conversation. Free tiers count those.")
-        case "off": return qsTr("Conversations keep their first question as a title and stay uncategorized.")
-        default: return qsTr("Titles and categories worked out on the phone. Costs nothing, no request sent.")
+        case "off": return qsTr("Conversations keep their first question as a title.")
+        default: return qsTr("Titles worked out on the phone. Costs nothing, no request sent.")
         }
     }
 

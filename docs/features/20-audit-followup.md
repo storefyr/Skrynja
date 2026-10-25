@@ -60,20 +60,12 @@ Deltas accumulate in `ChatPage.streamingContent` and are flushed to the model on
 90 ms timer. The markdown formatter used to re-parse the entire message on every SSE
 token.
 
-## 20.9 Categories
+## 20.9 Categories (removed)
 
-28 identifiers, defined once in `src/categories.cpp` and mirrored for display in
-`qml/components/Categories.js`.
-
-The old prompt offered 7 labels and let the model fall back to "other", which it did
-almost always. Now the prompt lists all 28 and describes "other" as a last resort,
-and `Categories::classify()` runs a local keyword heuristic whenever the model still
-answers "other" or something unknown.
-
-The classifier scores whole words against per-category French and English keyword
-lists, accent-insensitively. A word owned by a single category is worth 3, a shared
-one 1, and a total below 3 returns nothing rather than guess. "Auto-label
-conversations" in the history pulley re-runs it over everything still unlabelled.
+The category feature was removed entirely in v0.9.9+: `src/categories.{h,cpp}`,
+`qml/components/Categories.js`, `qml/components/CategoryChip.qml`, the category
+field in `Conversation`, the category tokens in the title prompt, and the stats
+section. Titles are still generated, without a category.
 
 ## 20.12 Update checker removed
 

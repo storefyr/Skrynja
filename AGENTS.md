@@ -66,7 +66,6 @@ These are non-negotiable. Violating them produces code that does not compile or 
 - `src/settingsmanager.{h,cpp}` — QSettings wrapper: `apiKey` (stored obfuscated), `modelName`,
   `webSearch` toggle, `language`, `chatStyle`, `savedPrompts`.
 - `src/securestore.{h,cpp}` — owner-only file permissions and salted obfuscation for the API key.
-- `src/categories.{h,cpp}` — conversation categories and the local keyword classifier. Mirrored for display in `qml/components/Categories.js`.
 - `src/providers.{h,cpp}` — kept from SailCat for the model-catalogue parsing only; there is a single provider (Mistral AI) and no provider picker.
 - `qml/pages/ChatPage.qml` — main chat UI. `qml/components/MessageBubble.qml` — message rendering with regex-based markdown and source chips. `qml/pages/SettingsPage.qml` — settings dialog.
 
@@ -135,6 +134,8 @@ Both scripts use only `curl` (preinstalled on Sailfish OS). They must NOT call t
 - **Everything in English**: code, comments, commit messages, tags, docs.
 - **Commits**: one-liner, very concise, conventional prefix (`feat:`, `fix:`, `chore:`). No emoji, no "Co-authored-by" or AI attribution lines.
 - **Tags/releases**: semver `vX.Y.Z`, starting at `v0.1.0` for Skrynja (the SailCat 2.x history stays with SailCat). Pushing a tag triggers the release CI (`.github/workflows/build-docker.yml`), which builds aarch64 only and creates the GitHub release. Bump the version in `rpm/harbour-skrynja.spec` and `harbour-skrynja.yaml` when releasing.
+- **Avoid unnecessary API calls.** The Mistral API is rate-limited and costs money per token. When a feature can work without an API call (local heuristics, cached data, first-message titles), prefer that. When an API call is needed, keep the payload small (short digests, cheap models for auxiliary tasks like title generation — use `ministral-3b-2512` at $0.10/M instead of the conversation's active model). Never add a background/automatic API call the user did not ask for unless it is behind a setting that defaults to off.
+- **Avoid rate-limited external APIs in scripts and tooling.** GitHub API is limited to 60 req/hour unauthenticated; Actions artifacts require auth. Prefer `raw.githubusercontent.com` with fixed filenames on git branches (see the device scripts section above).
 - Match existing code style: 4-space indent in C++ and QML, Qt naming (`m_` member prefix, camelCase).
 
 ## Working Style

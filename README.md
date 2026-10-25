@@ -21,12 +21,12 @@ Skrynja is a fork of [SailCat](https://github.com/nicosouv/harbour-sailcat), rew
 - 🧠 **Live model list** — Fetched from Mistral, with a quick-switch button next to the input
 - 🎭 **System prompt & personas** — Presets (Concise, Translator, Code assistant) or your own instruction
 - 🎛️ **Generation settings** — Temperature and response length
-- 💬 **Conversation history** — Search, per-conversation details, automatic titles and categories
+- 💬 **Conversation history** — Search, per-conversation details, automatic titles
 - 📌 **Message actions** — Pin and copy code blocks
 - 📤 **Markdown export** — To Documents or clipboard
-- 📊 **Statistics & badges** — Activity charts, real token tracking (per day/month/conversation), question categories, fun badges and top AI words
+- 📊 **Statistics & badges** — Activity charts, real token tracking (per day/month/conversation), fun badges and top AI words
 - 🎨 **Native Sailfish interface** — Swipe to history, bottom pulley menu, animations, live cover with the latest answer
-- 🌍 **Multilingual** — English, French, German, Spanish, Finnish, Italian, Norwegian, Swedish
+- 🌍 **Multilingual** — English and Danish
 
 ## 🚀 Installation
 

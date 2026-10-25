@@ -76,10 +76,6 @@ Page {
                         font.pixelSize: Theme.fontSizeExtraSmall
                         color: Theme.secondaryColor
                     }
-
-                    CategoryChip {
-                        category: detailPage.convStats.category || ""
-                    }
                 }
             }
 

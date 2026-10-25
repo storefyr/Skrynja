@@ -12,7 +12,7 @@ The four backend classes are pure Qt (no Silica), so they compile and run agains
 
 - **ConversationModel**: add/count, streaming update creating the assistant row, empty-bubble cleanup, regenerate removal (and its user-last no-op), truncation bounds, pin toggling, image path round trip, API payload shape (role+content only), last-assistant lookup skipping empty content.
 - **MistralAPI** (via `friend class TestMistralAPI` on the private `processStreamData`): SSE delta parsing, UTF-8 sequence split across network chunks, `[DONE]`, usage extraction, malformed lines, multiple lines per chunk.
-- **ConversationManager**: full save/load round trip (pins, image paths, title, category), markdown export format, pinned list across conversations, fun stats (ghost count, longest message, top words), token accumulation (lifetime, per conversation, daily series), category counting. `XDG_CONFIG_HOME` is redirected to a QTemporaryDir so tests never touch real user settings.
+- **ConversationManager**: full save/load round trip (pins, image paths, title), markdown export format, pinned list across conversations, fun stats (ghost count, longest message, top words), token accumulation (lifetime, per conversation, daily series). `XDG_CONFIG_HOME` is redirected to a QTemporaryDir so tests never touch real user settings.
 
 ## Out of scope
 

@@ -1,5 +1,4 @@
 #include "conversationmanager.h"
-#include "categories.h"
 #include "mistralapi.h"
 #include "providers.h"
 #include "securestore.h"
@@ -372,7 +371,6 @@ QJsonObject ConversationManager::conversationToJson(const Conversation &conv) co
     QJsonObject obj;
     obj["id"] = conv.id;
     obj["title"] = conv.title;
-    obj["category"] = conv.category;
     obj["provider"] = conv.provider;
     obj["model"] = conv.model;
     obj["systemPrompt"] = conv.systemPrompt;
@@ -425,7 +423,6 @@ Conversation ConversationManager::conversationFromJson(const QJsonObject &obj)
     Conversation conv;
     conv.id = obj["id"].toString();
     conv.title = obj["title"].toString();
-    conv.category = obj["category"].toString();
     // Written since 2.3. Anything older can only have talked to Mistral, and
     // saying so explicitly beats letting it drift with the default setting.
     conv.provider = obj["provider"].toString();
@@ -809,42 +806,6 @@ void ConversationManager::updateCurrentConversationTitle(const QString &newTitle
     renameConversation(m_currentConversationId, newTitle);
 }
 
-void ConversationManager::updateCurrentConversationCategory(const QString &category)
-{
-    setConversationCategory(m_currentConversationId, category);
-}
-
-void ConversationManager::setConversationCategory(const QString &conversationId,
-                                                  const QString &category)
-{
-    Conversation *conv = findConversation(conversationId);
-    if (!conv) {
-        return;
-    }
-
-    QString resolved = category.trimmed().toLower();
-    if (!Categories::isValid(resolved)) {
-        resolved = "other";
-    }
-
-    // The model routinely falls back to "other" even when the topic is
-    // obvious; give the local classifier the final say in that case.
-    if (resolved == "other") {
-        const QString guessed = Categories::classify(userText(*conv));
-        if (!guessed.isEmpty()) {
-            resolved = guessed;
-        }
-    }
-
-    if (conv->category == resolved) {
-        return;
-    }
-
-    conv->category = resolved;
-    markDirty(conversationId);
-    saveDirtyConversations();
-}
-
 void ConversationManager::autoLabelConversation(const QString &conversationId)
 {
     Conversation *conv = findConversation(conversationId);
@@ -852,52 +813,17 @@ void ConversationManager::autoLabelConversation(const QString &conversationId)
         return;
     }
 
-    bool changed = false;
+    if (!conv->title.isEmpty()) {
+        return;
+    }
 
+    conv->title = generateConversationTitle(conv->messages);
     if (conv->title.isEmpty()) {
-        conv->title = generateConversationTitle(conv->messages);
-        changed = !conv->title.isEmpty();
-    }
-
-    // A category the user picked by hand is never overwritten; "other" is not
-    // a choice, it is what the app falls back to.
-    if (conv->category.isEmpty() || conv->category == "other") {
-        const QString guessed = Categories::classify(userText(*conv));
-        if (!guessed.isEmpty() && guessed != conv->category) {
-            conv->category = guessed;
-            changed = true;
-        }
-    }
-
-    if (!changed) {
         return;
     }
 
     markDirty(conversationId);
     saveDirtyConversations();
-}
-
-int ConversationManager::recategorizeConversations()
-{
-    int changed = 0;
-
-    for (Conversation &conv : m_conversations) {
-        if (!conv.category.isEmpty() && conv.category != "other") {
-            continue;
-        }
-
-        const QString guessed = Categories::classify(userText(conv));
-        if (guessed.isEmpty() || guessed == conv.category) {
-            continue;
-        }
-
-        conv.category = guessed;
-        markDirty(conv.id);
-        changed++;
-    }
-
-    saveDirtyConversations();
-    return changed;
 }
 
 void ConversationManager::saveCurrentConversation()
@@ -966,14 +892,12 @@ QVariantMap ConversationManager::getConversationOverrides(const QString &convers
     overrides["model"] = QString();
     overrides["systemPrompt"] = QString();
     overrides["title"] = QString();
-    overrides["category"] = QString();
 
     const Conversation *conv = findConversation(conversationId);
     if (conv) {
         overrides["model"] = conv->model;
         overrides["systemPrompt"] = conv->systemPrompt;
         overrides["title"] = conv->title;
-        overrides["category"] = conv->category;
         overrides["provider"] = conv->provider;
     }
 
@@ -1034,7 +958,6 @@ QJsonArray ConversationManager::getConversationsList() const
         obj["createdAt"] = conv.createdAt;
         obj["updatedAt"] = conv.updatedAt;
         obj["messageCount"] = conv.messages.count();
-        obj["category"] = conv.category;
         obj["unread"] = conv.unread;
         obj["archived"] = conv.archived;
         obj["provider"] = conv.provider;
@@ -1247,9 +1170,9 @@ QString ConversationManager::conversationDigest(const QString &conversationId) c
 
     // Enough of the exchange for the model to name the topic, without paying
     // for the whole transcript. Each turn is clipped, and the whole digest is
-    // capped: a title is not worth more than a couple of thousand characters.
-    static const int PER_MESSAGE = 400;
-    static const int BUDGET = 2000;
+    // capped: a title is not worth more than a couple of hundred characters.
+    static const int PER_MESSAGE = 200;
+    static const int BUDGET = 500;
 
     QString digest;
     for (const Message &msg : conv->messages) {
@@ -1464,7 +1387,6 @@ QVariantMap ConversationManager::getConversationStatistics(const QString &conver
     stats["avgChars"] = count > 0 ? int(totalChars / count) : 0;
     stats["longestChars"] = longestChars;
     stats["estimatedTokens"] = totalChars / 4;
-    stats["category"] = conv->category;
     stats["totalTokens"] = conv->totalTokens;
 
     qint64 durationMs = 0;
@@ -1587,7 +1509,6 @@ QVariantMap ConversationManager::getStatistics() const
     qint64 totalUserChars = 0;
     qint64 totalAssistantChars = 0;
     QString longestConvTitle;
-    QVariantMap categoryCounts;
     QVariantMap modelCounts;
 
     // Activity distribution: last 14 days (oldest first) and hour of day
@@ -1598,11 +1519,6 @@ QVariantMap ConversationManager::getStatistics() const
     for (const Conversation &conv : m_conversations) {
         int convMessageCount = conv.messages.count();
         totalMessages += convMessageCount;
-
-        if (convMessageCount > 0) {
-            QString cat = conv.category.isEmpty() ? "other" : conv.category;
-            categoryCounts[cat] = categoryCounts[cat].toInt() + 1;
-        }
 
         if (convMessageCount > longestConvMessages) {
             longestConvMessages = convMessageCount;
@@ -1672,7 +1588,6 @@ QVariantMap ConversationManager::getStatistics() const
     stats["totalTokens"] = m_totalPromptTokens + m_totalCompletionTokens;
     stats["totalUserChars"] = totalUserChars;
     stats["totalAssistantChars"] = totalAssistantChars;
-    stats["categoryCounts"] = categoryCounts;
 
     const QVariantList modelAnswers = rankCounts(modelCounts, "model");
     stats["modelAnswers"] = modelAnswers;
@@ -1771,7 +1686,6 @@ QVariantList ConversationManager::searchConversations(const QString &query) cons
             result["updatedAt"] = conv.updatedAt;
             result["messageCount"] = conv.messages.count();
             result["userMessageCount"] = userCount;
-            result["category"] = conv.category;
             result["unread"] = conv.unread;
             result["matchCount"] = matchCount;
             result["matchPreview"] = matchPreview.isEmpty() ? tr("Match in title") : matchPreview;
@@ -1791,21 +1705,6 @@ QString ConversationManager::generateConversationId() const
     // Qt 5.6 doesn't have QUuid::WithoutBraces, so we manually remove braces
     QString uuid = QUuid::createUuid().toString();
     return uuid.mid(1, uuid.length() - 2);  // Remove { and }
-}
-
-QString ConversationManager::userText(const Conversation &conv)
-{
-    QString text;
-    for (const Message &msg : conv.messages) {
-        if (msg.role != "user") {
-            continue;
-        }
-        text += msg.content + " ";
-        if (text.length() > 2000) {
-            break;
-        }
-    }
-    return text;
 }
 
 QString ConversationManager::generateConversationTitle(const QList<Message> &messages) const

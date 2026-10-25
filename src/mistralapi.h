@@ -113,8 +113,7 @@ signals:
     // Sources cited by web_search, collected from tool.execution events.
     // Emitted once per response, before responseCompleted.
     void sourcesReceived(const QStringList &sources);
-    void titleGenerated(const QString &title, const QString &category,
-                        const QString &targetId);
+    void titleGenerated(const QString &title, const QString &targetId);
     void titleGenerationFailed(const QString &targetId);
     void modelsFetched(const QVariantList &models);
     void modelsFetchFailed();

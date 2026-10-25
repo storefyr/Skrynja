@@ -1,5 +1,4 @@
 #include "mistralapi.h"
-#include "categories.h"
 #include <QBuffer>
 #include <QDateTime>
 #include <QDir>
@@ -425,14 +424,10 @@ void MistralAPI::generateTitle(const QString &apiKey,
     requestBody["model"] = modelName;
     requestBody["store"] = false;
     requestBody["inputs"] = QString(
-                "Analyze the conversation excerpt sent by the user and reply with ONLY a "
-                "compact JSON object, no explanation, no code fences: "
-                "{\"title\":\"short conversation title, max 50 characters, same language as "
-                "the conversation\",\"category\":\"one of the labels below\"}. "
-                "Pick the single most specific matching category from this list: %1. "
-                "Use \"other\" only when no other label fits at all. The excerpt follows.\n\n"
-                + conversationText)
-            .arg(Categories::all().join(", "));
+                "Reply with ONLY a short conversation title, max 50 characters, "
+                "same language as the conversation, no explanation, no quotes. "
+                "The excerpt follows.\n\n"
+                + conversationText);
 
     QByteArray jsonData = QJsonDocument(requestBody).toJson(QJsonDocument::Compact);
 
@@ -1404,33 +1399,21 @@ void MistralAPI::onTitleGenerationFinished()
                                       usage["completion_tokens"].toInt());
             }
 
-            const QString content = outputsToText(obj["outputs"].toArray()).trimmed();
+            QString title = outputsToText(obj["outputs"].toArray()).trimmed();
 
-            QString title;
-            QString category;
-
-            // Extract the JSON object even if wrapped in fences or prose
-            int start = content.indexOf('{');
-            int end = content.lastIndexOf('}');
-            if (start >= 0 && end > start) {
+            // The model is asked for a plain title, but it sometimes wraps it
+            // in quotes or JSON: strip the common wrappers.
+            if (title.startsWith("\"") && title.endsWith("\"") && title.length() > 1) {
+                title = title.mid(1, title.length() - 2);
+            }
+            int braceStart = title.indexOf('{');
+            int braceEnd = title.lastIndexOf('}');
+            if (braceStart >= 0 && braceEnd > braceStart) {
                 QJsonDocument titleDoc = QJsonDocument::fromJson(
-                            content.mid(start, end - start + 1).toUtf8());
-                if (titleDoc.isObject()) {
+                            title.mid(braceStart, braceEnd - braceStart + 1).toUtf8());
+                if (titleDoc.isObject() && titleDoc.object().contains("title")) {
                     title = titleDoc.object()["title"].toString().trimmed();
-                    category = titleDoc.object()["category"].toString().trimmed().toLower();
                 }
-            }
-
-            // Fallback: model ignored the JSON format, use raw content as title
-            if (title.isEmpty()) {
-                title = content;
-                if (title.startsWith("\"") && title.endsWith("\"")) {
-                    title = title.mid(1, title.length() - 2);
-                }
-            }
-
-            if (!Categories::isValid(category)) {
-                category = "other";
             }
 
             if (title.length() > 50) {
@@ -1439,7 +1422,7 @@ void MistralAPI::onTitleGenerationFinished()
 
             if (!title.isEmpty()) {
                 delivered = true;
-                emit titleGenerated(title, category, targetId);
+                emit titleGenerated(title, targetId);
             }
         }
     } else {
