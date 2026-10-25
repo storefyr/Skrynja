@@ -1,127 +1,125 @@
 # Skrynja 🐱⛵
 
 <p align="center">
-  <img src="icons/172x172/harbour-skrynja.png" alt="Skrynja Logo" width="172"/>
+  <img src="icons/172x172/harbour-skrynja.png" alt="Skrynja-logo" width="172"/>
 </p>
 
-**Skrynja** is an elegant AI chat client, specifically designed for **Sailfish OS**. Talk to **Mistral AI** directly from your Sailfish device, with live **web search** powered by Mistral's Conversations API.
+**Skrynja** er en elegant AI-chatklient, målrettet **Sailfish OS**. Chat direkte med **Mistral AI** fra din Sailfish-enhed, med live **websøgning** via Mistrals Conversations API.
 
-Skrynja is a fork of [SailCat](https://github.com/nicosouv/harbour-sailcat), rewritten to use Mistral's `/v1/conversations` endpoint instead of `/v1/chat/completions`.
+> 🦖 **Skrynja er udviklet med hjælp fra AI** — Mistral Vibe. Funktioner specificeres i [docs/features/](docs/features/), implementeres i samarbejde mellem en menneskelig udvikler og AI-agenter, valideres af CI og dækkes af unit tests før hver udgivelse.
 
-> 🤖 **Skrynja is developed with the help of AI** — Mistral Vibe. Features are specified in [docs/features/](docs/features/), implemented together by a human developer and AI agents, validated by CI on three architectures and covered by unit tests before every release.
+## ✨ Funktioner
 
-## ✨ Features
-
-- 🌐 **Web search** — The models can search the internet mid-conversation, with sources
-- 🇫🇷 **Mistral AI only** — Built on the Conversations API (`/v1/conversations`)
-- 🆓 **Free tier supported** — Mistral's Experiment plan works out of the box
-- 🔑 **Your own key** — Bring your own API key, stored scrambled, never sent anywhere else
-- ⚡ **Real-time streaming** — Instant and smooth responses
-- 🖼️ **Image support (vision)** — Attach a photo and let Pixtral analyze it
-- 🧠 **Live model list** — Fetched from Mistral, with a quick-switch button next to the input
-- 🎭 **System prompt & personas** — Presets (Concise, Translator, Code assistant) or your own instruction
-- 🎛️ **Generation settings** — Temperature and response length
-- 💬 **Conversation history** — Search, per-conversation details, automatic titles
-- 📌 **Message actions** — Pin and copy code blocks
-- 📤 **Markdown export** — To Documents or clipboard
-- 📊 **Statistics & badges** — Activity charts, real token tracking (per day/month/conversation), fun badges and top AI words
-- 🎨 **Native Sailfish interface** — Swipe to history, bottom pulley menu, animations, live cover with the latest answer
-- 🌍 **Multilingual** — English and Danish
+- 🌐 **Websøgning** — modellerne kan søge på nettet midt i en samtale, med kilder
+- 🇫🇷 **Kun Mistral AI** — bygget på Conversations API (`/v1/conversations`)
+- 🆓 **Gratis niveau understøttet** — Mistrals Experiment-abonnement virker med det samme
+- 🔑 **Din egen nøgle** — API-nøglen gemmes tilsløret og sendes aldrig videre
+- ⚡ **Streaming i realtid** — øjeblikkelige og glatte svar
+- 🖼️ **Billeder (vision)** — vedhæft et foto, og lad Pixtral analysere det
+- 🧠 **Live modelliste** — hentet fra Mistral, med en hurtigskifter ved inputfeltet
+- 🎭 **Systemprompt & personaer** — forudindstillinger (Kortfattet, Oversætter, Kodeassistent) eller din egen instruktion
+- 🎛️ **Genereringsindstillinger** — temperatur og svarslængde
+- 💬 **Samtalehistorik** — søgning, detaljer pr. samtale, automatiske titler
+- 📌 **Beskedhandlinger** — fastgør beskeder og kopier kodeblokke
+- 📤 **Markdown-eksport** — til Dokumenter eller udklipsholderen
+- 📊 **Statistik & badges** — aktivitetsdiagrammer, reel token-tælling (pr. dag/måned/samtale), sjove badges og top-AI-ord
+- 🎨 **Native Sailfish-grænseflade** — swipe til historik, pulley-menu øverst, animationer, live cover med seneste svar
+- 🌍 **Flersproget** — engelsk og dansk
 
 ## 🚀 Installation
 
-### Prerequisites
+### Forudsætninger
 
-- Sailfish OS 3.0+ or higher
-- Internet connection
-- A Mistral AI API key (free tier available)
+- Sailfish OS 3.0 eller nyere
+- Internetforbindelse
+- En Mistral AI API-nøgle (gratis niveau tilgængeligt)
 
-### Build from source
+### Byg fra kildekode
 
 ```bash
-# Clone the repo
+# Klon repoet
 git clone https://github.com/storefyr/Skrynja.git
-cd harbour-skrynja
+cd Skrynja
 
-# Build with Sailfish SDK
+# Byg med Sailfish SDK
 sfdk build
 
-# Install the generated RPM
+# Installér den genererede RPM
 sfdk deploy --manual
 ```
 
-### RPM Installation
+### RPM-installation
 
-Download the `.rpm` file from [releases](https://github.com/storefyr/Skrynja/releases) and install it on your Sailfish device.
+Download `.rpm`-filen fra [udgivelserne](https://github.com/storefyr/Skrynja/releases) og installér den på din Sailfish-enhed.
 
-## 🔧 Configuration
+## 🔧 Konfiguration
 
-1. Launch Skrynja
-2. Access **Settings** via the pulley menu
-3. Paste your **Mistral API key**
-4. Choose your preferred model
-5. Optionally enable **web search**
-6. Save and start chatting!
+1. Start Skrynja
+2. Åbn **Indstillinger** via pulley-menuen øverst
+3. Indsæt din **Mistral API-nøgle**
+4. Vælg din foretrukne model
+5. Slå eventuelt **websøgning** til
+6. Gem, og begynd at chatte!
 
-## 📖 Usage
+## 📖 Brug
 
-### Start a conversation
+### Start en samtale
 
-1. Open Skrynja
-2. Type your message in the input field
-3. Press the send button or Enter
-4. Watch the response appear in real-time thanks to streaming
+1. Åbn Skrynja
+2. Skriv din besked i inputfeltet
+3. Tryk på send-knappen eller Enter
+4. Se svaret dukke op i realtid takket være streaming
 
-### Web search
+### Websøgning
 
-Enable **Web search** in Settings (or per conversation) and the model will search the internet when it needs up-to-date information. While it searches, Skrynja shows a "Searching the web…" indicator, and the answer includes its sources.
+Slå **websøgning** til i Indstillinger (eller pr. samtale), så søger modellen på nettet, når den har brug for aktuel viden. Mens den søger, viser Skrynja en indikator for "Søger på nettet…", og svaret indeholder kilderne.
 
-### New conversation
+### Ny samtale
 
-Use the pulley menu and select **"New conversation"** to start fresh.
+Swipe tilbage til samtalehistorikken og vælg **"Ny samtale"** i dens pulley-menu. Alternativt kan du starte en ny samtale fra coveret, når appen kører i baggrunden.
 
-### Available models
+### Tilgængelige modeller
 
-The model list is fetched live from Mistral and cached for offline use. The model is chosen when a conversation is created; start a new conversation to switch models.
+Modellisten hentes live fra Mistral og gemmes lokalt til offline brug. Modellen vælges, når en samtale oprettes; start en ny samtale for at skifte model.
 
-## 🏗️ Technical Architecture
+## 🏗️ Teknisk arkitektur
 
-### Qt C++ Backend
+### Qt C++-backend
 
-- **MistralAPI** — HTTP request management with SSE (Server-Sent Events) streaming against `/v1/conversations`
-- **ConversationModel** — QAbstractListModel for message display
-- **ConversationManager** — Local conversation persistence and remote conversation-id tracking
-- **SettingsManager** — Settings persistence with QSettings
+- **MistralAPI** — HTTP-forespørgsler med SSE-streaming (Server-Sent Events) mod `/v1/conversations`
+- **ConversationModel** — QAbstractListModel til beskedvisning
+- **ConversationManager** — lokal samtalepersistens og sporing af fjern-samtale-id
+- **SettingsManager** — indstillingspersistens med QSettings
 
-### QML Frontend
+### QML-frontend
 
-- **ChatPage** — Main conversation interface with SilicaListView
-- **SettingsPage** — API configuration and model selection
-- **ConversationHistoryPage** — Browse past conversations
-- **CoverPage** — Active cover with statistics
+- **ChatPage** — hovedgrænsefladen til samtaler med SilicaListView
+- **SettingsPage** — API-konfiguration og modelvalg
+- **ConversationHistoryPage** — gennemse tidligere samtaler
+- **CoverPage** — aktivt cover med statistik
 
-### Technologies used
+### Teknologier
 
 - Qt 5.6 (QtCore, QtNetwork, QtQuick, QtQml)
-- Sailfish Silica UI Components
-- Mistral Conversations API (REST + SSE streaming)
-- QML + JavaScript for the interface
+- Sailfish Silica UI-komponenter
+- Mistral Conversations API (REST + SSE-streaming)
+- QML + JavaScript til grænsefladen
 
 ## 🎯 Mistral Conversations API
 
-Skrynja talks exclusively to Mistral's Conversations API, which is what makes web search possible (the `web_search` tool only exists on this API, not on Chat Completions).
+Skrynja kommunikerer udelukkende med Mistrals Conversations API — det er den, der gør websøgning mulig (`web_search`-værktøjet findes kun på denne API, ikke på Chat Completions).
 
-### Endpoints used
+### Endpoints
 
 ```
-POST https://api.mistral.ai/v1/conversations#stream          (create a conversation)
-POST https://api.mistral.ai/v1/conversations/{id}#stream     (append a message)
-POST https://api.mistral.ai/v1/conversations/{id}/restart#stream  (after a cancelled answer)
-GET  https://api.mistral.ai/v1/conversations/{id}/messages   (reconcile before retrying)
-DELETE https://api.mistral.ai/v1/conversations/{id}          (delete a conversation)
+POST https://api.mistral.ai/v1/conversations#stream          (opret en samtale)
+POST https://api.mistral.ai/v1/conversations/{id}#stream     (tilføj en besked)
+POST https://api.mistral.ai/v1/conversations/{id}/restart#stream  (efter et annulleret svar)
+GET  https://api.mistral.ai/v1/conversations/{id}/messages   (afstem før nyt forsøg)
+DELETE https://api.mistral.ai/v1/conversations/{id}          (slet en samtale)
 ```
 
-### Request format
+### Forespørgselsformat
 
 ```json
 {
@@ -133,134 +131,118 @@ DELETE https://api.mistral.ai/v1/conversations/{id}          (delete a conversat
 }
 ```
 
-### Design decisions (vs. SailCat)
+## 🔒 Sikkerhed & privatliv
 
-| Topic | Skrynja |
-|---|---|
-| Providers | Mistral AI only |
-| Server-side history | Yes — the API remembers the conversation |
-| Context limit trimming | Removed (the server keeps the full history) |
-| Model switching | Fixed per conversation; start a new one to switch |
-| Edit / regenerate | Removed (needs entry-level restart, deferred) |
-| Retry after ambiguous failure | Reconciles with `GET .../messages` first |
-| Cancelled answer | Marked dirty; next message restarts from before it |
-| Existing conversations | Start fresh server-side; old messages stay local |
-| Privacy | Conversation history is stored on Mistral's servers |
+- ✅ SailJail-sandboxing med minimale tilladelser (Internet, Billeder, Dokumenter)
+- ✅ Ingen telemetri eller analyse
+- ✅ Direkte kommunikation med Mistral (HTTPS), ingen mellemliggende server
+- ✅ Lokal kopi af samtaler på din enhed
+- ✅ **Stemmeinput anonymiseres på enheden før upload** (til som standard): toneskift + spektral hældning + telefonbånd-begrænsning + rystet støj, så din stemme er meget sværere at identificere ud fra optagelsen. Det er tilsløring, ikke kryptering — den transskriberede tekst kan stadig identificere dig, og din API-nøgle knytter forespørgslen til din konto. Lokal tale-til-tekst på enheden (whisper.cpp) blev testet og fravalgt: for langsom på en telefon-CPU og for dårlig til dansk.
+- ⚠️ **Med Conversations API ligger samtalehistorikken også på Mistrals servere** — det er prisen for server-side hukommelse og websøgning
+- ⚠️ På Mistrals gratis "Experiment"-abonnement indgår API-input og -output som standard i deres modeltræningsprogrammer. Fravælg det i Admin Consolens privatlivsindstillinger, hvis det betyder noget for dig
+- ⚠️ Din API-nøgle giver adgang til din Mistral-konto — hold den hemmelig
 
-## 🔒 Security & Privacy
+## 🚀 Udgivelser & CI/CD
 
-- ✅ SailJail sandboxing with minimal permissions (Internet, Pictures, Documents)
-- ✅ No telemetry or analytics
-- ✅ Direct communication with Mistral (HTTPS), no intermediary
-- ✅ No intermediate server
-- ✅ Local copy of conversations on your device
-- ✅ **Voice input is anonymized on the device before upload** (on by default): pitch shift + spectral tilt + telephone-band limiting + jittered noise, so your voice is much harder to identify from the recording. This is obfuscation, not encryption — the transcribed text can still identify you, and your API key ties the request to your account. Local on-device STT (whisper.cpp) was tested and rejected: too slow on a phone CPU and too poor at Danish.
-- ⚠️ **With the Conversations API, the conversation history also lives on Mistral's servers** — that is the price of server-side memory and web search
-- ⚠️ On Mistral's free "Experiment" plan, API inputs and outputs go into their model training programs by default. Opt out in the Admin Console privacy settings if that matters to you
-- ⚠️ Your API key gives access to your Mistral account - keep it secret
+Skrynja bruger GitHub Actions til automatisk at bygge og udgive releases.
 
-## 🚀 Releases & CI/CD
+### Automatisk build
 
-Skrynja uses GitHub Actions to automatically build and publish releases.
-
-### Automatic build
-
-Each `vX.Y.Z` tag triggers a multi-architecture build:
+Hvert `vX.Y.Z`-tag udløser et build:
 
 ```bash
 git tag v0.1.0
 git push origin v0.1.0
 ```
 
-The **build-docker.yml** workflow:
-- ✅ Builds for aarch64 (Jolla Phone 2026)
-- ✅ Generates changelog from commits
-- ✅ Creates GitHub release with the RPM
-- ✅ Publishes automatically
+Workflowet **build-docker.yml**:
+- ✅ Bygger for aarch64 (Jolla Phone 2026, Jolla C2, Xperia 10 II/III/IV)
+- ✅ Genererer changelog ud fra commits
+- ✅ Opretter GitHub-release med RPM'en
+- ✅ Udgiver automatisk
 
-Compiled RPMs are available in [Releases](https://github.com/storefyr/Skrynja/releases).
+Kompilerede RPM'er findes under [Releases](https://github.com/storefyr/Skrynja/releases).
 
-### PR Validation
+### PR-validering
 
-Pull Requests are automatically validated with the **pr-build.yml** workflow that builds for aarch64 and runs the unit test suite.
+Pull requests valideres automatisk af workflowet **pr-build.yml**, som bygger for aarch64 og kører unit test-suiten.
 
 ### Tests
 
-Backend classes are covered by a QtTest suite (`tests/`) that runs in CI on every build and blocks releases on failure:
+Backend-klasserne er dækket af en QtTest-suite (`tests/`), der kører i CI ved hvert build og blokerer udgivelser ved fejl:
 
 ```bash
 cd tests && qmake tests.pro && make && ./tst_skrynja
 ```
 
-### Testing a PR on device
+### Test en PR på enheden
 
-Every PR build pushes the aarch64 RPM to a `pr-<N>-rpm` git branch with a fixed filename. Download the script directly on your Jolla Phone and run it — no computer needed, no GitHub API, no auth:
+Hvert PR-build pusher aarch64-RPM'en til en `pr-<N>-rpm` git-branch med et fast filnavn. Download scriptet direkte på din Jolla-telefon og kør det — ingen computer, ingen GitHub API, ingen autentifikation nødvendig:
 
 ```bash
-# One-time: download the script (from the PR branch)
+# Én gang: download scriptet (fra PR-branchen)
 curl -LO https://raw.githubusercontent.com/storefyr/Skrynja/feature/cancel-voice-recording/test-pr.sh
 
-# Then for each PR:
-sh test-pr.sh 11        # downloads + installs the RPM for PR #11
+# Derefter for hver PR:
+sh test-pr.sh 11        # downloader + installerer RPM'en for PR #11
 ```
 
-The script downloads directly from `raw.githubusercontent.com` — it does not call the GitHub API (rate-limited) or use Actions artifacts (auth required).
+Scriptet henter direkte fra `raw.githubusercontent.com` — det kalder ikke GitHub API'et (begrænset hastighed) og bruger ikke Actions artifacts (kræver autentifikation).
 
-### For maintainers
+### For vedligeholdere
 
-See [RELEASE.md](RELEASE.md) for the complete release guide.
+Se [RELEASE.md](RELEASE.md) for den komplette udgivelsesguide.
 
-## 🤝 Contributing
+## 🤝 Bidrag
 
-Contributions are welcome! Here's how to participate:
+Bidrag er velkomne! Sådan deltager du:
 
-1. Fork the project
-2. Create a branch for your feature (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+1. Fork projektet
+2. Opret en branch til din funktion (`git checkout -b feature/AmazingFeature`)
+3. Commit dine ændringer (`git commit -m 'Add some AmazingFeature'`)
+4. Push branchen (`git push origin feature/AmazingFeature`)
+5. Åbn en Pull Request
 
-## 📝 TODO / Roadmap
+## 🗺️ TODO / Roadmap
 
-The detailed feature roadmap with per-feature specs lives in [docs/ROADMAP.md](docs/ROADMAP.md).
+Den detaljerede funktionsroadmap med specifikationer pr. funktion ligger i [docs/ROADMAP.md](docs/ROADMAP.md).
 
-- [x] Web search via the Conversations API
-- [x] Conversations API rewrite (create/append/restart/reconcile/delete)
-- [x] Persistent conversation saving
-- [x] Conversation export (text, markdown)
-- [x] Multiple simultaneous conversations
-- [x] Advanced settings (temperature, max_tokens, system prompt)
-- [x] Translations
-- [x] Statistics, token tracking, badges
-- [ ] Edit & regenerate via entry-level restart
-- [ ] Mistral agents support
-- [ ] Custom color themes
+- [x] Websøgning via Conversations API
+- [x] Omskrivning til Conversations API (opret/tilføj/genstart/afstem/slet)
+- [x] Persistent lagring af samtaler
+- [x] Eksport af samtaler (tekst, markdown)
+- [x] Flere samtidige samtaler
+- [x] Avancerede indstillinger (temperatur, max_tokens, systemprompt)
+- [x] Oversættelser
+- [x] Statistik, token-tælling, badges
+- [ ] Rediger & generer svar via genstart på entryniveau
+- [ ] Understøttelse af Mistral-agenter
+- [ ] Brugerdefinerede farvetemaer
 
-## 🐛 Known Issues
+## 🐛 Kendte problemer
 
-- Free tier rate limits can be restrictive for intensive usage
-- Streaming can sometimes be slow depending on network connection
-- No offline support (requires Internet connection)
+- Gratis niveau har strenge hastighedsbegrænsninger ved intensiv brug
+- Streaming kan nogle gange være langsom afhængigt af netværksforbindelsen
+- Ingen offline-understøttelse (kræver internetforbindelse)
 
-## 📄 License
+## 📄 Licens
 
-MIT License - see the [LICENSE](LICENSE) file for details.
+GNU General Public License v3.0 (GPL-3.0) — se [LICENSE](LICENSE) og [gnu.org/licenses/gpl-3.0](https://www.gnu.org/licenses/gpl-3.0.html) for detaljer.
 
-## 🙏 Acknowledgments
+## 🙏 Tak til
 
-- **Mistral AI** for their excellent API, the Conversations API and the generous free tier
-- **Jolla** for Sailfish OS and the Silica framework
-- **The Sailfish community** for their support and feedback
-- **[SailCat](https://github.com/nicosouv/harbour-sailcat)** — Skrynja started as a fork
+- **Mistral AI** for deres fremragende API, Conversations API og det generøse gratis niveau
+- **Jolla** for Sailfish OS og Silica-frameworket
+- **Sailfish-fællesskabet** for deres støtte og feedback
 
-## 📧 Contact
+## 📧 Kontakt
 
 [@storefyr](https://github.com/storefyr)
 
-Project link: [https://github.com/storefyr/Skrynja](https://github.com/storefyr/Skrynja)
+Projektlink: [https://github.com/storefyr/Skrynja](https://github.com/storefyr/Skrynja)
 
 ---
 
 <p align="center">
-  Made with ❤️ for Sailfish OS
+  Lavet med ❤️ til Sailfish OS
 </p>

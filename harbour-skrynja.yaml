@@ -4,7 +4,7 @@ Version: 0.9.9
 Release: 1
 Group: Applications/Internet
 URL: https://github.com/storefyr/Skrynja
-License: MIT
+License: GPL-3.0-only
 Sources:
   - '%{name}-%{version}.tar.bz2'
 Description: |

@@ -378,7 +378,7 @@ Voir [CONTRIBUTING.md](CONTRIBUTING.md) pour les guidelines de contribution.
 
 ## License
 
-MIT - Voir [LICENSE](LICENSE)
+GPL-3.0-only - Voir [LICENSE](LICENSE)
 
 ---
 

@@ -3,7 +3,7 @@ Summary:    Chatklient med Mistral AI til Sailfish OS med websøgning
 Version:    0.9.9
 Release:    1
 Group:      Applications/Internet
-License:    MIT
+License:    GPL-3.0-only
 URL:        https://github.com/storefyr/Skrynja
 Source0:    %{name}-%{version}.tar.bz2
 Requires:   sailfishsilica-qt5 >= 0.10.9

@@ -559,7 +559,7 @@ Dialog {
             Label {
                 x: Theme.horizontalPageMargin
                 width: parent.width - 2 * Theme.horizontalPageMargin
-                text: qsTr("Powered by Mistral AI • MIT License")
+                text: qsTr("Powered by %1 • GPL-3.0 License").arg("Mistral AI")
                 wrapMode: Text.WordWrap
                 font.pixelSize: Theme.fontSizeExtraSmall
                 color: Theme.secondaryColor
