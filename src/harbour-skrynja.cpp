@@ -55,18 +55,17 @@ int main(int argc, char *argv[])
         app->installTranslator(translator);
     }
 
-    // Lambda to switch language dynamically
-    auto switchLanguage = [app, translator, view](const QString &lang) {
+    // Lambda to switch language dynamically. The translator swap alone makes
+    // qsTr() re-evaluate, which sends LanguageChange events to every live QML
+    // item — no view reload. Reloading the view here crashed: the reload ran
+    // inside the ComboBox's onCurrentItemChanged handler while that item was
+    // being destroyed (binding loop on TextField width, then segfault).
+    auto switchLanguage = [app, translator](const QString &lang) {
         app->removeTranslator(translator);
         QString translationFile = QString("harbour-skrynja-%1").arg(lang);
         if (translator->load(translationFile, SailfishApp::pathTo("translations").toLocalFile())) {
             app->installTranslator(translator);
         }
-        // Reload the QML to apply translations
-        QUrl source = view->source();
-        view->engine()->clearComponentCache();
-        view->setSource(QUrl());
-        view->setSource(source);
     };
 
     // Connect language change signal
