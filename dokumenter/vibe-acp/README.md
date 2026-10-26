@@ -9,7 +9,10 @@ Måleresultater og scripts fra arbejdet med vejkortet for Skrynja mod `vibe-acp`
 |---|---|
 | `maalejournal-runde1.md` | Første målerunde: M0.0, M0.1, M0.15, M0.14 (delvist) |
 | `maalejournal-runde1-tilfoejelse.md` | Afslutning af M0.15/M0.1 + forberedelse af M0.16 |
+| `maalejournal-runde2.md` | Anden målerunde: M0.0b (integritet), M0.1b (fuld frame), M0.16 (bro, halvt), versionsaudit |
 | `maaling_m00_m01.py` | Script: stdio `initialize`-udveksling mod `vibe-acp` (M0.1) |
+| `maaling_m01b_fuld_frame.py` | Script: `initialize` med `protocolVersion` 99/2/0 — måler versionshåndtering (M0.1b) |
+| `m016-bro/` | Rust reference-bro: `AcpHttpServer` + `AcpAgent` spawner `vibe-acp`, loopback roundtrip (M0.16) |
 | `maaling_m00_versionscheck.py` | Script: `vibe-acp --version` + pakke-licenser (M0.0) |
 | `maaling_m03_sessioner.py` | Script: `session/new`, `session/load`, `session/prompt` uden API-nøgle |
 | `maaling_m14_fejlkoder.py` | Script: fremprovokerede fejlkoder (ukendt metode, ugyldige params, ukendt session) |
@@ -24,6 +27,13 @@ Scripts forventer at `vibe-acp` er installeret og kører med shim'en:
 export PYTHONPATH=<denne mappe>   # aktiverer malelab-sitecustomize.py
 python3 maaling_m00_m01.py
 ```
+
+## Hovedfund (runde 2)
+
+- **Versionsaudit:** nyeste `mistral-vibe` på PyPI er **3.0.2** (kræver `agent-client-protocol==0.11.0`, `mcp==1.28.1`) — målmaskinen kører **2.9.4**, én major-version bagud. Alle adfærdsmålinger gælder 2.9.4.
+- **M0.0b ●:** `pip check` viser hård konflikt `mistralai 3.2.0` vs krævet `==2.4.4`; `mcp 2.3.0` opfylder kravet `>=1.14.0` men har inkompatibel API — **det er mcp-konflikten der forårsager shim-behovet**.
+- **M0.1b ●:** agenten afviser **ikke** `protocolVersion: 99/2/0` — svarer altid `protocolVersion: 1` uden fejl. **K1 må håndhæves klientside** (klienten disconnecter selv ved mismatch).
+- **M0.16 ◐ halvt:** Rust-bro (`AcpHttpServer` + `AcpAgent`) spawner `vibe-acp` og loopback roundtrip virker (HTTP → bro → stdio → svar). "Bro foran en fremmed proces" er **ikke** målt — kræver custom `ConnectTo`.
 
 ## Hovedfund (runde 1)
 
