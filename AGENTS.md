@@ -142,7 +142,7 @@ Both scripts use only `curl` (preinstalled on Sailfish OS). They must NOT call t
 - Keep changes minimal and scoped to the request. Do not refactor adjacent code unless asked.
 - Comments only where the code cannot explain itself (protocol quirks, Qt 5.6 workarounds). No narrative comments.
 - If a build or test fails, report the actual error output — do not claim success without verifying.
-- Feature work is planned in `ROADMAP.md` at the repository root.
+- Feature work is planned in `dokumenter/vejkort.md`.
 
 ## Mistral Conversations API Quick Reference
 

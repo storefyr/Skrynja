@@ -6,7 +6,7 @@
 
 **Skrynja** er en elegant AI-chatklient, målrettet **Sailfish OS**. Chat direkte med **Mistral AI** fra din Sailfish-enhed, med live **websøgning** via Mistrals Conversations API.
 
-> 🦖 **Skrynja er udviklet med hjælp fra AI** — Mistral Vibe. Funktioner planlægges i [ROADMAP.md](ROADMAP.md), implementeres i samarbejde mellem en menneskelig udvikler og AI-agenter, valideres af CI og dækkes af unit tests før hver udgivelse.
+> 🦖 **Skrynja er udviklet med hjælp fra AI** — Mistral Vibe. Funktioner planlægges i [dokumenter/vejkort.md](dokumenter/vejkort.md), implementeres i samarbejde mellem en menneskelig udvikler og AI-agenter, valideres af CI og dækkes af unit tests før hver udgivelse.
 
 ## ✨ Funktioner
 
@@ -205,7 +205,7 @@ Bidrag er velkomne! Sådan deltager du:
 
 ## 🗺️ TODO / Roadmap
 
-Se [ROADMAP.md](ROADMAP.md) for den fulde plan.
+Se [dokumenter/vejkort.md](dokumenter/vejkort.md) for den fulde plan.
 
 - [x] Websøgning via Conversations API
 - [x] Omskrivning til Conversations API (opret/tilføj/genstart/afstem/slet)
