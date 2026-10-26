@@ -18,6 +18,7 @@ Måleresultater og scripts fra arbejdet med vejkortet for Skrynja mod `vibe-acp`
 | `analyse-sentinel-l5-size-guard.md` | Sentinel-analyse: `-1` kan ikke lække i `size`, men `0` kan; L5 udvidet med `size <= 0`-guard |
 | `analyse-permission-always-allowlist.md` | `permission = "always"` + allowlist-mekanismen; mode-spørgsmålet lukket |
 | `analyse-n6-korrigeret-derive-config.md` | N6 korrigeret: kompaktion er **automatic** ved 800000 (ikke disabled) — `_core_config` er template, aktiv config kommer fra `derive_config` via `configure_runtime`; lærd lektion tilføjet som R11 |
+| `analyse-n8-kaede-context-window.md` | N8 kæde lukket: `usage_update.size` kommer fra `RuntimeSnapshot.context_window = auto_compact_threshold` (`_runtime.py:2202`); navnekollision med `max_context_length` på linje 1584; `size` måler afstand til kompaktion |
 | `maaling_m00_m01.py` | Script: stdio `initialize`-udveksling mod `vibe-acp` (M0.1) |
 | `maaling_m01b_fuld_frame.py` | Script: `initialize` med `protocolVersion` 99/2/0 — måler versionshåndtering (M0.1b) |
 | `m016-bro/` | Rust reference-bro: `AcpHttpServer` + `AcpAgent` spawner `vibe-acp`, loopback roundtrip (M0.16) |
@@ -40,7 +41,7 @@ python3 maaling_m00_m01.py
 
 Telefonen kører `mistral_vibe` **3.0.2** (identisk med PyPI), `agent_client_protocol` **0.11.0**, `mistralai` **2.6.0**; harness-pakken er indlejret i kernepakken (ingen egen dist-info).
 
-- **N8 ● lukket på wire:** for `zai-glm-5-3-flash` (`max_context_length=1048576`, `auto_compact_threshold=800000`) rapporterer `usage_update.size = 800000` — tærsklen, ikke vinduet.
+- **N8 ● lukket på wire og i kode:** for `zai-glm-5-3-flash` (`max_context_length=1048576`, `auto_compact_threshold=800000`) rapporterer `usage_update.size = 800000` — tærsklen, ikke vinduet. Kæden er sporet: `acp/agent.py:1808` → `_runtime_resources.py:380` → `client_state.py:80` → `_runtime.py:2202` (`build_unified_runtime_snapshot`, kaldt fra `derive_config:1439`). En procent mod `size` måler **afstand til kompaktion**. `max_context_length` (det reelle vindue) når klienten ikke via ACP.
 - **L5 ● korrigeret:** `used = 0` optræder med positiv `size` både før og efter gyldigt forbrug — filteret er på `used == 0` alene, plus guard mod `size <= 0`.
 - **N6 ● falsificeret:** `mode: automatic, token_threshold: 800000` målt på wire. Min tidligere læsning af `_core_config` (`_host.py`) var en template, ikke aktiv konfiguration — den reelle konfiguration kommer fra `derive_config` (`app_server/_runtime.py:1385-1389`) via `configure_runtime`. Lærd lektion tilføjet som **R11**.
 - **R32 ● lukket:** 800000 bekræftet tre veje — wire `token_threshold`, wire `usage_update.size`, GrowthBook-payload `auto_compact_threshold`. Kompaktionsrisikoen på `glm-5-3` er reel.
