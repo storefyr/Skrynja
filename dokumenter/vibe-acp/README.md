@@ -21,6 +21,7 @@ Måleresultater og scripts fra arbejdet med vejkortet for Skrynja mod `vibe-acp`
 | `analyse-n8-kaede-context-window.md` | N8 kæde lukket: `usage_update.size` kommer fra `RuntimeSnapshot.context_window = auto_compact_threshold` (`_runtime.py:2202`); navnekollision med `max_context_length` på linje 1584; `size` måler afstand til kompaktion |
 | `maalejournal-afsluttende-status.md` | **Afsluttende status:** måleserien færdig — N5 filbevis, 18→2 korrektion, R12 nyt risiko, klientregler tabel, implementationsrækkefølge, risikoregister endelig tilstand |
 | `analyse-session-cancel-sdk-dispatch.md` | `session/cancel` er fuldt understøttet (SDK dispatcher selv — tekstsøgning var ikke evidens); `session/resume` er unstable men implementeret uden historik-replay — `session/load` er metoden til genåbning med historik; lærd lektion R13 |
+| `analyse-arkitekturvalg-a1-a2-set-mode.md` | **Arkitekturvalg vedtaget:** A1 (cancel-rækkefølge m. cancelled-svar først), A2 (`session/load` med historik, `session/new` fallback); kun `session/set_config_option` — aldrig `session/set_mode` (ingen configOptions i svar, tavst None ved fejl) |
 | `maaling_m00_m01.py` | Script: stdio `initialize`-udveksling mod `vibe-acp` (M0.1) |
 | `maaling_m01b_fuld_frame.py` | Script: `initialize` med `protocolVersion` 99/2/0 — måler versionshåndtering (M0.1b) |
 | `m016-bro/` | Rust reference-bro: `AcpHttpServer` + `AcpAgent` spawner `vibe-acp`, loopback roundtrip (M0.16) |
@@ -63,6 +64,12 @@ Se `maalejournal-afsluttende-status.md` for den fulde klientregel-tabel og risik
 6. **A5/H2** — vis altid `tool_call`/`tool_call_update`; læs og vis `permission` og `allowlist` fra `~/.vibe/config.toml`
 7. **R37/R42** — `configOptions` er fornyelig; tomt modelkatalog = fejl, ikke tom menu
 8. **`request_permission`** — defensiv håndtering (betinget kald; filkonfig kan undertrykke)
+
+## Arkitekturvalg (vedtaget ●)
+
+- **A1 — afbrydelse:** svar `cancelled` på udestående permission → send `session/cancel` → luk dialog lokalt → sæt tool calls `cancelled` lokalt → procesgenstart som fallback efter frist
+- **A2 — genoptagelse:** `session/load` (med historik-replay); `session/new` ved `SessionNotFoundError`; `session/resume` fravalgt (ingen replay)
+- **Mode/model/thinking:** kun via `session/set_config_option` — aldrig `session/set_mode`; svaret erstatter hele lokale `configOptions`; `thinking`-menu minus A7-forbudte par
 
 ## Hovedfund (runde 2)
 
