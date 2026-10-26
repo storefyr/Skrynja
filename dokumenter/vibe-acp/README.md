@@ -19,6 +19,7 @@ Måleresultater og scripts fra arbejdet med vejkortet for Skrynja mod `vibe-acp`
 | `analyse-permission-always-allowlist.md` | `permission = "always"` + allowlist-mekanismen; mode-spørgsmålet lukket |
 | `analyse-n6-korrigeret-derive-config.md` | N6 korrigeret: kompaktion er **automatic** ved 800000 (ikke disabled) — `_core_config` er template, aktiv config kommer fra `derive_config` via `configure_runtime`; lærd lektion tilføjet som R11 |
 | `analyse-n8-kaede-context-window.md` | N8 kæde lukket: `usage_update.size` kommer fra `RuntimeSnapshot.context_window = auto_compact_threshold` (`_runtime.py:2202`); navnekollision med `max_context_length` på linje 1584; `size` måler afstand til kompaktion |
+| `maalejournal-afsluttende-status.md` | **Afsluttende status:** måleserien færdig — N5 filbevis, 18→2 korrektion, R12 nyt risiko, klientregler tabel, implementationsrækkefølge, risikoregister endelig tilstand |
 | `maaling_m00_m01.py` | Script: stdio `initialize`-udveksling mod `vibe-acp` (M0.1) |
 | `maaling_m01b_fuld_frame.py` | Script: `initialize` med `protocolVersion` 99/2/0 — måler versionshåndtering (M0.1b) |
 | `m016-bro/` | Rust reference-bro: `AcpHttpServer` + `AcpAgent` spawner `vibe-acp`, loopback roundtrip (M0.16) |
@@ -49,14 +50,18 @@ Telefonen kører `mistral_vibe` **3.0.2** (identisk med PyPI), `agent_client_pro
 - **R30 ● to uafhængige forekomster:** `low→"none"`-tabellen findes både i `mistralai_vibe_local_harness/vibe/adapters/mistral.py` og `vibe/core/llm/backend/mistral.py`. Ikke rettet i 3.0.2; kan ikke afhjælpes klientside — kun undgås (A7).
 - **Åbne ○ (ikke-blokerende, klientside):** R34 (hvilken `Skrynja.conf`-sti er aktiv), R41 (`model_catalog_cache.json` skrives aldrig).
 
-## Implementationsklar backlog (fra måleserien)
+## Implementationsklar backlog (fra måleserien — endelig)
 
-1. **A7** — undertryk `low` for `glm-5-3` og `zai-glm-5-3-flash` (fører til `3051`)
-2. **L5** — filtrér `used == 0`, guard `size <= 0` før procentberegning
-3. **N8** — mærk `size` som «kompaktionsgrænse», aldrig som «kontekstvindue»
-4. **A5/H2** — vis altid `tool_call`/`tool_call_update`; læs og vis `permission` og `allowlist` fra `~/.vibe/config.toml`
-5. **R37/R42** — `configOptions` er fornyelig; tomt modelkatalog = fejl, ikke tom menu
-6. **Trin E** — tolerant NDJSON-parser over `stdio`
+Se `maalejournal-afsluttende-status.md` for den fulde klientregel-tabel og risikoregister.
+
+1. **Trin E** — tolerant NDJSON-parser over `stdio` (første skridt)
+2. **Transport + session** — `initialize`/`session/new`/`session/prompt` + `cancel`
+3. **A7** — undertryk `low` for `glm-5-3` og `zai-glm-5-3-flash` (fører til `3051`)
+4. **L5** — filtrér `used == 0`, guard `size <= 0` før procentberegning
+5. **N8 + R12** — mærk `size` som «kompaktionsgrænse»; advar kun ved `used → size` når vindue er kendt og > tærskel, ellers «ukendt» — aldrig udled vinduet af `size`
+6. **A5/H2** — vis altid `tool_call`/`tool_call_update`; læs og vis `permission` og `allowlist` fra `~/.vibe/config.toml`
+7. **R37/R42** — `configOptions` er fornyelig; tomt modelkatalog = fejl, ikke tom menu
+8. **`request_permission`** — defensiv håndtering (betinget kald; filkonfig kan undertrykke)
 
 ## Hovedfund (runde 2)
 
