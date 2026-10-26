@@ -20,6 +20,7 @@ Måleresultater og scripts fra arbejdet med vejkortet for Skrynja mod `vibe-acp`
 | `analyse-n6-korrigeret-derive-config.md` | N6 korrigeret: kompaktion er **automatic** ved 800000 (ikke disabled) — `_core_config` er template, aktiv config kommer fra `derive_config` via `configure_runtime`; lærd lektion tilføjet som R11 |
 | `analyse-n8-kaede-context-window.md` | N8 kæde lukket: `usage_update.size` kommer fra `RuntimeSnapshot.context_window = auto_compact_threshold` (`_runtime.py:2202`); navnekollision med `max_context_length` på linje 1584; `size` måler afstand til kompaktion |
 | `maalejournal-afsluttende-status.md` | **Afsluttende status:** måleserien færdig — N5 filbevis, 18→2 korrektion, R12 nyt risiko, klientregler tabel, implementationsrækkefølge, risikoregister endelig tilstand |
+| `analyse-session-cancel-sdk-dispatch.md` | `session/cancel` er fuldt understøttet (SDK dispatcher selv — tekstsøgning var ikke evidens); `session/resume` er unstable men implementeret uden historik-replay — `session/load` er metoden til genåbning med historik; lærd lektion R13 |
 | `maaling_m00_m01.py` | Script: stdio `initialize`-udveksling mod `vibe-acp` (M0.1) |
 | `maaling_m01b_fuld_frame.py` | Script: `initialize` med `protocolVersion` 99/2/0 — måler versionshåndtering (M0.1b) |
 | `m016-bro/` | Rust reference-bro: `AcpHttpServer` + `AcpAgent` spawner `vibe-acp`, loopback roundtrip (M0.16) |
