@@ -10,6 +10,14 @@ Måleresultater og scripts fra arbejdet med vejkortet for Skrynja mod `vibe-acp`
 | `maalejournal-runde1.md` | Første målerunde: M0.0, M0.1, M0.15, M0.14 (delvist) |
 | `maalejournal-runde1-tilfoejelse.md` | Afslutning af M0.15/M0.1 + forberedelse af M0.16 |
 | `maalejournal-runde2.md` | Anden målerunde: M0.0b (integritet), M0.1b (fuld frame), M0.16 (bro, halvt), versionsaudit |
+| `maalejournal-runde3-wire.md` | Tredje målerunde: wire-bekræftelser fra telefonen via relæ — N8 lukket, L5 korrigeret, N6 åben, N7 lukket |
+| `analyse-mistral-vibe-302-kode.md` | Kodelæsning af mistral-vibe 3.0.2 sdist: R30 svar (ikke rettet), betinget `_reasoning_effort()`, glm-modeller ikke i statisk katalog, ACP configOptions-validering |
+| `analyse-harness-r30-r42-verifikation.md` | Verifikation af R30–R42 i både harness- og kernepakken |
+| `analyse-r32-katalog-vs-kode.md` | R32 afgørende: kataloglaget kasserer `auto_compact_threshold`; `experiment_eval_cache.json` er GrowthBook; harness `_core_config` har disabled kompaktion (senere korrigeret, se næste) |
+| `analyse-n5-n6-n7-growthbook-usage.md` | N5/N6/N7: GrowthBook injicerer modeller uden om `_CATALOG_FIELDS`; N7 omformuleret til `usage_update`; N8 nyt (`size` = tærskel) |
+| `analyse-sentinel-l5-size-guard.md` | Sentinel-analyse: `-1` kan ikke lække i `size`, men `0` kan; L5 udvidet med `size <= 0`-guard |
+| `analyse-permission-always-allowlist.md` | `permission = "always"` + allowlist-mekanismen; mode-spørgsmålet lukket |
+| `analyse-n6-korrigeret-derive-config.md` | N6 korrigeret: kompaktion er **automatic** ved 800000 (ikke disabled) — `_core_config` er template, aktiv config kommer fra `derive_config` via `configure_runtime`; lærd lektion tilføjet som R11 |
 | `maaling_m00_m01.py` | Script: stdio `initialize`-udveksling mod `vibe-acp` (M0.1) |
 | `maaling_m01b_fuld_frame.py` | Script: `initialize` med `protocolVersion` 99/2/0 — måler versionshåndtering (M0.1b) |
 | `m016-bro/` | Rust reference-bro: `AcpHttpServer` + `AcpAgent` spawner `vibe-acp`, loopback roundtrip (M0.16) |
@@ -27,6 +35,27 @@ Scripts forventer at `vibe-acp` er installeret og kører med shim'en:
 export PYTHONPATH=<denne mappe>   # aktiverer malelab-sitecustomize.py
 python3 maaling_m00_m01.py
 ```
+
+## Hovedfund (runde 3–4 — målt på telefonen via relæ)
+
+Telefonen kører `mistral_vibe` **3.0.2** (identisk med PyPI), `agent_client_protocol` **0.11.0**, `mistralai` **2.6.0**; harness-pakken er indlejret i kernepakken (ingen egen dist-info).
+
+- **N8 ● lukket på wire:** for `zai-glm-5-3-flash` (`max_context_length=1048576`, `auto_compact_threshold=800000`) rapporterer `usage_update.size = 800000` — tærsklen, ikke vinduet.
+- **L5 ● korrigeret:** `used = 0` optræder med positiv `size` både før og efter gyldigt forbrug — filteret er på `used == 0` alene, plus guard mod `size <= 0`.
+- **N6 ● falsificeret:** `mode: automatic, token_threshold: 800000` målt på wire. Min tidligere læsning af `_core_config` (`_host.py`) var en template, ikke aktiv konfiguration — den reelle konfiguration kommer fra `derive_config` (`app_server/_runtime.py:1385-1389`) via `configure_runtime`. Lærd lektion tilføjet som **R11**.
+- **R32 ● lukket:** 800000 bekræftet tre veje — wire `token_threshold`, wire `usage_update.size`, GrowthBook-payload `auto_compact_threshold`. Kompaktionsrisikoen på `glm-5-3` er reel.
+- **Tilladelsesdialog ● lukket:** årsagen til udeblevne dialoger er filkonfiguration (`permission = "always"` i to `[tools.*]`-sektioner + `"id"` i allowlist i `~/.vibe/config.toml`), ikke mode. Begge veje ender i `decision="allow"`.
+- **R30 ● to uafhængige forekomster:** `low→"none"`-tabellen findes både i `mistralai_vibe_local_harness/vibe/adapters/mistral.py` og `vibe/core/llm/backend/mistral.py`. Ikke rettet i 3.0.2; kan ikke afhjælpes klientside — kun undgås (A7).
+- **Åbne ○ (ikke-blokerende, klientside):** R34 (hvilken `Skrynja.conf`-sti er aktiv), R41 (`model_catalog_cache.json` skrives aldrig).
+
+## Implementationsklar backlog (fra måleserien)
+
+1. **A7** — undertryk `low` for `glm-5-3` og `zai-glm-5-3-flash` (fører til `3051`)
+2. **L5** — filtrér `used == 0`, guard `size <= 0` før procentberegning
+3. **N8** — mærk `size` som «kompaktionsgrænse», aldrig som «kontekstvindue»
+4. **A5/H2** — vis altid `tool_call`/`tool_call_update`; læs og vis `permission` og `allowlist` fra `~/.vibe/config.toml`
+5. **R37/R42** — `configOptions` er fornyelig; tomt modelkatalog = fejl, ikke tom menu
+6. **Trin E** — tolerant NDJSON-parser over `stdio`
 
 ## Hovedfund (runde 2)
 
