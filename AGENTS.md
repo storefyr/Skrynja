@@ -12,12 +12,9 @@ frontend, SSE streaming for real-time responses. Forked from SailCat (harbour-sa
 ## Migration status
 
 The codebase is inherited from SailCat and is being rewritten step by step.
-As of v0.1.0 the rename (app name, packaging, paths, docs) is done, but
-`src/mistralapi.cpp` still speaks Chat Completions (`/v1/chat/completions`) and
-`src/providers.cpp` still lists the old providers. The sections below describe
-the **target** architecture and the decisions already locked in; when a doc and
-the code disagree, trust the code and note the gap. The API rewrite is tracked
-in `docs/ROADMAP.md`.
+The codebase was forked from SailCat and has been fully rewritten to the
+Conversations API. The sections below describe the current architecture;
+when a doc and the code disagree, trust the code and note the gap.
 
 Locked decisions (do not relitigate in code reviews):
 
@@ -145,7 +142,7 @@ Both scripts use only `curl` (preinstalled on Sailfish OS). They must NOT call t
 - Keep changes minimal and scoped to the request. Do not refactor adjacent code unless asked.
 - Comments only where the code cannot explain itself (protocol quirks, Qt 5.6 workarounds). No narrative comments.
 - If a build or test fails, report the actual error output — do not claim success without verifying.
-- Feature work is specified in `docs/features/`. When asked to implement a feature, read its spec file first and follow it; update `docs/ROADMAP.md` status when done.
+- Feature work is planned in `ROADMAP.md` at the repository root.
 
 ## Mistral Conversations API Quick Reference
 

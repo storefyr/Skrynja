@@ -10,8 +10,8 @@ stateful (the server remembers the history) and is the only Mistral API that off
 `web_search` tool, which is the point of the fork. Qt/C++ backend, QML/Silica frontend,
 streaming SSE (Server-Sent Events) to display real-time AI responses.
 
-Forked from SailCat. The rename is done; the API rewrite is in progress — see
-`docs/ROADMAP.md` and the "Migration status" section in `AGENTS.md`.
+Forked from SailCat and fully rewritten to the Conversations API. See
+`ROADMAP.md` at the repository root for the current plan.
 
 ## Build Commands
 
@@ -131,8 +131,7 @@ GitHub Releases poll was removed in 2.1.0.
 Helpers (plain namespaces, not QObjects):
 
 - **SecureStore** (`src/securestore.*`) - owner-only file permissions and salted
-  obfuscation for the API key. See `docs/features/20-audit-followup.md` for the
-  threat model and the migration rules.
+  obfuscation for the API key.
 - **Providers** (`src/providers.*`) - inherited from SailCat; currently still lists
   Mistral AI, Scaleway, OVHcloud, Groq and custom, but only the Mistral catalogue
   parsing is used. The other entries are removed as part of the API rewrite.
