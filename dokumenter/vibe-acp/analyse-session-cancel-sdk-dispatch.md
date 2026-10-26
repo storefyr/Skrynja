@@ -62,11 +62,13 @@ Spec'en siger klienten SKAL svare `cancelled` på udestående `request_permissio
 - Ved cancel: `session.cancel_prompt()` → `interrupt()` → app-server lukker den aktive turn. Dette lukker også den åbne callback (jf. kommentaren ved `agent.py:729`: «A cancel that lands while the client is still answering closes the callback first; the turn then reports its own stop reason»).
 - Hvis klienten derefter alligevel svarer på den gamle `request_permission` (id: 0), modtages svaret på en lukket callback → `AppServerResponseError` med `CALLBACK_CLOSED`, som bevidst **swallowes** (linje 730-732: `if exc.error.code is not ProtocolErrorCode.CALLBACK_CLOSED: raise`).
 
-**Konsekvens for Skrynja ●:** klienten behøver **ikke** selv at svare `cancelled` på en udestående permission — agenten lukker callback'en ved interrupt og ignorerer et senere svar. Men det er god klientadfærd at lukke dialogen lokalt ved cancel, så brugeren ikke kan klikke «allow» på en død anmodning. Skrynja bør:
+**Konsekvens for Skrynja ●:** ACP-spec'en **kræver**, at klienten svarer `cancelled` på udestående `request_permission`, når den sender `session/cancel`. Agentens nuværende adfærd (lukker callback ved interrupt, swallower `CALLBACK_CLOSED`) gør svaret *overflødigt i praksis* — men spec-kravet vejer tungere, og et ignoreret svar koster intet. Skrynja bør derfor ved cancel:
 
-1. Sende `session/cancel` (notifikation, uden `id`)
-2. Lukke en evt. åben permission-dialog lokalt
-3. Ignorere et sent svar på den gamle `request_permission` (agenten swallower `CALLBACK_CLOSED` — men hvis Skrynja svarer før interrupt når igennem, er det også fint)
+1. Sende svar på evt. udestående `request_permission` med `{"id": <heltal>, "result": {"outcome": {"outcome": "cancelled"}}}` (`DeniedOutcome`, `schema.py:2414-2415`) — **før eller samtidig med** cancel-notifikationen
+2. Sende `session/cancel` (notifikation, uden `id`)
+3. Lukke permission-dialogen lokalt, så brugeren ikke kan klikke «allow» på en død anmodning
+
+Rækkefølgen (svar først, så cancel) er at foretrække: hvis interrupt når at lukke callback'en først, swallowes svaret — men hvis svaret når igennem først, afvises anmodningen pænt. Begge rækkefølger er sikre; svar-først er mest spec-korrekt.
 
 ### Forud-markering af værktøjskald
 
@@ -111,7 +113,7 @@ Begge bruger `ResumeSessionIntent`, som genåbner den samme app-server-session (
 | Er `session/cancel` understøttet? | **Ja ●** — fuldt, via SDK-dispatch + `agent.cancel` (`agent.py:981`) |
 | Skal Skrynja sende `cancel` alligevel? | **Ja** — det er den eneste måde at afbryde et aktivt turn på |
 | Får Skrynja `stopReason: "cancelled"`? | **Ja ●** — målt på wire tidligere |
-| Skal Skrynja svare `cancelled` på udestående permission? | **Ikke nødvendigt** — agenten lukker callback ved interrupt og swallower `CALLBACK_CLOSED`. Luk dialogen lokalt i stedet |
+| Skal Skrynja svare `cancelled` på udestående permission? | **Ja ●** — spec'en kræver det; svar format `{"outcome":{"outcome":"cancelled"}}` (`DeniedOutcome`). Agentens swallow af `CALLBACK_CLOSED` gør det overflødigt i praksis, men kravet står. Svar før eller samtidig med cancel |
 | Skal Skrynja markere tool calls som cancelled? | **Ja, lokalt** — agenten sender ingen `tool_call_update(status=cancelled)` |
 | Genåbning med historik? | **`session/load`** (stabil, med replay) — ikke `session/resume` (unstable, ingen replay) |
 | Fallback ved ukendt session? | `session/new` — ny session uden historik |
