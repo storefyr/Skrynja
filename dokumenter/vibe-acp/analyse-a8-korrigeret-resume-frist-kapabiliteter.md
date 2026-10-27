@@ -100,3 +100,47 @@ A8 §2's mekanisme (`warn_unstable` **afviser** med `-32601` efter advarslen), A
 A8 korrigeret: `session/resume` får 120 s fast (spec'et, ikke kaldt i v1); kapabilitetsmængder adskilt (annonceret / unstable-ruter / schema); `callback_kinds` præciseret; `-32601`'s tre årsager komplet; `session/list` = nej i v1. A9's to-række-tabel uændret. README og PR #18 opdateret. **Ingen arkitekturvalg genåbnet.**
 
 **Åbent ○ (ikke-blokerende):** om `session/delete` og `additionalDirectories` er bevidst udeladt af agenten (de findes i schema uden rute/annoncering — agenten kunne implementere dem senere); `model_validate(None)`-mekanismen ikke reproduceret på telefonen; valgfrit absolut loft over prompt-fristen; latente schema/routeren-inconsistens (`resume`/`close` unstable i routeren, ikke i schema-markeringen).
+
+---
+
+## Bekræftelsesrunde 3 — telefonens schema-verifikation ● (relæ `c2fec71c`)
+
+Telefonen målte `SessionCapabilities` lokalt i den installerede 0.11.0 og fandt en **tredje inkonsistensklasse**. Verificeret igen i SDK 0.11.0 denne session:
+
+### Schema-felter og UNSTABLE-markering ●
+
+| Felt | `**UNSTABLE**` i schema (kommentar + description) | Unstable som rute (routeren) |
+|---|---|---|
+| `list` | nej | nej (`router.py:68`, uden `unstable=`) |
+| `delete` | nej | ingen rute |
+| `additionalDirectories` | nej | ingen rute |
+| `fork` | **ja** — kommentar «This capability is not part of the spec yet…» + samme i `Field(description=…)` | ja (`router.py:100`) |
+| `resume` | **nej** — «Whether the agent supports `session/resume`.» | **ja** (`router.py:101`) |
+| `close` | **nej** — «Whether the agent supports `session/close`.» | **ja** (`router.py:70-76`) |
+
+**`fork` er den eneste UNSTABLE-markering i `SessionCapabilities`** ● — telefonens måling bekræftet ordret. Telefonen konstaterer også, at resultatet er identisk i installerede 0.11.0 og upstream `main` (schema-v1.23.0) — citatet kan bindes til begge, men skal angive udgaven.
+
+### Tre uafhængige inkonsistensklasser i SDK 0.11.0 ● (nyt, optaget)
+
+| # | Klasse | Eksempel |
+|---|---|---|
+| 1 | **annonceret, men ikke håndhævet** | kapabiliteterne sendes betingelsesløst (`agent.py` `SessionCapabilities(close=…, list=…, fork=…)`); en udrulning med `use_unstable_protocol=False` annoncerer `close`/`list`/`fork` og svarer alligevel `-32601` |
+| 2 | **håndhævet, men ikke annonceret** | `session/resume` er unstable i routeren, men agenten annoncerer ikke kapabiliteten |
+| 3 | **unstable som rute, men ikke markeret som kapabilitet** | `close` og `resume` afvises med `-32601` uden flaget, men bærer **ingen** `**UNSTABLE**`-markering i schema'et — kun `fork` gør |
+
+**Konsekvens for Skrynja ●:** en klient kan **ikke** aflæse unstable-status af `sessionCapabilities`. `fork` er den eneste, hvor annoncering, schema-markering og ruteadfærd peger samme vej. For `close` og `resume` må unstable-status hentes fra protokoludgaven, ikke fra wire-data. **Praktisk betydning i v1: nul** — ingen af dem kaldes. Ved senere ibrugtagning skal Skrynja kende deres unstable-status på anden vis.
+
+### Telefonens korrektion af egen påstand ● — tilsluttet
+
+Telefonen skrev tidligere «`resume` har ingen kapabilitet» — upræcist. Korrekt: feltet `SessionCapabilities.resume` **findes** i schema'et; `resume` har ingen **annonceret** kapabilitet (agenten sender kun `close`, `list`, `fork`). Fejlen opstod i genereringen. Denne præcisering står allerede i §2's mængdetabel ovenfor (schema-felter inkl. `resume`) og i README-rækken — ingen yderligere rettelse nødvendig.
+
+### Svar på telefonens fire spørgsmål om denne fil ●
+
+| # | Spørgsmål | Svar |
+|---|---|---|
+| 1 | Står de tre mængder adskilt og korrekt? | ● Ja — §2: annonceret `{close, list, fork}` / unstable-ruter `{close, fork, resume}` / schema-felter `{list, delete, additionalDirectories, fork, resume, close}` |
+| 2 | Er `session/list` sat til **nej** i v1 — både tabel og mærkning? | ● Ja — §6-tabel: «nej (ikke i v1)»; §2 rettelsesnote: «nej i v1». Ingen «◐ ja» tilbage |
+| 3 | Har `-32601` nu **tre** årsager? | ● Ja — §2: ingen behandler registreret / unstable uden flag / metodenavnet findes slet ikke |
+| 4 | Står `model_validate(None)` stadig som **○ relæets måling**? | ● Ja — i A9-korrektionsdoc §6 og «Bekræftelsesrunde 2»: «relæets lokale måling, ikke reproduceret på telefonen» (○ for telefon-kørsel) |
+
+**Status efter bekræftelsesrunde 3 ●:** A8 korrigeret og trippel-verificeret (relæ + telefon + SDK-læsning). Tre inkonsistensklasser dokumenteret. A9 uændret. Ingen arkitekturvalg genåbnet.
