@@ -29,6 +29,8 @@ Måleresultater og scripts fra arbejdet med vejkortet for Skrynja mod `vibe-acp`
 | `maalejournal-r34-konfigsti-lukket.md` | **R34 ● lukket på telefonen:** ekstra `~/.config/harbour-skrynja/` slettet (backup i `/tmp/skrynja-konf-backup-2026-10-27`); én aktiv sti — lag 2+3 ligger utvetydigt i `~/.config/org.skrynja/Skrynja/Skrynja.conf`. Nummereringsafklaring: relæets «R42» kaldes R34 her (R42 = tom katalog, allerede optaget) |
 | `gennemgang-journal-foer-kode.md` | **Gennemgang før kodning:** ID-konsistens ●, wire-format spec for Trin E, UTF-8/buffer-regler, Trin E-testplan. Afklaring: måleseriens «Trin E» ≠ vejkortets Trin E (Planer) |
 | `fixture-trin-e.ndjson` | **Trin E fixture:** 13 komplette målte wire-linjer + 1 delvis linje (EOF-test). Trin E bygges og testes mod denne fil fra første linje |
+| `fixture-trin-e-sammenklaebning.ndjson` | **Trin E edge-case:** to JSON-objekter på én linje uden `\n` (id=7, id=8) + delvis linje — tester parserens objektgrænsehåndtering |
+| `analyse-fixture-rettelse-objektgraenser.md` | **Fixture rettet** (sammenklæbning var min fejl) + **parser-beslutning:** del på `\n`, ved «Extra data» brug `QJsonParseError::offset` til at udtrække flere objekter fra samme linje (Qt 5.6-ækvivalent til `raw_decode`). Testplan: 15 succes-parses, 2 forventede EOF-fejl, 0 crashes |
 | `maaling_m00_m01.py` | Script: stdio `initialize`-udveksling mod `vibe-acp` (M0.1) |
 | `maaling_m01b_fuld_frame.py` | Script: `initialize` med `protocolVersion` 99/2/0 — måler versionshåndtering (M0.1b) |
 | `m016-bro/` | Rust reference-bro: `AcpHttpServer` + `AcpAgent` spawner `vibe-acp`, loopback roundtrip (M0.16) |
