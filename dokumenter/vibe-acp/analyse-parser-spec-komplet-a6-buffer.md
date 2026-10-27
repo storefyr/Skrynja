@@ -44,17 +44,25 @@ hvert split skal give n > 0:
 
 **Begrundelse ●:** en parser-fejl uden fremgang ville ellers loope uendeligt på samme linje.
 
-## A6 — buffergrænse ● (navngivet, hård, eksplicit fejl)
+## A6 — buffergrænse ● (navngivet, hård, eksplicit fejl; differentieret reaktion)
 
-Relæet har ret: «ingen antagelse om maksimal linjelængde» er i praksis en ubegrænset buffer, og én stor `rawOutput`-linje (kompaktér-turn) kan tømme telefonen for hukommelse.
+Relæet har ret: «ingen antagelse om maksimal linjelængde» er i praksis en ubegrænset buffer, og én stor `rawOutput`-linje (kompaktér-turn) kan tømme telefonen for hukommelse. *(Kropsrettet i runde 11: denne sektion var forældet — den spec'ede 4 MiB og «luk agenten» ved enhver overskridelse. A6 er siden begrundet og besluttet i `analyse-a6-begrundet-forkast-ikke-draeb.md` (commit `804b4ae`, nyere end denne fils `8f9b952`): **8 MiB** med to differentierede tilstande A6a/A6b. Nedenstående er den gældende spec; begrundelsen står i A6-filen.)*
 
-**Specifikation ●:**
+**Specifikation ● (gældende — jf. `analyse-a6-begrundet-forkast-ikke-draeb.md`):**
 
 | Parameter | Værdi | Begrundelse |
 |---|---|---|
-| `ACP_MAX_LINE_BYTES` | **4 MiB (4 194 304 bytes)** | rigeligt til selv store `tool_call_update` med `rawOutput`; Sailfish-telefoner har begrænset RAM |
-| Overskridelse | **eksplicit fejl** — stop læsning, log, signalér transport-fejl, luk agenten ned (procesgenstart ved næste session) | ikke stille afkortning (ville korrumpere JSON), ikke ubegrænset vækst |
+| `ACP_MAX_LINE_BYTES` | **8 MiB (8 388 608 bytes)** | 2× margin over største kendte legitime linje (~4 MB escaped ved replay); caps målt: bash 16 000, grep 64 000, shell-standard 16 000, hook 1 MB, sandbox 512 KiB — 8× margin normal, 2× replay. Én konstant; hæves kun ved målt større legitim linje |
 | Måling | akkumuleret bufferstørrelse pr. linje, ikke pr. read | en linje kan komme i mange små reads |
+
+**To forskellige A6-tilstande ●:**
+
+| Tilstand | Udgangspunkt | Reaktion |
+|---|---|---|
+| **A6a — komplet linje over grænsen** | Linje med `\n` fundet, men længde > 8 MiB | Log «linje forkastet, over 8 MiB», kassér linjen, fortsæt med næste. Forbindelsen består |
+| **A6b — akkumuleret buffer over grænsen uden `\n`** | Ingen `\n` i buffer, størrelse > 8 MiB | Log «buffer over 8 MiB uden linjeskift — protokolkorruption», eksplicit transport-fejl, luk agenten (procesgenstart ved næste session) |
+
+A6a = tab af én meddelelse. A6b = tab af sessionen, kun når synkronisering er umulig.
 
 **Kvota-tjek placeres før hver append** til linje-bufferen — ikke efter.
 
@@ -62,19 +70,20 @@ Relæet har ret: «ingen antagelse om maksimal linjelængde» er i praksis en ub
 
 ```
 BUFFER = QByteArray (akkumulerer rå bytes fra QProcess::readyRead)
-MAX_LINE = 4 MiB
+MAX_LINE = 8 MiB
 
 ved hver read:
   BUFFER += nye bytes
+  hvis BUFFER.size() > MAX_LINE og BUFFER ikke indeholder '\n':
+    → A6b: eksplicit transport-fejl, luk agent, stop
   loop:
     pos = BUFFER.indexOf('\n')
-    hvis pos == -1:
-      hvis BUFFER.size() > MAX_LINE: → A6-fejl (eksplicit, stop, luk agent)
-      break (vent på flere bytes)
+    hvis pos == -1: break (vent på flere bytes)
     linje = BUFFER.left(pos)
     BUFFER = BUFFER.mid(pos + 1)
-    hvis linje.size() > MAX_LINE: → A6-fejl
-    parseLinje(linje)   // se nedenfor
+    hvis linje.size() > MAX_LINE:
+      → A6a: log «linje forkastet (>8 MiB)», fortsæt loop (næste linje)
+    ellers: parseLinje(linje)   // se nedenfor
 
 parseLinje(linje: QByteArray):
   rest = linje
@@ -112,11 +121,25 @@ ved EOF (QProcess::finished):
 | ugyldig | 2 (id=11 + `}}}`) | ○ **hele linjen forkastes** | regel 2 |
 | ugyldig | 3 (id=12) | ● udleveret | normal (efter forkastede) |
 | ugyldig | 4 (delvis, id=13) | ○ EOF: «afbrudt ved EOF» | EOF-sti |
-| syntetisk | linje > 4 MiB | ○ A6-fejl: eksplicit fejl, agent lukkes | A6 |
+| syntetisk A6a | linje på 9 MiB med `\n` | ◐ linje forkastes, logges; næste linje parses normalt; forbindelse består | A6a |
+| syntetisk A6b | 9 MiB uden `\n` i buffer | ◐ transport-fejl, agent lukkes; ingen crash, ingen uendelig vækst | A6b |
 
-**Samlede kriterier ●:** 16 succes-udleveringer (13 + 2 + 1), 4 forventede forkastninger/EOF (ikke crashes), 0 uendelige løkker, 0 crashes, A6-fejl ved >4 MiB.
+**Samlede kriterier ●:** 16 succes-udleveringer (13 + 2 + 1), 4 forventede forkastninger/EOF (ikke crashes), 0 uendelige løkker, 0 crashes, A6a ved komplet linje >8 MiB (forkast, forbindelse består), A6b ved buffer >8 MiB uden `\n` (transport-fejl, luk agent).
 
 ## Status ●
 
-Parserens kerne er nu **fuldt specificeret**: byte-akkumulering, `
-`-split, ExtraData-offset-loop med tre sikkerhedsregler, EOF-håndtering, A6 buffergrænse. Ingen arkitekturvalg genåbnes. Trin E kan kodes direkte mod denne spec + de tre fixtures.
+Parserens kerne er nu **fuldt specificeret**: byte-akkumulering, `\n`-split, ExtraData-offset-loop med tre sikkerhedsregler, EOF-håndtering, A6 buffergrænse (8 MiB, A6a/A6b — gældende værdier per `analyse-a6-begrundet-forkast-ikke-draeb.md`). Ingen arkitekturvalg genåbnes. Trin E kan kodes direkte mod denne spec + de tre fixtures.
+
+---
+
+## Kropsrettelse i runde 11 (in-place, noteret efter konventionen) ● — afklaring af gældende parser-spec (relæ `6fc943d2`)
+
+Telefonen spurgte, hvilken fil der er den gældende parser-spec for Trin E, og pegede på to forhold: README peger både på denne fil og på `gennemgang-journal-foer-kode.md`, og denne fil angav 4 MiB mens A6-filen angav 8 MiB. Verificeret mod hele træet ved `c79a791`:
+
+- **Denne fil er den gældende parser-spec ●** — præcis én fil med «parser» i navnet, ingen ældre eller nyere konkurrent. Algoritmen, de tre sikkerhedsregler, fixtures og testplan står uændret.
+- **A6-delen var forældet ● — kropsrettet her:** 4 MiB → **8 MiB**; «luk agenten ved enhver overskridelse» → **A6a/A6b** (forkast én linje / luk kun ved desynk). A6-beslutningen (`804b4ae`, `analyse-a6-begrundet-forkast-ikke-draeb.md`) er nyere end denne fil (`8f9b952`) og autoritativ for A6; begrundelsen (caps, margin 8×/2×, replay ~4 MB escaped) står dér og citeres her.
+- **`gennemgang-journal-foer-kode.md` er ikke parser-spec'en ●:** den er før-kode-review'en af målejournalen (`114bcf4`) — wire-format-fakta, UTF-8-regler, fixture-forslag. Den siger selv «ingen antagelse om maksimal linjelængde», hvilket A6 siden har lukket. README's backlog-peg («spec i `gennemgang-journal-foer-kode.md`») var misvisende — rettet i README.
+- **Sidefund ●:** `gennemgang-journal-foer-kode.md` indeholdt ét NUL-byte (byte 3809, hvor der skulle stå `\u0007` i «escapes `\u0007`-form») — git/grep behandlede filen som binær. Rettet i runde 11; se note i den fil.
+- **Mindre ●:** testplanens syntetiske A6-række bar ○ (tom cirkel, U+25CB) hvor projektet ellers bruger ◐ (halvfyldt, U+25D0) — erstattet sammen med rækken.
+
+**Status efter runde 11 ●:** parser-spec'en gældende og konsistent med A6-beslutningen; README's peg korrekte. Ingen arkitekturvalg genåbnet.
