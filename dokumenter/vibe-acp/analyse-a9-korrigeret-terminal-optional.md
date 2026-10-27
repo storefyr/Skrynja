@@ -202,13 +202,13 @@ Route(func=<handler returning None>, optional=True, default_result={}, adapt_res
 ### To nye fund i `handle` ●
 
 1. **`func is None`-grenen ligger før `warn_unstable`** — en rute med både `optional=True` og `warn_unstable=True` ville svare `default_result` i stedet for `-32601`. **`optional` er stærkere end unstable-flaget.** Ingen nuværende rute har begge (○ ikke målt), men rækkefølgen bør stå som regel i spec'en — den er kontraintuitiv. **Tilføjet til A9 som rækkefølgeregel ●:** i SDK'ets `handle` er rækkefølgen (a) ingen behandler → `default_result` eller `-32601`; (b) `warn_unstable` → advarsel + `-32601`; (c) behandlerkald + `adapt_result`. Skrynjas egen klient bør følge samme rækkefølge, hvis den implementerer `optional`-lignende auto-svar (den gør ikke i v1 — Skrynja svarer altid selv).
-2. **`-32601`'s tredje årsag er nu målt, ikke udledt ●:** `routes.get(method)` → `None` → `RequestError.method_not_found(method)` i routerens dispatch (før `route.handle` kaldes). Alle tre årsager er dermed belagte med målt kode: ingen behandler uden `optional` (`handle`, første gren), `warn_unstable` (`handle`, anden gren), ukendt metodenavn (router-dispatch, `routes.get` → `None`).
+2. **`-32601`'s tredje variant er nu målt, ikke udledt ●:** `routes.get(method)` → `None` → `RequestError.method_not_found(method)` i routerens dispatch (før `route.handle` kaldes). *(Kropsrettet i runde 6: tidligere stod «Alle tre årsager» — efter runde 5 er der **fire varianter**: (a) ingen behandler uden `optional`, (b) `warn_unstable`, (c) ukendt metodenavn, (d) `_`-præfiks uden extension-handler. Se runde 5 nedenfor.)*
 
 ### Kolonneforveksling i A8-doc §6 — bekræftet og allerede præciseret ●
 
 Telefonen peger på kolonneforvekslingen i `analyse-a8-korrigeret-resume-frist-kapabiliteter.md` §6-tabellen: kolonnen «I SDK'et (Python-klient)» beskriver **Skrynjas** adfærd for `session/request_permission` («Skrynja implementerer: dialog…») — SDK'et er agenten, ikke klienten; der er ingen «SDK-klient» at beskrive for denne rute. Kolonnen beskriver faktisk «A9's vedtagne adfærd». Rettet her frem for in-place: §6-tabellens venstre kolonne skal læses som «**A9-vedtaget (gælder Skrynja)**», ikke «I SDK'et». For `terminal/*`-rækkerne er kolonnen korrekt — der beskriver den *Python-SDK-klient*, Skrynja ville erstatte.
 
-**Status efter bekræftelsesrunde 4 ●:** `adapt_result`-spørgsmålet lukket (én beskyttelse, ikke to); `serialize_params` lukket; `-32601` lukket med tre målte årsager; rækkefølgereglen `optional` før `unstable` tilføjet A9; §6-kolonneforvekslingen præciseret. A9's to-række-tabel uændret. A8 uændret. Ingen arkitekturvalg genåbnet.
+**Status efter bekræftelsesrunde 4 ●:** `adapt_result`-spørgsmålet lukket (én beskyttelse, ikke to); `serialize_params` lukket; `-32601` lukket med tre målte varianter (senere fire — se runde 5); rækkefølgereglen `optional` før `unstable` tilføjet A9; §6-kolonneforvekslingen præciseret. A9's to-række-tabel uændret. A8 uændret. Ingen arkitekturvalg genåbnet.
 
 ---
 
@@ -231,7 +231,7 @@ Telefonen fandt en fjerde variant i `_resolve_handler` og dispatchen. Verificere
 | c | ukendt metodenavn — `routes.get(method)` → `None` | router-dispatch | målt |
 | d | metodenavn med `_`-præfiks **uden** extension-handler (`method.startswith("_")` + `ext_handler is None`) | router-dispatch | målt i 0.11.0 denne session (`router.py`: `if isinstance(method, str) and method.startswith("_"): if ext_handler is None: raise RequestError.method_not_found(method)`) |
 
-**Korrektion:** A8-doc §2 og denne fil's runde 4 siger «tre årsager» — rettet til **fire** (a-d). (a) og (d) var telefonens læsning af upstream `main`; jeg har målt begge i den lokale 0.11.0 — de findes dér også. Klienten kan ikke skelne nogen af dem uden at kende flaget og extension-konfigurationen.
+**Korrektion:** A8-doc §2 og denne fil's runde 4 siger «tre årsager» — rettet til **fire varianter** (a-d). (a) og (d) var telefonens læsning af upstream `main`; jeg har målt begge i den lokale 0.11.0 — de findes dér også. Klienten kan ikke skelne nogen af dem uden at kende flaget og extension-konfigurationen.
 
 ### Fem tekstrettelser i `41bf277` ● — alle adresseret her (append-only)
 
@@ -243,4 +243,17 @@ Telefonen fandt en fjerde variant i `_resolve_handler` og dispatchen. Verificere
 | 4 | **A9's «ubetinget»** (§2-tabel, oprindelig tekst): «`callback_kinds=["approval"]` er ubetinget» — telefonen påpegede i runde 3, at listen er betinget (`user_input` ved `elicitation.form`); rettelsen blev appenderet (punkt 1 i «Rettelser fra PR-gennemlæsningen»), men §2-tabellens oprindelige celle står uændret og siger stadig «ubetinget» | Præciseret her: §2-tabellens «ubetinget» gælder **kun `approval`-elementet** (det tilføjes altid); listen som helhed er betinget. Den appendede rettelse i «Rettelser fra PR-gennemlæsningen» punkt 1 står og er den autoritative formulering |
 | 5 | **A8's urørte §6** (oprindelig A8-doc §6, «Indgående» linje 96): «`fs/*` + `elicitation/*` + `terminal/*` → `-32601` øjeblikkeligt» gendanner A9-korrektionens fejl — den præcisering, der blev appenderet til **A8-korrektionsdoc** (`1cfa12d`), nåede ikke den **oprindelige** A8-doc (`analyse-a8-komplet-rutekort-kode.md`), hvis §5-tabel stadig viser én fælles række | Peget tilføjet her: den oprindelige A8-doc's §5 indgående-række er **erstattet af** A9-korrektionsdoc + A8-korrektionsdoc's §6-præcisering. Læses den oprindelige A8-doc alene, er `terminal/*`-rækken forældet — det står nu i README-rækken for den oprindelige A8-doc (som allerede er markeret «titel overdrevet»; pege udbygges nedenfor) |
 
-**Status efter bekræftelsesrunde 5 ●:** punkt 6b lukket (0 ruter med `optional`+`unstable`; kombinationen konstruerbar = latent fælde, regel står i A9); `-32601` har **fire** målelige årsager; fem tekstrettelser i `41bf277` adresseret; diskriminerende `adapt_result`-test kørt og bekræfter runde 4. A9's to-række-tabel uændret. A8 uændret. Ingen arkitekturvalg genåbnet.
+**Status efter bekræftelsesrunde 5 ●:** punkt 6b lukket (0 ruter med `optional`+`unstable`; kombinationen konstruerbar = latent fælde, regel står i A9); `-32601` har **fire** målelige varianter; fem tekstrettelser i `41bf277` adresseret; diskriminerende `adapt_result`-test kørt og bekræfter runde 4. A9's to-række-tabel uændret. A8 uændret. Ingen arkitekturvalg genåbnet.
+
+---
+
+## Kropsrettelser i runde 6 (in-place, noteret efter konventionen) ●
+
+Følgende korte faktafejl er rettet **i kroppen** af denne fil i samme commit som A8-doc's runde 6 — hver rettelse angives her, så revisionssporet bevares:
+
+1. **Runde 4, punkt 2:** «Alle tre årsager er dermed belagte» → note om at der efter runde 5 er **fire varianter** (a-d), med pege til runde 5.
+2. **Runde 4, status:** «`-32601` lukket med tre målte årsager» → «tre målte varianter (senere fire — se runde 5)».
+3. **Runde 5, korrektion:** «rettet til **fire** (a-d)» → «rettet til **fire varianter** (a-d)» (telefonens formulering: (d) er en undermængde af «ukendt metode» med anden mekanisme — «varianter» er præcisere end «årsager»).
+4. **Runde 5, status:** «fire målelige årsager» → «fire målelige varianter».
+
+Konventionen (præciseret i A8-korrektionsdoc's runde 6): analysedokumenters krop er append-only **undtagen korte, utvetydige faktafejl**, der ellers ville leve i modstrid med README og de andre analysedokumenter; README redigeres in-place som levende indeks.

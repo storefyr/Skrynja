@@ -45,7 +45,7 @@ A8 §3 skrev «alle tre **unstable-kapabiliteter** (`close`, `list`, `fork`)» �
 **Andre rettelser fra samme gennemlæsning ●:**
 
 - **A8 §4:** `session/list` var mærket «◐ ja (sessionsliste)» — intern modstrid (◐ = uafklaret, teksten = ja) og modstrid med A9's «nej i v1». Rettet: **nej i v1** (Skrynja fører ikke sessionsliste; `session/load` + lokal historik er vejen). Fristen står — rutetabellen dækker alle udgående anmodninger uanset om de kaldes.
-- **A8 §2:** «`-32601` betyder ikke-registreret eller unstable-ikke-aktiveret» — tredje årsag tilføjet: **metodenavnet findes slet ikke** (opslaget i `RequestError` fejler). `-32601` har tre årsager, klienten kan ikke skelne dem uden at kende flaget.
+- **A8 §2:** «`-32601` betyder ikke-registreret eller unstable-ikke-aktiveret» — tredje variant tilføjet: **metodenavnet findes slet ikke** (`routes.get` → `None`). `-32601` har **fire varianter** (a: ingen behandler — attribut mangler eller er ikke-kaldbar; b: `warn_unstable`; c: ukendt metodenavn; d: `_`-præfiks uden extension-handler — a og d målt i runde 5). Klienten kan ikke skelne dem uden at kende flaget og extension-konfigurationen. *(Kropsrettet i runde 6: tidligere stod «tre årsager» — rettelsen fra runde 5 var lagt i A9-dokumentet.)*
 
 ## 3 · Præcisering — `callback_kinds` er ikke ubetinget `["approval"]` ●
 
@@ -64,9 +64,9 @@ Korrekt formulering ●: `["approval"]` **plus** `"user_input"`, når klienten a
 | # | Sted | Rettelse |
 |---|---|---|
 | 5 | README | To maskiner præciseret: **målmaskinen** (sandbox) kører 2.9.4 — alle runde 1-2-adfærdsmålinger; **telefonen** (Jolla) kører 3.0.2 — alle runde 3-4/wire-målinger. Hver måling mærkes med sin maskine fremadrettet |
-| 6 | A9-korrektion §4 | Fire sdist-linjenumre (`_runtime.py:562`, `local.py:106`, `_client_provided_tools.py:150-155`, `_unified_harness_backend_adapter.py:3894-3902`) citeres i strid med R13 — erstattes af udtrykscitater i denne korrigeringsrække; originalen bevares (korrektur sker i nye filer), men README peger på denne rettelse |
+| 6 | A9-korrektion §4 | Fire sdist-linjenumre (`_runtime.py:562`, `local.py:106`, `_client_provided_tools.py:150-155`, `_unified_harness_backend_adapter.py:3894-3902`) citeres i strid med R13 — erstattes af udtrykscitater i **A9-korrektionsdoc'ets append** («Rettelser fra PR-gennemlæsningen»); originalen bevares (korrektur sker i append), og README peger på A9-doc'en *(kropsrettet i runde 6: tidligere stod «i denne korrigeringsrække»)* |
 | 7 | A9-korrektion §3 | Sætningen om `AttributeError`-vejen «kun» ved `request_optional_model`-ruterne var ulogisk — netop de ruter får `{}`, ikke `null`. Skåret ned til det målte: `validate_model(None)` → `ValidationError`; `{}` parses som tom respons |
-| 8 | A8 §2 | Tredje `-32601`-årsag tilføjet (se §2 ovenfor) |
+| 8 | A8 §2 | Fjerde `-32601`-variant tilføjet (runde 5: `_`-præfiks uden extension-handler); «fire varianter» samlet *(kropsrettet i runde 6)* |
 | 9 | PR #18-beskrivelse | Dækkede kun runde 1; opdateret til at dække hele grenen (se commit) |
 | 10 | README | Testtallene «15 succes-parses / 2 EOF-fejl» (før tredje fixture) vs «16 udleveringer / 4 forkastninger» (efter) — README række præciseret som før/efter |
 
@@ -93,11 +93,11 @@ A8 §2's mekanisme (`warn_unstable` **afviser** med `-32601` efter advarslen), A
 | `session/resume` | 120 s fast | nej (A2: `load` foretrækkes) — **frist spec'et, ikke arvet** |
 | `session/cancel` | notification — rydder udestående | ● ja (A1) |
 
-**Indgående (agent → Skrynja, A9):** uændret fra A9-korrektionen — `session/request_permission` (dialog, ingen klient-timeout, `cancelled` ved cancel), `session/update` (behandles), `fs/*` + `elicitation/*` + `terminal/*` → `-32601` øjeblikkeligt.
+**Indgående (agent → Skrynja, A9):** `session/request_permission` (dialog, ingen klient-timeout, `cancelled` ved cancel), `session/update` (behandles), `fs/*` + `elicitation/*` → `-32601` øjeblikkeligt; `terminal/*` → `-32601` øjeblikkeligt **i Skrynja** — i SDK'et svarer `terminal/*` selv (`null` ×3, `{}` ×2; se A9-korrektionsdoc). *(Kropsrettet i runde 6: tidligere stod én fælles række «`fs/*` + `elicitation/*` + `terminal/*` → `-32601`», som gendannede A9-korrektionens fejl.)*
 
 ## Status ●
 
-A8 korrigeret: `session/resume` får 120 s fast (spec'et, ikke kaldt i v1); kapabilitetsmængder adskilt (annonceret / unstable-ruter / schema); `callback_kinds` præciseret; `-32601`'s tre årsager komplet; `session/list` = nej i v1. A9's to-række-tabel uændret. README og PR #18 opdateret. **Ingen arkitekturvalg genåbnet.**
+A8 korrigeret: `session/resume` får 120 s fast (spec'et, ikke kaldt i v1); kapabilitetsmængder adskilt (annonceret / unstable-ruter / schema); `callback_kinds` præciseret; `-32601`'s fire varianter komplet; `session/list` = nej i v1. A9's to-række-tabel uændret. README og PR #18 opdateret. **Ingen arkitekturvalg genåbnet.**
 
 **Åbent ○ (ikke-blokerende):** om `session/delete` og `additionalDirectories` er bevidst udeladt af agenten (de findes i schema uden rute/annoncering — agenten kunne implementere dem senere); `model_validate(None)`-mekanismen ikke reproduceret på telefonen; valgfrit absolut loft over prompt-fristen; latente schema/routeren-inconsistens (`resume`/`close` unstable i routeren, ikke i schema-markeringen).
 
@@ -187,3 +187,58 @@ Telefonen mente, PR-beskrivelsen stadig var «runde 1». Ved efterprøvning (`gh
 **Telefonens lokale git ○:** `42a6302` ukendt lokalt, `git log -- dokumenter/vibe-acp/README.md` tom — fordi klonen står på `main` (50 commits bagud) og ikke har hentet grenen siden `74c65a6`. For at læse grenen lokalt: `git fetch origin vibe/vibe-acp-maalejournal-ea9aca && git log --oneline origin/vibe/vibe-acp-maalejournal-ea9aca -- dokumenter/vibe-acp/README.md`.
 
 **Status efter denne rettelsesrunde ●:** seks fejl adresseret (fem rettet/præciseret, én — #5 — afvist som telefonens side-cache); `resume_session` verificeret med udtrykscitater; §6's indgående præciseret med SDK/Skrynja-skel. A8+A9 komplet. Ingen arkitekturvalg genåbnet.
+
+---
+
+## Bekræftelsesrunde 6 — gennemlæsning af `42c0d20` ● (relæ `bead5011`)
+
+Telefonen gennemlæste `42c0d20` og fandt: runde 5's punkter står ●, den diskriminerende test er reel ● — men tre ting holder ikke, og telefonen fangede sin egen fejl (`from_protocol`). Denne runde adresserer dem. **Konventionen er nu eksplicit:** append-only gælder analysedokumenternes *krop*; README er et levende indeks og må redigeres in-place. Se «Append-only vs. in-place» nedenfor.
+
+### 1 · A8-dokumentet sagde stadig «tre årsager» tre steder ● — rettet her
+
+Runde 5's fire-årsager-rettelse landede i **A9**-dokumentet; denne fil (A8-korrektionen) stod urørt med «tre årsager» i §2, §4 række 8 og Status. Samme fejlklasse som runde 4's «ubetinget», omvendt fortegn. **Rettet i kroppen** (se nedenfor) — dette er en undtagelse fra append-only, begrundet under «Append-only vs. in-place»: en kort numerisk optælling, der ellers ville leve videre i modstrid med README og A9 i hele dokumentets levetid.
+
+### 2 · README's pegepind pegede på en forældet §6 ● — rettet i README
+
+README-rækken for den oprindelige A8-doc sagde, at §5's indgående-række er «erstattet af A9-korrektionsdoc + **A8-korrektionsdoc's §6-præcisering**» — men A8-korrektionsdoc's §6 selv stod urørt («`fs/*` + `elicitation/*` + `terminal/*` → `-32601` øjeblikkeligt»), præciseringen lå i et appenderet afsnit. **Rettet i kroppen** (§6 nedenfor) + README-pilen rettet til at pege på hele filen, ikke §6 alene. Samme gælder §4 rækker 6-7 («i denne korrigeringsrække» — de ligger i A9-appendet) — rettet i kroppen.
+
+### 3 · «Append-only forhindrer ombygning» var internt inkonsistent ● — konvention præciseret
+
+Runde 5 afviste en ombygning af §6-tabellen med henvisning til append-only, i samme commit der redigerede README in-place. **Konventionen præciseret:**
+
+| Art | Regel | Begrundelse |
+|---|---|---|
+| Analysedokumenters **krop** (påstande, tabeller, beslutninger) | **Append-only** — rettelser appenderes som nye afsnit | Revisionssporet: en læser kan følge, hvad der blev påstået hvornår, og hvad der siden blev korrigeret |
+| **Korte, utvetydige faktafejl** (tal, der skal svare til README/andre filer) | **In-place tilladt** — med en note i næste append, der angiver hvad kroppen fik rettet | Ellers ender samme tal i modstrid på tværs af filer resten af dokumentets levetid |
+| **README** | **In-place** — det er et levende indeks, ikke et revisionsspor | Indekset skal altid pege rigtigt; historikken ligger i commits og analysedokumenterne |
+
+Under denne konvention er følgende rettet **i kroppen** i denne commit: §2's «tre årsager» → «fire varianter», §4 række 8, Status-linien, §6's indgående-linje, §4 rækker 6-7. Alt er noteret her, så revisionssporet bevares.
+
+### Telefonens egen fejl — `from_protocol` ● — anerkendt, konklusion uændret
+
+Telefonen skrev, at `from_protocol` sætter `optional=metadata.optional` / `warn_unstable=metadata.unstable and not use_unstable_protocol`, og citerede det ved siden af 0.11.0-målinger uden versionsmærkning. **Relæets måling står ●:** `from_protocol` findes **ikke** i 0.11.0 (søgt i hele pakken — kun `route_request`/`route_notification`/`add_route`). Udtrykket er upstream-`main` alene. **Konklusionen holder:** `optional` og `unstable` er separate parametre i `route_request`'s signatur (målt i 0.11.0), så kombinationen er konstruerbar — begrundelsen hviler på signaturen, ikke på `from_protocol`. Runde 5's formulering i A9-doc («`route_request` tager begge som uafhængige parametre») står uden `from_protocol`-henvisningen.
+
+### Mindre ○ — adresseret
+
+| # | Forhold | Håndtering |
+|---|---|---|
+| a | Runde 5's række 5 blandede «oprindelig A8-doc §6, linje 96» — linje 96 er i **korrektions**doc, ikke den oprindelige | Præciseret her: den forældede indgående-linje findes i **to** filer — oprindelig A8-doc har ingen indgående-§6 (dens fristtabel er §4, kun udgående); den oprindelige **A9**-doc (`analyse-a9-indgaaende-anmodninger-kapabiliteter.md`) har §5's tabel med én fælles `fs/*`, `terminal/*`, `elicitation/*` → `-32601`-række (linje 107) — **det** er den række, README-pilen dækker. A8-korrektionsdoc's §6-linje (linje 96) er den anden forældede forekomst. Begge peget nu |
+| b | «Fire årsager» vs «fire varianter»: (d) `_`-præfiks er en undermængde af «ukendt metode» med anden mekanisme | Accepteret — formuleringen «**fire varianter**» anvendes fremover; taxonomien (a-d) står uændret |
+| c | README's «(efter runde 5)»-datering i tabelcelle | README-rækken omformuleret til at pege på A9-doc's runde 5 i stedet for en datering |
+| d | Testudskrift uden `await` (`Route.handle` er async) | Kosmetisk — udeladt; testen er kørt og resultatet står |
+
+---
+
+## Kropsrettelser i denne commit (in-place, noteret efter konventionen) ●
+
+Følgende er rettet **i kroppen** af denne fil — hver rettelse er en kort faktafejl, der ellers ville leve i modstrid med README og A9-dokumentet:
+
+1. **§2** (tidligere linje 48): «`-32601` har tre årsager» → «`-32601` har **fire varianter**» med (a)-(d) opremset.
+2. **§4 række 8** (tidligere linje 69): «Tredje `-32601`-årsag tilføjet» → «Fjerde `-32601`-variant tilføjet (runde 5; `_`-præfiks uden extension-handler); «fire varianter» samlet».
+3. **§4 rækker 6-7** (tidligere linje 67 og tilsvarende): «i denne korrigeringsrække» → «i A9-korrektionsdoc'ets append («Rettelser fra PR-gennemlæsningen»)».
+4. **§6** (tidligere linje 96): indgående-linjen «`fs/*` + `elicitation/*` + `terminal/*` → `-32601` øjeblikkeligt» → opdelt i to rækker: `fs/*` + `elicitation/*` → `-32601`; `terminal/*` → `-32601` i Skrynja (SDK'et svarer selv `null`/`{}` — se A9-korrektionsdoc).
+5. **Status** (tidligere linje 100): «`-32601`'s tre årsager komplet» → «`-32601`'s fire varianter komplet».
+
+README er ligeledes rettet in-place: A8-rækken peger nu på A9-doc runde 5 (ikke «efter runde 5»-datering); A8-komplet-rækken peger på A9-korrektionsdoc + denne fils krop (ikke «§6-præcisering» alene).
+
+**Status efter bekræftelsesrunde 6 ●:** A8-dokumentet, A9-dokumentet og README siger nu samme tal og samme peg. Append-only-konventionen præciseret (krop append-only undtagen korte faktafejl; README in-place). Telefonens `from_protocol`-fejl anerkendt — konklusion uændret via `route_request`-signaturen. A9's to-række-tabel uændret. Ingen arkitekturvalg genåbnet.
