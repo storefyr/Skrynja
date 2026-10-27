@@ -209,3 +209,38 @@ Route(func=<handler returning None>, optional=True, default_result={}, adapt_res
 Telefonen peger på kolonneforvekslingen i `analyse-a8-korrigeret-resume-frist-kapabiliteter.md` §6-tabellen: kolonnen «I SDK'et (Python-klient)» beskriver **Skrynjas** adfærd for `session/request_permission` («Skrynja implementerer: dialog…») — SDK'et er agenten, ikke klienten; der er ingen «SDK-klient» at beskrive for denne rute. Kolonnen beskriver faktisk «A9's vedtagne adfærd». Rettet her frem for in-place: §6-tabellens venstre kolonne skal læses som «**A9-vedtaget (gælder Skrynja)**», ikke «I SDK'et». For `terminal/*`-rækkerne er kolonnen korrekt — der beskriver den *Python-SDK-klient*, Skrynja ville erstatte.
 
 **Status efter bekræftelsesrunde 4 ●:** `adapt_result`-spørgsmålet lukket (én beskyttelse, ikke to); `serialize_params` lukket; `-32601` lukket med tre målte årsager; rækkefølgereglen `optional` før `unstable` tilføjet A9; §6-kolonneforvekslingen præciseret. A9's to-række-tabel uændret. A8 uændret. Ingen arkitekturvalg genåbnet.
+
+---
+
+## Bekræftelsesrunde 5 — punkt 6b lukket; fjerde `-32601`-variant; fem tekstrettelser ● (relæ `d544375b`)
+
+### Punkt 6b lukket ● — nul ruter har både `optional=True` og `unstable`
+
+Målt i SDK 0.11.0 denne session: `optional=True` forekommer kun i `acp/client/router.py` (de fem `terminal/*`-ruter); ingen af dem bærer `unstable`. Agent-routeren har **ingen** `optional=True` overhovedet. Kombinationen `optional` + `unstable` er **konstruerbar** (`route_request` tager begge som uafhængige parametre; `warn_unstable=unstable and not self._use_unstable_protocol`), men forekommer ikke i 0.11.0. Rækkefølgereglen (`func is None` før `warn_unstable`, så `optional` vinder) er dermed en **latent fælde for fremtidige ruter**, ikke en aktuel fejl — og står nu som regel i A9 (runde 4).
+
+**Præcisering af `warn_unstable` ●:** sættes som `unstable and not self._use_unstable_protocol`. På Skrynjas forbindelse (`use_unstable_protocol=True` på agentens side) er `warn_unstable` **False** på alle ruter — unstable-grenen i `handle` er død der. Samme konklusion som tidligere, nu med udtrykket bag.
+
+### Fjerde variant af `-32601` ● — `-32601` har nu **fire** årsager
+
+Telefonen fandt en fjerde variant i `_resolve_handler` og dispatchen. Verificeret i SDK 0.11.0 denne session:
+
+| # | Årsag | Sted | Kilde |
+|---|---|---|---|
+| a | ingen behandler — attribut **mangler eller er ikke-kaldbar** (`func is None or not callable(func)` → `None`) | `_resolve_handler` → `_make_func` → `handle` første gren | målt i 0.11.0 denne session (telefonen læste samme gren i upstream) |
+| b | `warn_unstable` (unstable-rute uden aktiveret flag) | `handle` anden gren | målt |
+| c | ukendt metodenavn — `routes.get(method)` → `None` | router-dispatch | målt |
+| d | metodenavn med `_`-præfiks **uden** extension-handler (`method.startswith("_")` + `ext_handler is None`) | router-dispatch | målt i 0.11.0 denne session (`router.py`: `if isinstance(method, str) and method.startswith("_"): if ext_handler is None: raise RequestError.method_not_found(method)`) |
+
+**Korrektion:** A8-doc §2 og denne fil's runde 4 siger «tre årsager» — rettet til **fire** (a-d). (a) og (d) var telefonens læsning af upstream `main`; jeg har målt begge i den lokale 0.11.0 — de findes dér også. Klienten kan ikke skelne nogen af dem uden at kende flaget og extension-konfigurationen.
+
+### Fem tekstrettelser i `41bf277` ● — alle adresseret her (append-only)
+
+| # | Fejl | Rettelse |
+|---|---|---|
+| 1 | **Ikke-diskriminerende test** (runde 4): min kørsel brugte `normalize_result` som `adapt_result`, og `normalize_result({})` returnerer `{}` uændret — testen kunne ikke skelne «adapt kørt på `{}`» fra «adapt ikke kørt». Telefonen har ret | **Diskriminerende test kørt denne session** med en spy-adapter: `Route(func=None, optional=True, default_result={'raw': True}, adapt_result=spy).handle({})` → `{'raw': True}`, **adapt kørt 0 gange**; samme rute med handler → adapt kørt 1 gang. Konklusion uændret: `adapt_result` kører **ikke** på `default_result` ● |
+| 2 | **Selvmodsigende kolonneparagraf** (runde 4, «Kolonneforveksling»): jeg skrev at kolonnen skal læses som «A9-vedtaget», men samtidig at den for `terminal/*` er korrekt som «Python-SDK-klient» — én kolonne, to betydninger | Præciseret: §6-tabellen i A8-doc har **to forskellige venstre-kolonne-betydninger** på forskellige rækker. `session/request_permission` og `session/update`: kolonnen beskriver **A9-vedtaget for Skrynja**. `fs/*`, `elicitation/*`, `terminal/*`: kolonnen beskriver **Python-SDK-klientens** adfærd (hvad SDK'et ville gøre, hvis Skrynja brugte det). Læseren skal kende forskellen pr. række — en bedre tabel ville have haft to kolonner; append-only forhindrer ombygning, så forskellen står her eksplicit |
+| 3 | **Manglende runde 3-pegepind**: A9-doc nævner «Bekræftelsesrunde 2» i README-rækken og i filen, men runde 3 (schema-verifikation, tredje inkonsistensklasse) blev appenderet til **A8-doc**, ikke A9-doc — A9-doc's læser ser ikke pege. | Pege tilføjet her: A9-relevante dele af runde 3 (schema-felter, `resume` uden annonceret kapabilitet, tredje inkonsistensklasse) står i `analyse-a8-korrigeret-resume-frist-kapabiliteter.md` → «Bekræftelsesrunde 3». README-rækken for A8-doc nævner allerede «tre inkonsistensklasser» — pege tilføjes nedenfor i README |
+| 4 | **A9's «ubetinget»** (§2-tabel, oprindelig tekst): «`callback_kinds=["approval"]` er ubetinget» — telefonen påpegede i runde 3, at listen er betinget (`user_input` ved `elicitation.form`); rettelsen blev appenderet (punkt 1 i «Rettelser fra PR-gennemlæsningen»), men §2-tabellens oprindelige celle står uændret og siger stadig «ubetinget» | Præciseret her: §2-tabellens «ubetinget» gælder **kun `approval`-elementet** (det tilføjes altid); listen som helhed er betinget. Den appendede rettelse i «Rettelser fra PR-gennemlæsningen» punkt 1 står og er den autoritative formulering |
+| 5 | **A8's urørte §6** (oprindelig A8-doc §6, «Indgående» linje 96): «`fs/*` + `elicitation/*` + `terminal/*` → `-32601` øjeblikkeligt» gendanner A9-korrektionens fejl — den præcisering, der blev appenderet til **A8-korrektionsdoc** (`1cfa12d`), nåede ikke den **oprindelige** A8-doc (`analyse-a8-komplet-rutekort-kode.md`), hvis §5-tabel stadig viser én fælles række | Peget tilføjet her: den oprindelige A8-doc's §5 indgående-række er **erstattet af** A9-korrektionsdoc + A8-korrektionsdoc's §6-præcisering. Læses den oprindelige A8-doc alene, er `terminal/*`-rækken forældet — det står nu i README-rækken for den oprindelige A8-doc (som allerede er markeret «titel overdrevet»; pege udbygges nedenfor) |
+
+**Status efter bekræftelsesrunde 5 ●:** punkt 6b lukket (0 ruter med `optional`+`unstable`; kombinationen konstruerbar = latent fælde, regel står i A9); `-32601` har **fire** målelige årsager; fem tekstrettelser i `41bf277` adresseret; diskriminerende `adapt_result`-test kørt og bekræfter runde 4. A9's to-række-tabel uændret. A8 uændret. Ingen arkitekturvalg genåbnet.
