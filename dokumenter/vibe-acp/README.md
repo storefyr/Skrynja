@@ -24,6 +24,7 @@ Måleresultater og scripts fra arbejdet med vejkortet for Skrynja mod `vibe-acp`
 | `analyse-arkitekturvalg-a1-a2-set-mode.md` | **Arkitekturvalg vedtaget:** A1 (cancel-rækkefølge m. cancelled-svar først), A2 (`session/load` med historik, `session/new` fallback); kun `session/set_config_option` — aldrig `session/set_mode` (ingen configOptions i svar, tavst None ved fejl) |
 | `analyse-a7-korrigeret-thinking-validering.md` | **A7 korrigeret:** ingen agent-lag afviser `low` før API'et — ACP tjekker kun generisk `THINKING_LEVELS`, model-laget accepterer `low` fordi zai-glm selv erklærer det; først harness-adapteren mapper `low→"none"` → `3051`. Fravalgslisten er **model-niveau**, ikke kun to aliaser |
 | `analyse-beslutning-thinking-ui-fravalgsliste.md` | **Beslutning:** `medium`/`max` vises med «samme som High» (skjules ikke); A7 som 3-lags tilstand — hardcoded standard + `Skrynja.conf` override + indlært ved `3051` |
+| `analyse-lag3-positiv-evidens-r34.md` | **Lag 3 korrigeret:** lærer kun ved positiv evidens (`3051` + entydigt tekstmønster + første prompt efter skift til `low`); synlig «Nulstil»-vej. **R34 afgjort:** aktiv sti er `~/.config/org.skrynja/Skrynja/Skrynja.conf` |
 | `maaling_m00_m01.py` | Script: stdio `initialize`-udveksling mod `vibe-acp` (M0.1) |
 | `maaling_m01b_fuld_frame.py` | Script: `initialize` med `protocolVersion` 99/2/0 — måler versionshåndtering (M0.1b) |
 | `m016-bro/` | Rust reference-bro: `AcpHttpServer` + `AcpAgent` spawner `vibe-acp`, loopback roundtrip (M0.16) |
@@ -52,7 +53,7 @@ Telefonen kører `mistral_vibe` **3.0.2** (identisk med PyPI), `agent_client_pro
 - **R32 ● lukket:** 800000 bekræftet tre veje — wire `token_threshold`, wire `usage_update.size`, GrowthBook-payload `auto_compact_threshold`. Kompaktionsrisikoen på `glm-5-3` er reel.
 - **Tilladelsesdialog ● lukket:** årsagen til udeblevne dialoger er filkonfiguration (`permission = "always"` i to `[tools.*]`-sektioner + `"id"` i allowlist i `~/.vibe/config.toml`), ikke mode. Begge veje ender i `decision="allow"`.
 - **R30 ● to uafhængige forekomster:** `low→"none"`-tabellen findes både i `mistralai_vibe_local_harness/vibe/adapters/mistral.py` og `vibe/core/llm/backend/mistral.py`. Ikke rettet i 3.0.2; kan ikke afhjælpes klientside — kun undgås (A7).
-- **Åbne ○ (ikke-blokerende, klientside):** R34 (hvilken `Skrynja.conf`-sti er aktiv), R41 (`model_catalog_cache.json` skrives aldrig).
+- **Åbne ○ (ikke-blokerende, klientside):** R41 (`model_catalog_cache.json` skrives aldrig). **R34 ● afgjort:** `harbour-skrynja.cpp:26-27` (`org.skrynja`/`Skrynja`) → aktiv sti er `~/.config/org.skrynja/Skrynja/Skrynja.conf`.
 
 ## Implementationsklar backlog (fra måleserien — endelig)
 
