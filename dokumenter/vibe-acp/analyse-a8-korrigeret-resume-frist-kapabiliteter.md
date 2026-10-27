@@ -17,7 +17,7 @@ Målt i `acp/agent/router.py` (`build_agent_router`): der er **elleve** request-
 
 `session/resume` er **ikke kaldt i v1** (A2: `session/load` foretrækkes; `resume` laver samme `ResumeSessionIntent` men uden historik-replay — verificeret i sdist: `resume_session` bygger `ResumeSessionIntent(session_id)` og returnerer uden `_load_complete_history`, hvor `load_session` replay'er). Men A8's princip er **generelt**: *ingen udgående anmodning hænger uden frist* — ellers er det præcis det hul, A8 blev lavet for at lukke.
 
-**Vedtaget ●:** `session/resume` får **120 s fast**, samme klasse som de øvrige livscyklus-ruter. Implementeres kun hvis Skrynja en dag kalder den (v2+); i v1 står rækken som «ikke kaldt», men fristen er **spec'et**, så en fremtidig aktivering ikke arver en regel uden dækning. A8's oprindelige påstand var «alle request-ruter har frist» (præcist citat — den fulde faktiske titel står i H1), og den var falsk for 10 af 11 ruter. *(Kropsrettet i runde 9: tidligere stod «Titlen rettes tilsvarende til den faktiske (se H1): «A8 påstod alle 11 request-ruter havde frist, men `session/resume` manglede frist (nu 120 s fast)»» — en parafrase præsenteret som faktisk titel; ingen sådan titel blev vedtaget. Kropsrettet i runde 8: tidligere stod forslaget «alle request-ruter, der kan kaldes, har frist — inklusive `session/resume`, som ikke kaldes i v1», som var selvmodsigende og aldrig blev vedtaget.)*
+**Vedtaget ●:** `session/resume` får **120 s fast**, samme klasse som de øvrige livscyklus-ruter. Implementeres kun hvis Skrynja en dag kalder den (v2+); i v1 står rækken som «ikke kaldt», men fristen er **spec'et**, så en fremtidig aktivering ikke arver en regel uden dækning. A8's oprindelige påstand var «alle request-ruter har frist» (præcist citat — den fulde faktiske titel står i H1), og den var **sand for 10 af 11 ruter og falsk for én (`session/resume`)**. *(Kropsrettet i runde 10: tidligere stod «… og den var falsk for 10 af 11 ruter» — tællingen var omvendt; påstanden var sand for 10 ruter og falsk for én. Kropsrettet i runde 9: tidligere stod «Titlen rettes tilsvarende til den faktiske (se H1): «A8 påstod alle 11 request-ruter havde frist, men `session/resume` manglede frist (nu 120 s fast)»» — en parafrase præsenteret som faktisk titel; ingen sådan titel blev vedtaget. Kropsrettet i runde 8: tidligere stod forslaget «alle request-ruter, der kan kaldes, har frist — inklusive `session/resume`, som ikke kaldes i v1», som var selvmodsigende og aldrig blev vedtaget.)*
 
 ## 2 · Bør-rettelser — kapabilitetsmængder adskilt ●
 
@@ -294,4 +294,16 @@ Telefonen gennemlæste `feba661` med friske API-hentninger (commit + diff for al
 
 **Ikke kropsrettet (append kun):** A9-doc's §3-spekulation, runde-4 «Kolonneforveksling»-paragraf og ◐-mærket — de ligger i A9-filen og rettets der (se dens runde 9).
 
-**Status efter runde 9 ●:** A8-doc, A9-doc og README læst igen efter alle rettelser — titler, tællinger, klasse 1, §6-formel, række 7, H1-note og begge statuslinjer konsistente i krop og append. A9's to-række-tabel uændret. Ingen arkitekturvalg genåbnet.
+**Status efter runde 9 ●:** A8-doc, A9-doc og README læst igen efter alle rettelser — titler, tællinger, klasse 1, §6-formel, række 7, H1-note og begge statuslinjer konsistente i krop og append. *(Statuslinjen kropsrettet i runde 10: «tællinger» var usandt i denne commit — §1's sandt/falsk-tælling var omvendt («falsk for 10 af 11»); rettet i runde 10, se nedenfor. Resten af påstanden gælder.)* A9's to-række-tabel uændret. Ingen arkitekturvalg genåbnet.
+
+---
+
+## Kropsrettelse i runde 10 (in-place, noteret efter konventionen) ● — gennemlæsning af `aebf4b6` (relæ `30e506b1`)
+
+Telefonen fandt **én fejl** i `aebf4b6`, A8 §1 (linje 20): «… og den var falsk for 10 af 11 ruter» — tællingen var **omvendt**. Påstanden «alle request-ruter har frist» var sand for 10 ruter og falsk for én (`session/resume`), hvilket samme fils H1, §1, §1-tabellen og §6-tabel alle viser. Fejlen opstod i runde 9's §1-rettelse og var ikke dækket af runde 9's revisionsspor.
+
+**Rettet i kroppen:** «… og den var **sand for 10 af 11 ruter og falsk for én (`session/resume`)**» — med note, der citerer den gamle ordlyd. Runde 9's statuslinje kropsrettet tilsvarende («tællinger» var usandt i den commit).
+
+README's A8-række gengiver ikke tællingen — ingen README-rettelse nødvendig ud over rundenummereringen.
+
+**Status efter runde 10 ●:** A8-doc, A9-doc og README læst igen efter rettelsen — §1's tælling nu konsistent med H1, §1-tabellen og §6-tabellen. A9's to-række-tabel uændret. Ingen arkitekturvalg genåbnet.
