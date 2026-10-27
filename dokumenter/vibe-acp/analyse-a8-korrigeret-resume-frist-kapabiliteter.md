@@ -1,4 +1,6 @@
-# A8 korrigeret — `session/resume` har ingen frist; kapabilitetsmængder adskilt; `callback_kinds` præciseret ●
+# A8 korrigeret — A8 påstod «alle 11 request-ruter har frist», men `session/resume` manglede frist (nu 120 s fast); kapabilitetsmængder adskilt; `callback_kinds` præciseret ●
+
+*(Titel kropsrettet i runde 7: tidligere titel «`session/resume` har ingen frist» beskrev problemet og modsagde §1's vedtagelse — samme fejlklasse som de øvrige kropsrettelser.)*
 
 PR-gennemlæsningen (relæ `606a4b06`) fandt én blokerende fejl og fire bør-rettelser i dokumentationen. Denne analyse verificerer hver påstand mod SDK 0.11.0 og sdist 3.0.2, træffer beslutningen om `session/resume`'s frist, og præciserer kapabilitetsmængderne. Ingen arkitekturvalg genåbnes — A8's principper står; dokumentets påstande om sig selv rettes.
 
@@ -162,7 +164,7 @@ Telefonen gennemlæste denne fil og fandt seks fejl. Originalsektionerne ovenfor
 
 ### §6, indgående — præciseret ●
 
-| Rute | I SDK'et (Python-klient) | I Skrynja (C++-klient) |
+| Rute | A9-vedtaget / Python-SDK-klientens adfærd (se note) | I Skrynja (C++-klient) |
 |---|---|---|
 | `session/request_permission` | Skrynja implementerer: dialog, ingen klient-timeout, `cancelled` ved cancel | samme |
 | `session/update` | behandles (notification) | samme |
@@ -170,6 +172,8 @@ Telefonen gennemlæste denne fil og fandt seks fejl. Originalsektionerne ovenfor
 | `elicitation/create`, `elicitation/complete` | unstable; agenten kalder ikke (ingen `elicitation.form`) | Skrynja svarer `-32601` / ignorerer |
 | `terminal/create`, `output`, `wait_for_exit` | **SDK svarer selv `null`** (`optional=True`) | Skrynja svarer `-32601` øjeblikkeligt (defensivt; unåeligt i v1) |
 | `terminal/release`, `kill` | **SDK svarer selv `{}`** (`optional=True`) | Skrynja svarer `-32601` øjeblikkeligt |
+
+*Kolonnebetydning pr. række (kropsrettet i runde 7 — tidligere stod «I SDK'et (Python-klient)» på alle rækker): for `session/request_permission` og `session/update` beskriver venstre kolonne **A9-vedtaget for Skrynja** (SDK'et er agenten, ikke klienten — der er ingen SDK-klient at beskrive for disse ruter). For `fs/*`, `elicitation/*` og `terminal/*` beskriver venstre kolonne **Python-SDK-klientens** adfærd (hvad SDK'et ville gøre, hvis Skrynja brugte det).*
 
 ### §1, `resume_session` — udtrykscitater tilføjet ● (R13)
 
@@ -209,7 +213,7 @@ Runde 5 afviste en ombygning af §6-tabellen med henvisning til append-only, i s
 | Art | Regel | Begrundelse |
 |---|---|---|
 | Analysedokumenters **krop** (påstande, tabeller, beslutninger) | **Append-only** — rettelser appenderes som nye afsnit | Revisionssporet: en læser kan følge, hvad der blev påstået hvornår, og hvad der siden blev korrigeret |
-| **Korte, utvetydige faktafejl** (tal, der skal svare til README/andre filer) | **In-place tilladt** — med en note i næste append, der angiver hvad kroppen fik rettet | Ellers ender samme tal i modstrid på tværs af filer resten af dokumentets levetid |
+| **Korte, utvetydige faktafejl** (tal, pegepinde, overskrifter og terminologi, der skal svare til README/andre filer eller modsiger resten af samme dokument) | **In-place tilladt** — med en note i næste append, der angiver hvad kroppen fik rettet | Ellers ender samme påstand i modstrid på tværs af filer — eller internt i samme fil — resten af dokumentets levetid |
 | **README** | **In-place** — det er et levende indeks, ikke et revisionsspor | Indekset skal altid pege rigtigt; historikken ligger i commits og analysedokumenterne |
 
 Under denne konvention er følgende rettet **i kroppen** i denne commit: §2's «tre årsager» → «fire varianter», §4 række 8, Status-linien, §6's indgående-linje, §4 rækker 6-7. Alt er noteret her, så revisionssporet bevares.
@@ -236,9 +240,24 @@ Følgende er rettet **i kroppen** af denne fil — hver rettelse er en kort fakt
 1. **§2** (tidligere linje 48): «`-32601` har tre årsager» → «`-32601` har **fire varianter**» med (a)-(d) opremset.
 2. **§4 række 8** (tidligere linje 69): «Tredje `-32601`-årsag tilføjet» → «Fjerde `-32601`-variant tilføjet (runde 5; `_`-præfiks uden extension-handler); «fire varianter» samlet».
 3. **§4 rækker 6-7** (tidligere linje 67 og tilsvarende): «i denne korrigeringsrække» → «i A9-korrektionsdoc'ets append («Rettelser fra PR-gennemlæsningen»)».
-4. **§6** (tidligere linje 96): indgående-linjen «`fs/*` + `elicitation/*` + `terminal/*` → `-32601` øjeblikkeligt» → opdelt i to rækker: `fs/*` + `elicitation/*` → `-32601`; `terminal/*` → `-32601` i Skrynja (SDK'et svarer selv `null`/`{}` — se A9-korrektionsdoc).
+4. **§6** (tidligere linje 96): indgående-linjen «`fs/*` + `elicitation/*` + `terminal/*` → `-32601` øjeblikkeligt» → én linje med opdeling: `fs/*` + `elicitation/*` → `-32601`; `terminal/*` → `-32601` **i Skrynja** (SDK'et svarer selv `null`/`{}` — se A9-korrektionsdoc). *(Noten kropsrettet i runde 7: tidligere stod «opdelt i to rækker» — diffen viser én linje med semikolon og parentes.)*
 5. **Status** (tidligere linje 100): «`-32601`'s tre årsager komplet» → «`-32601`'s fire varianter komplet».
 
 README er ligeledes rettet in-place: A8-rækken peger nu på A9-doc runde 5 (ikke «efter runde 5»-datering); A8-komplet-rækken peger på A9-korrektionsdoc + denne fils krop (ikke «§6-præcisering» alene).
 
 **Status efter bekræftelsesrunde 6 ●:** A8-dokumentet, A9-dokumentet og README siger nu samme tal og samme peg. Append-only-konventionen præciseret (krop append-only undtagen korte faktafejl; README in-place). Telefonens `from_protocol`-fejl anerkendt — konklusion uændret via `route_request`-signaturen. A9's to-række-tabel uændret. Ingen arkitekturvalg genåbnet.
+
+---
+
+## Kropsrettelser i runde 7 (in-place, noteret efter konventionen) ● — gennemlæsning af `5a2d8db` (relæ `5ea9ae1f`)
+
+Telefonen gennemlæste `5a2d8db` og fandt, at fem A8-kropsrettelser var udført ●, men fire forhold stod tilbage. Rettet i kroppen i denne commit:
+
+1. **H1-titel** (tidligere: «`session/resume` har ingen frist»): beskrev problemet og modsagde §1's vedtagelse (120 s fast) — samme fejlklasse som de øvrige kropsrettelser. Ny titel beskriver både problemet og beslutningen.
+2. **Konventionens kriterium** (runde 6's tabel): sagde «tal, der skal svare til README/andre filer» — men de faktisk udførte rettelser var pegepinde, en sætningsopdeling og terminologibyte. Kriteriet udvidet til «tal, pegepinde, overskrifter og terminologi, der skal svare til README/andre filer eller modsiger resten af samme dokument», så reglen dækker det, der faktisk blev gjort.
+3. **Runde 6-noten om §6-rettelsen**: påstod «opdelt i to rækker» — diffen viser én linje med semikolon og parentes. Noteret korrekt.
+4. **§6-tabelens kolonneoverskrift**: «I SDK'et (Python-klient)» stod på alle rækker, men beskriver A9-vedtaget for `session/request_permission`/`session/update`. Overskriften præciseret til «A9-vedtaget / Python-SDK-klientens adfærd (se note)», med en note under tabellen der angiver betydningen pr. række.
+
+README er ligeledes rettet in-place (række 41: stort begyndelsesbogstav, «A9-doc's», enkelt «krop»; række 44: runde 6 tilføjet, «årsag» → «variant» ×2, runde 6's kropsrettelser nævnt).
+
+**Status efter runde 7 ●:** H1, konventionens kriterium, runde 6-noten og §6-kolonneoverskriften rettet. A8-dokumentet, A9-dokumentet og README er nu konsistente i krop såvel som append. A9's to-række-tabel uændret. Ingen arkitekturvalg genåbnet.

@@ -48,7 +48,7 @@ Route.handle(params)                  # router.py:63-78
 
 | Indgående | Skrynjas svar | Grund |
 |---|---|---|
-| `session/request_permission` | Dialog → brugerbeslutning → svar. **Ingen klient-timeout** (A1: svar `cancelled` ved `session/cancel`) | ikke optional; `callback_kinds=["approval"]` er ubetinget (`agent.py:679`) |
+| `session/request_permission` | Dialog → brugerbeslutning → svar. **Ingen klient-timeout** (A1: svar `cancelled` ved `session/cancel`) | ikke optional; `callback_kinds` starter som `["approval"]` — `approval` tilføjes **ubetinget**, listen får `"user_input"` ved `elicitation.form` (`agent.py:679-681`) |
 | `session/update` (notification) | Behandles, intet svar | – |
 | `fs/read_text_file`, `fs/write_text_file` | `-32601` øjeblikkeligt | ikke optional → `func is None`-grenen; desuden ikke annoncere (`clientCapabilities: {}`) |
 | `elicitation/create`, `elicitation/complete` | `-32601` / ignoreres | ikke annoncere (`elicitation.form` udeladt → `_supports_user_input()` False → kaldsstedet nås aldrig); unstable |
@@ -97,10 +97,10 @@ Min tidligere formulering («`None` → `AttributeError` på `response.terminal_
 
 Selv hvis Skrynja en dag annoncerede `terminal: true` eller `fs.*: true`, er der **to uafhængige stop**, verificeret i sdist 3.0.2:
 
-1. **Kapabilitetslaget** (`agent.py:668-690`, `_client_descriptor`): `client_tools` bygges kun fra `capabilities.fs.*` / `capabilities.terminal`. Med `clientCapabilities: {}` (Skrynjas v1) bliver listen **tom** — og `callback_kinds` er `["approval"]` uden betingelse.
+1. **Kapabilitetslaget** (`agent.py:668-690`, `_client_descriptor`): `client_tools` bygges kun fra `capabilities.fs.*` / `capabilities.terminal`. Med `clientCapabilities: {}` (Skrynjas v1) bliver listen **tom** — og `callback_kinds` er `["approval"]` uden betingelse **i v1** (`approval` ubetinget; `"user_input"` tilføjes ved `elicitation.form`).
 2. **Værktøjslaget** (uafhængigt af kapabiliteter): ACP-stien konstruerer `LocalHarnessOptions(client=…, session_options=…, session=…, client_tool_handler=…)` (`agent.py:601-611`) — **`client_tools` sættes aldrig** (feltet default-er til `None`, `_runtime.py:562`). `LocalHarnessHost._process_for` overfører `options.client_tools` til `HarnessProcess` (`local.py:106`) → `ClientProvidedTools(None)` → `self._groups = ()` (`_client_provided_tools.py:150-155`) → adapteren kalder kun `configure_provided_tool_executor` **hvis `context.client_tools.group_names` er non-tom** (`_unified_harness_backend_adapter.py:3894-3902`). Core får derfor **ingen klient-værktøjsgrupper** — uanset hvad klienten annoncerer.
 
-**Følge ●:** Core kan ikke kalde `fs/*`/`terminal/*` på wire. Den eneste levende klient-kaldsvej er `callback/call` → `CallbackRequested` → `_answer_callback` → `session/request_permission` (betinget af `callback_kinds`, altid `["approval"]`, og af tool-permissions). App-serverens `_handle_request` (`session.py:1021-1055`) dispatcher `clientTool/*` til `AcpClientToolHandler` — men Core når aldrig dertil uden grupper.
+**Følge ●:** Core kan ikke kalde `fs/*`/`terminal/*` på wire. Den eneste levende klient-kaldsvej er `callback/call` → `CallbackRequested` → `_answer_callback` → `session/request_permission` (betinget af `callback_kinds`, der altid indeholder `"approval"`, og af tool-permissions). App-serverens `_handle_request` (`session.py:1021-1055`) dispatcher `clientTool/*` til `AcpClientToolHandler` — men Core når aldrig dertil uden grupper.
 
 ## 5 · A9 endelig for Skrynja (C++-klient) ●
 
@@ -117,7 +117,7 @@ Selv hvis Skrynja en dag annoncerede `terminal: true` eller `fs.*: true`, er der
 ## 6 · R13-noter (sdist ≠ installeret træ) ○
 
 - **Thinking-guard:** relæet målte **ingen** hardcoded thinking-level-liste i den installerede `vibe/acp/agent.py` (`eb5fc4f4`); sdist'en **har** en — `case "thinking", str(level) if level in {"off","low","medium","high","max"}` (`agent.py:1069-1075`, læst igen denne session). Guarden validerer mod den **globale** `THINKING_LEVELS` (`vibe/config_values.py:11-12`), ikke mod modellens `thinking_levels`, så `low` passer alligevel for zai-glm og dør ved API'et med `3051`. **A7's konklusion er uændret**; forskellen er versions-drift mellem sdist og installeret træ. Per R13 citeres udtrykket, ikke linjenummeret, når dette relæes videre.
-- **Null-mekanismen (§3)** er verificeret ved lokal kørsel af SDK 0.11.0's egen `validate_model` mod schema-modellerne — samme kode, samme Pydantic-major, som telefonen kører (`agent_client_protocol 0.11.0` ● målt). Ikke desto: den er kørt i målemaskinen, ikke på telefonen — markeret ● for kodelæsning + lokal kørsel, ○ for telefon-kørsel.
+- **Null-mekanismen (§3)** er verificeret ved lokal kørsel af SDK 0.11.0's egen `validate_model` mod schema-modellerne — samme kode, samme Pydantic-major, som telefonen kører (`agent_client_protocol 0.11.0` ● målt). Ikke desto mindre: den er kørt i målemaskinen, ikke på telefonen — markeret ● for kodelæsning + lokal kørsel, ○ for telefon-kørsel.
 
 ## Testplan — A9 korrigeret ●
 
@@ -257,3 +257,20 @@ Følgende korte faktafejl er rettet **i kroppen** af denne fil i samme commit so
 4. **Runde 5, status:** «fire målelige årsager» → «fire målelige varianter».
 
 Konventionen (præciseret i A8-korrektionsdoc's runde 6): analysedokumenters krop er append-only **undtagen korte, utvetydige faktafejl**, der ellers ville leve i modstrid med README og de andre analysedokumenter; README redigeres in-place som levende indeks.
+
+---
+
+## Kropsrettelser i runde 7 (in-place, noteret efter konventionen) ● — gennemlæsning af `5a2d8db` (relæ `5ea9ae1f`)
+
+Telefonen gennemlæste `5a2d8db` og fandt A9's fire terminologibyte udført ● — men «ubetinget»-fejlen stod stadig **tre steder i kroppen**, mens appendet sagde det modsatte. Samme selektivitet som runde 5 blev kritiseret for: konventionen blev anvendt på terminologi («årsager» → «varianter»), ikke på fakta («ubetinget»). Rettet i kroppen i denne commit:
+
+1. **§2-tabel** (tidligere linje 51): «`callback_kinds=["approval"]` er ubetinget» → «`callback_kinds` starter som `["approval"]` — `approval` tilføjes **ubetinget**, listen får `"user_input"` ved `elicitation.form`».
+2. **§4 punkt 1** (tidligere linje 100): «er `["approval"]` uden betingelse» → «er `["approval"]` uden betingelse **i v1** (`approval` ubetinget; `"user_input"` tilføjes ved `elicitation.form`)».
+3. **§4 følge** (tidligere linje 103): «altid `["approval"]`» → «der altid indeholder `"approval"`».
+4. **§6** (tidligere linje 120): «Ikke desto:» → «Ikke desto mindre:» (afskåret udtryk).
+
+README række 44 rettet in-place: runde 6 tilføjet til rundenummereringen, «tredje/fjerde årsag» → «tredje/fjerde variant» (konsistent med række 42), runde 6's kropsrettelser nævnt.
+
+**Lærd lektion (tilføjet som R14 ◐):** append-only-konventionen skal anvendes på **indhold**, ikke kun på **ordvalg** — en terminologibyte uden den tilsvarende indholdsrettelse efterlader kroppen i modstrid med appendet. Kriteriet i A8-doc's runde 6 («modsiger resten af samme dokument») dækker netop dette tilfælde.
+
+**Status efter runde 7 ●:** A9's tre «ubetinget»-steder og «Ikke desto» rettet; README række 44 konsistent. A8-doc's H1, konvention, runde 6-note og §6-kolonne ligeledes rettet (se A8-doc's runde 7). Alle tre dokumenter konsistente i krop og append. A9's to-række-tabel uændret. Ingen arkitekturvalg genåbnet.
