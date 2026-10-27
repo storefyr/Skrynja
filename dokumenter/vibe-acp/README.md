@@ -26,6 +26,7 @@ Måleresultater og scripts fra arbejdet med vejkortet for Skrynja mod `vibe-acp`
 | `analyse-beslutning-thinking-ui-fravalgsliste.md` | **Beslutning:** `medium`/`max` vises med «samme som High» (skjules ikke); A7 som 3-lags tilstand — hardcoded standard + `Skrynja.conf` override + indlært ved `3051` |
 | `analyse-lag3-positiv-evidens-r34.md` | **Lag 3 korrigeret:** lærer kun ved positiv evidens (`3051` + entydigt tekstmønster + første prompt efter skift til `low`); synlig «Nulstil»-vej. **R34 afgjort:** aktiv sti er `~/.config/org.skrynja/Skrynja/Skrynja.conf` |
 | `analyse-lag3-bekraeftet-laering-r41.md` | **Lag 3 endelig:** bekræftet læring (dialog ved `3051` efter skift til `low` — ingen tekstmatch, falsk positiv umulig). **R41 afgjort:** katalog-cache er flaggated (`experimental_enable_model_catalog=False` default), ikke en fejl |
+| `maalejournal-r34-konfigsti-lukket.md` | **R34 ● lukket på telefonen:** ekstra `~/.config/harbour-skrynja/` slettet (backup i `/tmp/skrynja-konf-backup-2026-10-27`); én aktiv sti — lag 2+3 ligger utvetydigt i `~/.config/org.skrynja/Skrynja/Skrynja.conf`. Nummereringsafklaring: relæets «R42» kaldes R34 her (R42 = tom katalog, allerede optaget) |
 | `maaling_m00_m01.py` | Script: stdio `initialize`-udveksling mod `vibe-acp` (M0.1) |
 | `maaling_m01b_fuld_frame.py` | Script: `initialize` med `protocolVersion` 99/2/0 — måler versionshåndtering (M0.1b) |
 | `m016-bro/` | Rust reference-bro: `AcpHttpServer` + `AcpAgent` spawner `vibe-acp`, loopback roundtrip (M0.16) |
@@ -54,7 +55,7 @@ Telefonen kører `mistral_vibe` **3.0.2** (identisk med PyPI), `agent_client_pro
 - **R32 ● lukket:** 800000 bekræftet tre veje — wire `token_threshold`, wire `usage_update.size`, GrowthBook-payload `auto_compact_threshold`. Kompaktionsrisikoen på `glm-5-3` er reel.
 - **Tilladelsesdialog ● lukket:** årsagen til udeblevne dialoger er filkonfiguration (`permission = "always"` i to `[tools.*]`-sektioner + `"id"` i allowlist i `~/.vibe/config.toml`), ikke mode. Begge veje ender i `decision="allow"`.
 - **R30 ● to uafhængige forekomster:** `low→"none"`-tabellen findes både i `mistralai_vibe_local_harness/vibe/adapters/mistral.py` og `vibe/core/llm/backend/mistral.py`. Ikke rettet i 3.0.2; kan ikke afhjælpes klientside — kun undgås (A7).
-- **R34 ● afgjort:** `harbour-skrynja.cpp:26-27` (`org.skrynja`/`Skrynja`) → aktiv sti er `~/.config/org.skrynja/Skrynja/Skrynja.conf`. **R41 ◐ afgjort:** katalog-cache er flaggated (`experimental_enable_model_catalog=False` default i `vibe_schema.py:732`), ikke en fejl — ikke-blokerende.
+- **R34 ● lukket:** målt på telefonen — `~/.config/harbour-skrynja/` slettet (dens `Skrynja.conf` havde ingen effekt; kun `contextMessageLimit=0` fandtes kun dér, intet at overføre). Én aktiv sti: `~/.config/org.skrynja/Skrynja/Skrynja.conf` — lag 2+3 utvetydige. **R41 ◐ afgjort:** katalog-cache er flaggated (`experimental_enable_model_catalog=False` default i `vibe_schema.py:732`), ikke en fejl — ikke-blokerende.
 
 ## Implementationsklar backlog (fra måleserien — endelig)
 
