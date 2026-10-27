@@ -170,3 +170,42 @@ PR-gennemlæsningen fandt tre præciseringer i dette dokument. Originalsektioner
 2. **R13 — sdist-linjenumre i §4 punkt 2 ●:** henvisningerne `_runtime.py:562`, `local.py:106`, `_client_provided_tools.py:150-155`, `_unified_harness_backend_adapter.py:3894-3902` citerer sdist-linjenumre i strid med dette dokumentets egen R13-regel. Fremadrettet citeres **udtrykkene**: `LocalHarnessOptions(client=…, session_options=…, session=…, client_tool_handler=…)` (intet `client_tools`), `client_tools=options.client_tools`, `self._groups = () if tools is None else …`, `if context.client_tools.group_names:`. Kædens semantik er uændret ●.
 
 3. **§3 — `AttributeError`-spekulationen skåret væk ●:** den oprindelige sætning hævdede, at en `AttributeError`-vej «kun» ville være nåelig via `request_optional_model`-ruterne — ulogisk, for netop de ruter (`release`/`kill`) får `{}` fra SDK'et, ikke `null`. Det målte står alene: `validate_model(None, …)` → `ValidationError` → værktøjsfejl (`INVALID_PARAMS`) for de tre `null`-ruter; `{}` parses som tom respons → tavst succes for de to `{}`-ruter.
+
+---
+
+## Bekræftelsesrunde 4 — `handle` og `serialize_params` målt ● (relæ `7d44b866`)
+
+Telefonen målte `Route.handle` og `serialize_params` direkte og korrigerede én af mine slutninger. Verificeret igen i SDK 0.11.0 denne session — inklusive en lokal kørsel af `Route.handle` mod rigtige `Route`-objekter:
+
+### `adapt_result` rammer ikke `default_result` ● — min «dobbelt sikret» var forkert
+
+Telefonen er rigtig, og jeg bekræfter med en kørt test: `Route.handle` returnerer `default_result` med **tidlig retur** i `func is None`-grenen — `adapt_result` anvendes kun på et reelt behandlersvar (`if self.adapt_result is not None and self.kind == "request"` efter `await self.func(params)`). Kørsel bekræfter:
+
+```
+Route(func=None, optional=True, default_result={}, adapt_result=normalize_result).handle({})
+  → {}        # adapt_result IKKE kørt på default_result
+Route(func=<handler returning None>, optional=True, default_result={}, adapt_result=normalize_result).handle({})
+  → {}        # adapt_result kørt: None → {} via normalize_result
+```
+
+**Korrektion ●:** `terminal/release` og `terminal/kill` er beskyttet **én** gang — af `{}` som `default_result`. `normalize_result` beskytter kun behandlersvar (relevant hvis en klient faktisk implementerede ruten og returnerede `None`). Min formulering «dobbelt sikret» var en slutning skrevet som en målt kæde. §2-tabellen ovenfor viser `adapt_result=normalize_result` korrekt som registreret — men kolonnen må ikke læses som «køres også på default_result». A9's to-række-tabel står i øvrigt uændret.
+
+| Rute | `default_result` | `adapt_result` kørt på default? | Wire | Agent-side |
+|---|---|---|---|---|
+| `create` / `output` / `wait_for_exit` | `None` | – | `null` | `ValidationError` → værktøjsfejl |
+| `release` / `kill` | `{}` | **nej** (kun på behandlersvar) | `{}` | tavst succes |
+
+### `serialize_params` lukket ●
+
+`serialize_params` (udtryk: `params.model_dump(mode="json", by_alias=True, exclude_none=True, exclude_defaults=True)`). Kørsel bekræfter: `KillTerminalResponse()` → `{}`, `ReleaseTerminalResponse()` → `{}` — ikke `{"_meta": null}`. Uden praktisk betydning for A9 (ingen terminal-handler registreres på ACP-stien), men lukket som ○-punkt.
+
+### To nye fund i `handle` ●
+
+1. **`func is None`-grenen ligger før `warn_unstable`** — en rute med både `optional=True` og `warn_unstable=True` ville svare `default_result` i stedet for `-32601`. **`optional` er stærkere end unstable-flaget.** Ingen nuværende rute har begge (○ ikke målt), men rækkefølgen bør stå som regel i spec'en — den er kontraintuitiv. **Tilføjet til A9 som rækkefølgeregel ●:** i SDK'ets `handle` er rækkefølgen (a) ingen behandler → `default_result` eller `-32601`; (b) `warn_unstable` → advarsel + `-32601`; (c) behandlerkald + `adapt_result`. Skrynjas egen klient bør følge samme rækkefølge, hvis den implementerer `optional`-lignende auto-svar (den gør ikke i v1 — Skrynja svarer altid selv).
+2. **`-32601`'s tredje årsag er nu målt, ikke udledt ●:** `routes.get(method)` → `None` → `RequestError.method_not_found(method)` i routerens dispatch (før `route.handle` kaldes). Alle tre årsager er dermed belagte med målt kode: ingen behandler uden `optional` (`handle`, første gren), `warn_unstable` (`handle`, anden gren), ukendt metodenavn (router-dispatch, `routes.get` → `None`).
+
+### Kolonneforveksling i A8-doc §6 — bekræftet og allerede præciseret ●
+
+Telefonen peger på kolonneforvekslingen i `analyse-a8-korrigeret-resume-frist-kapabiliteter.md` §6-tabellen: kolonnen «I SDK'et (Python-klient)» beskriver **Skrynjas** adfærd for `session/request_permission` («Skrynja implementerer: dialog…») — SDK'et er agenten, ikke klienten; der er ingen «SDK-klient» at beskrive for denne rute. Kolonnen beskriver faktisk «A9's vedtagne adfærd». Rettet her frem for in-place: §6-tabellens venstre kolonne skal læses som «**A9-vedtaget (gælder Skrynja)**», ikke «I SDK'et». For `terminal/*`-rækkerne er kolonnen korrekt — der beskriver den *Python-SDK-klient*, Skrynja ville erstatte.
+
+**Status efter bekræftelsesrunde 4 ●:** `adapt_result`-spørgsmålet lukket (én beskyttelse, ikke to); `serialize_params` lukket; `-32601` lukket med tre målte årsager; rækkefølgereglen `optional` før `unstable` tilføjet A9; §6-kolonneforvekslingen præciseret. A9's to-række-tabel uændret. A8 uændret. Ingen arkitekturvalg genåbnet.
