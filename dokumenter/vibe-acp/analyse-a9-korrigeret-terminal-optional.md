@@ -271,6 +271,19 @@ Telefonen gennemlæste `5a2d8db` og fandt A9's fire terminologibyte udført ● 
 
 README række 44 rettet in-place: runde 6 tilføjet til rundenummereringen, «tredje/fjerde årsag» → «tredje/fjerde variant» (konsistent med række 42), runde 6's kropsrettelser nævnt.
 
-**Lærd lektion (tilføjet som R14 ◐):** append-only-konventionen skal anvendes på **indhold**, ikke kun på **ordvalg** — en terminologibyte uden den tilsvarende indholdsrettelse efterlader kroppen i modstrid med appendet. Kriteriet i A8-doc's runde 6 («modsiger resten af samme dokument») dækker netop dette tilfælde.
+**R14 ●:** append-only-konventionen gælder **indhold**, ikke kun **ordvalg** — en terminologibyte uden den tilsvarende indholdsrettelse efterlader kroppen i modstrid med appendet. *(Formuleret som regel i runde 8; tidligere stod den som «Lærd lektion (R14 ◐)» med en fejlagtig datering — bisætningen «modsiger resten af samme dokument» blev først indført i A8-doc's runde 7, og ◐ er ikke defineret i forhold til ●/○. R14 er nu en regel, ikke en observation.)*
 
-**Status efter runde 7 ●:** A9's tre «ubetinget»-steder og «Ikke desto» rettet; README række 44 konsistent. A8-doc's H1, konvention, runde 6-note og §6-kolonne ligeledes rettet (se A8-doc's runde 7). Alle tre dokumenter konsistente i krop og append. A9's to-række-tabel uændret. Ingen arkitekturvalg genåbnet.
+**Status efter runde 7 ●:** A9's tre «ubetinget»-steder og «Ikke desto» rettet. *(Statuslinjen kropsrettet i runde 8: «README række 44 konsistent» og «Alle tre dokumenter konsistente» var skrevet før README blev læst efter — telefonen påviste, at række 44 manglede runde 7 og tillagde runde 7's arbejde til runde 6. Efter runde 8's README-rettelser gælder påstanden.)* A8-doc's H1, konvention, runde 6-note og §6-kolonne ligeledes rettet (se A8-doc's runde 7). A9's to-række-tabel uændret. Ingen arkitekturvalg genåbnet.
+
+---
+
+## Kropsrettelser i runde 8 (in-place, noteret efter konventionen) ● — gennemlæsning af `080ae2c` (relæ `f14eefcc`)
+
+Telefonens gennemlæsning fandt to forhold i denne fil. Rettet i kroppen i denne commit:
+
+1. **R14 formuleret som regel ●** (tidligere i runde 7's note): «Lærd lektion (tilføjet som R14 ◐)» antydede læring på tværs af sessioner, og ◐ er ikke defineret i forhold til ●/○. Desuden fejlagtig datering: bisætningen «modsiger resten af samme dokument» blev først indført i A8-doc's **runde 7** (samme commit), ikke runde 6. Nu: «**R14 ●:** append-only-konventionen gælder **indhold**, ikke kun **ordvalg**» — med den gamle ordlyd citeret i noten.
+2. **Statuslinje** (runde 7's afslutning): «README række 44 konsistent» og «Alle tre dokumenter konsistente» var skrevet før README blev læst efter — telefonen påviste, at række 44 manglede runde 7 og tillagde runde 7's «tre ubetinget-steder» til runde 6. Kropsrettet med note; gælder efter denne rundes README-rettelser.
+
+README række 44 rettet in-place: rundenummereringen udvidet til «2, 4, 5, 6, 7 og 8»; «runde 6: kropsrettelser — tre «ubetinget»-steder…» flyttet fra runde 6 til runde 7; runde 6's faktiske arbejde (terminologibyte «årsager» → «varianter») angivet; runde 8's R14-formulering tilføjet. Række 42 (A8-doc) ligeledes udvidet med runde 7 og 8.
+
+**Status efter runde 8 ●:** A8-doc, A9-doc og README konsistente i krop og append — inklusive rundenummerering. A9's to-række-tabel uændret. Ingen arkitekturvalg genåbnet.

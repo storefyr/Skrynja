@@ -1,4 +1,4 @@
-# A8 korrigeret — A8 påstod «alle 11 request-ruter har frist», men `session/resume` manglede frist (nu 120 s fast); kapabilitetsmængder adskilt; `callback_kinds` præciseret ●
+# A8 korrigeret — A8 påstod «alle request-ruter har frist» (11 ruter, kun 10 med frist), men `session/resume` manglede frist (nu 120 s fast); kapabilitetsmængder adskilt; `callback_kinds` præciseret ●
 
 *(Titel kropsrettet i runde 7: tidligere titel «`session/resume` har ingen frist» beskrev problemet og modsagde §1's vedtagelse — samme fejlklasse som de øvrige kropsrettelser.)*
 
@@ -17,7 +17,7 @@ Målt i `acp/agent/router.py` (`build_agent_router`): der er **elleve** request-
 
 `session/resume` er **ikke kaldt i v1** (A2: `session/load` foretrækkes; `resume` laver samme `ResumeSessionIntent` men uden historik-replay — verificeret i sdist: `resume_session` bygger `ResumeSessionIntent(session_id)` og returnerer uden `_load_complete_history`, hvor `load_session` replay'er). Men A8's princip er **generelt**: *ingen udgående anmodning hænger uden frist* — ellers er det præcis det hul, A8 blev lavet for at lukke.
 
-**Vedtaget ●:** `session/resume` får **120 s fast**, samme klasse som de øvrige livscyklus-ruter. Implementeres kun hvis Skrynja en dag kalder den (v2+); i v1 står rækken som «ikke kaldt», men fristen er **spec'et**, så en fremtidig aktivering ikke arver en regel uden dækning. Titlen rettes tilsvarende: «alle request-ruter, der kan kaldes, har frist — inklusive `session/resume`, som ikke kaldes i v1».
+**Vedtaget ●:** `session/resume` får **120 s fast**, samme klasse som de øvrige livscyklus-ruter. Implementeres kun hvis Skrynja en dag kalder den (v2+); i v1 står rækken som «ikke kaldt», men fristen er **spec'et**, så en fremtidig aktivering ikke arver en regel uden dækning. Titlen rettes tilsvarende til den faktiske (se H1): «A8 påstod alle 11 request-ruter havde frist, men `session/resume` manglede frist (nu 120 s fast)». *(Kropsrettet i runde 8: tidligere stod forslaget «alle request-ruter, der kan kaldes, har frist — inklusive `session/resume`, som ikke kaldes i v1», som var selvmodsigende og aldrig blev vedtaget.)*
 
 ## 2 · Bør-rettelser — kapabilitetsmængder adskilt ●
 
@@ -173,7 +173,7 @@ Telefonen gennemlæste denne fil og fandt seks fejl. Originalsektionerne ovenfor
 | `terminal/create`, `output`, `wait_for_exit` | **SDK svarer selv `null`** (`optional=True`) | Skrynja svarer `-32601` øjeblikkeligt (defensivt; unåeligt i v1) |
 | `terminal/release`, `kill` | **SDK svarer selv `{}`** (`optional=True`) | Skrynja svarer `-32601` øjeblikkeligt |
 
-*Kolonnebetydning pr. række (kropsrettet i runde 7 — tidligere stod «I SDK'et (Python-klient)» på alle rækker): for `session/request_permission` og `session/update` beskriver venstre kolonne **A9-vedtaget for Skrynja** (SDK'et er agenten, ikke klienten — der er ingen SDK-klient at beskrive for disse ruter). For `fs/*`, `elicitation/*` og `terminal/*` beskriver venstre kolonne **Python-SDK-klientens** adfærd (hvad SDK'et ville gøre, hvis Skrynja brugte det).*
+*Kolonnebetydning pr. række (kropsrettet i runde 7, faktuelt rettet i runde 8): for `session/request_permission` og `session/update` beskriver venstre kolonne **A9-vedtaget for Skrynja** — SDK'ets klientrouter (`acp/client/router.py`) **videresender** disse ruter til `client.request_permission` / `client.session_update`, så en SDK-klient ville sende dem til sin egen `Client`-implementering; kolonnen beskriver derfor ikke SDK'ets standardadfærd, men hvad A9 vedtager for Skrynja. For `fs/*`, `elicitation/*` og `terminal/*` beskriver venstre kolonne **Python-SDK-klientens** standardadfærd (auto-svar ved `optional=True`, `-32601` ellers).*
 
 ### §1, `resume_session` — udtrykscitater tilføjet ● (R13)
 
@@ -213,7 +213,7 @@ Runde 5 afviste en ombygning af §6-tabellen med henvisning til append-only, i s
 | Art | Regel | Begrundelse |
 |---|---|---|
 | Analysedokumenters **krop** (påstande, tabeller, beslutninger) | **Append-only** — rettelser appenderes som nye afsnit | Revisionssporet: en læser kan følge, hvad der blev påstået hvornår, og hvad der siden blev korrigeret |
-| **Korte, utvetydige faktafejl** (tal, pegepinde, overskrifter og terminologi, der skal svare til README/andre filer eller modsiger resten af samme dokument) | **In-place tilladt** — med en note i næste append, der angiver hvad kroppen fik rettet | Ellers ender samme påstand i modstrid på tværs af filer — eller internt i samme fil — resten af dokumentets levetid |
+| **Korte, utvetydige faktafejl**, når alle tre betingelser gælder: (i) rettelsen løser en modstrid krop↔append eller fil↔fil, (ii) rettelsen er en minimal mekanisk substitution (tal, pege, overskrift, ét ord), (iii) den gamle ordlyd gengives i noten | **In-place tilladt** — med en note i næste append, der angiver hvad kroppen fik rettet og citerer den gamle ordlyd | Ellers ender samme påstand i modstrid på tværs af filer — eller internt i samme fil — resten af dokumentets levetid |
 | **README** | **In-place** — det er et levende indeks, ikke et revisionsspor | Indekset skal altid pege rigtigt; historikken ligger i commits og analysedokumenterne |
 
 Under denne konvention er følgende rettet **i kroppen** i denne commit: §2's «tre årsager» → «fire varianter», §4 række 8, Status-linien, §6's indgående-linje, §4 rækker 6-7. Alt er noteret her, så revisionssporet bevares.
@@ -260,4 +260,20 @@ Telefonen gennemlæste `5a2d8db` og fandt, at fem A8-kropsrettelser var udført 
 
 README er ligeledes rettet in-place (række 41: stort begyndelsesbogstav, «A9-doc's», enkelt «krop»; række 44: runde 6 tilføjet, «årsag» → «variant» ×2, runde 6's kropsrettelser nævnt).
 
-**Status efter runde 7 ●:** H1, konventionens kriterium, runde 6-noten og §6-kolonneoverskriften rettet. A8-dokumentet, A9-dokumentet og README er nu konsistente i krop såvel som append. A9's to-række-tabel uændret. Ingen arkitekturvalg genåbnet.
+**Status efter runde 7 ●:** H1, konventionens kriterium, runde 6-noten og §6-kolonneoverskriften rettet. *(Statuslinjen kropsrettet i runde 8: tidligere påstod den, at README var konsistent — telefonen påviste, at README manglede runde 7 og tillagde runde 7's arbejde til runde 6; påstanden var skrevet før README blev læst efter. Efter runde 8's README-rettelser gælder den.)* A9's to-række-tabel uændret. Ingen arkitekturvalg genåbnet.
+
+---
+
+## Kropsrettelser i runde 8 (in-place, noteret efter konventionen) ● — gennemlæsning af `080ae2c` mod PR #18's diff (relæ `f14eefcc`)
+
+Telefonen verificerede `080ae2c` mod PR-diffet (frem for cachede dokumenter — ingen rod fra gamle revisioner) og fandt runde 7's seks punkter udført ●, men syv nye forhold. Rettet i kroppen i denne commit:
+
+1. **§1's forældede titelforslag** (tidligere linje 20): stod stadig med det selvmodsigende forslag «alle request-ruter, der kan kaldes … inklusive `session/resume`, som ikke kaldes» — aldrig vedtaget. Erstatted af den faktiske titel med note.
+2. **§6-notens faktuelle fejl** (tidligere linje 176): påstod «SDK'et er agenten, ikke klienten — der er ingen SDK-klient at beskrive for disse ruter». **Forkert ●** — verificeret i SDK 0.11.0: `acp/client/router.py` **er** SDK'ets klientside og registrerer både `session/request_permission` (`route_request(..., "request_permission")`) og `session/update` (`route_notification(..., "session_update")`), som videresender til `client.request_permission` / `client.session_update`. Korrekt begrundelse: kolonnen beskriver A9-vedtaget for Skrynja, fordi en SDK-klient ville videresende til sin egen `Client`-implementering — ikke fordi der ingen klient findes. Noten modsagde desuden sin egen næste sætning om `fs/*`/`terminal/*`.
+3. **Konventionens kriterium afgrænset**: bisætningen «eller modsiger resten af samme dokument» gjorde undtagelsen til reglen. Nu tre betingelser: (i) modstrid krop↔append eller fil↔fil, (ii) minimal mekanisk substitution, (iii) gammel ordlyd gengivet i noten.
+4. **Statuslinje** (runde 7's afslutning): påstod README var konsistent — skrevet før README blev læst efter (samme mønster som runde 4-6). Kropsrettet med note; gælder efter denne rundes README-rettelser.
+5. **H1 præciseret**: to citatniveauer og en parafrase («alle 11 …» vs originalens «alle request-ruter har frist») — nu ét præcist citat: «alle request-ruter har frist» (11 ruter, kun 10 med frist).
+
+**Beslutning ○ — §6-tabellen ikke bygget om:** telefonen noterede, at én kolonne med to betydninger (nu med skråstreg + note) kunne erstattes af to kolonner eller fodnotemærker pr. række, eftersom in-place-redigering nu er etableret. **Afvist som uden for konventionen:** en tabelombygning er ikke en «minimal mekanisk substitution» (betingelse ii) — den er en restructure. Noten er nu faktuelt korrekt, hvilket var fejlen; ergonomien står.
+
+**Status efter runde 8 ●:** A8-doc, A9-doc og README konsistente i krop og append — inklusive rundenummerering (runde 7 og 8 nævnt i README). A9's to-række-tabel uændret. Ingen arkitekturvalg genåbnet.
