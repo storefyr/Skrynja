@@ -11,5 +11,4 @@
 {"jsonrpc":"2.0","id":4,"result":{"stopReason":"cancelled","usage":{"inputTokens":0,"outputTokens":0,"totalTokens":0}}}
 {"jsonrpc":"2.0","method":"session/update","params":{"sessionId":"fixture-session-0001","update":{"sessionUpdate":"fremtidig_variant","noget":"som Skrynja ikke kender endnu"}}}
 {"jsonrpc":"2.0","id":5,"result":{"stopReason":"end_turn","usage":{"inputTokens":12345,"outputTokens":678,"totalTokens":13023}}}
-{"jsonrpc":"2.0","id":5,"result":{"stopReason":"end_turn","usage":{"inputTokens":12345,"outputTokens":678,"totalTokens":13023}}}{"jsonrpc":"2.0","id":6,"res
 {"jsonrpc":"2.0","id":6,"res
