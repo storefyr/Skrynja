@@ -31,6 +31,8 @@ Måleresultater og scripts fra arbejdet med vejkortet for Skrynja mod `vibe-acp`
 | `fixture-trin-e.ndjson` | **Trin E fixture:** 13 komplette målte wire-linjer + 1 delvis linje (EOF-test). Trin E bygges og testes mod denne fil fra første linje |
 | `fixture-trin-e-sammenklaebning.ndjson` | **Trin E edge-case:** to JSON-objekter på én linje uden `\n` (id=7, id=8) + delvis linje — tester parserens objektgrænsehåndtering |
 | `analyse-fixture-rettelse-objektgraenser.md` | **Fixture rettet** (sammenklæbning var min fejl) + **parser-beslutning:** del på `\n`, ved «Extra data» brug `QJsonParseError::offset` til at udtrække flere objekter fra samme linje (Qt 5.6-ækvivalent til `raw_decode`). Testplan: 15 succes-parses, 2 forventede EOF-fejl, 0 crashes |
+| `fixture-trin-e-ugyldig.ndjson` | **Trin E edge-case:** gyldigt objekt + ugyldig resten (×2), normalt objekt, delvis linje — tester regel 2 (forkast hele linjen) |
+| `analyse-parser-spec-komplet-a6-buffer.md` | **Parser-spec komplet ●:** tre sikkerhedsregler (kun ExtraData splitter; valider første objekt eller forkast hele linjen; værn mod nul-fremgang) + **A6: `ACP_MAX_LINE_BYTES` = 4 MiB** hård grænse med eksplicit fejl. Endelig testplan: 16 udleveringer, 4 forventede forkastninger/EOF, 0 crashes |
 | `maaling_m00_m01.py` | Script: stdio `initialize`-udveksling mod `vibe-acp` (M0.1) |
 | `maaling_m01b_fuld_frame.py` | Script: `initialize` med `protocolVersion` 99/2/0 — måler versionshåndtering (M0.1b) |
 | `m016-bro/` | Rust reference-bro: `AcpHttpServer` + `AcpAgent` spawner `vibe-acp`, loopback roundtrip (M0.16) |
