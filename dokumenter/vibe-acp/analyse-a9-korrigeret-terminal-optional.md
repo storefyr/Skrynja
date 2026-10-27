@@ -158,3 +158,15 @@ Telefonen målte bekræftelserne lokalt i den installerede udgave og tilføjede 
 **Telefonens forbehold ○ (stående):** `model_validate(None)` → `ValidationError` er relæets lokale måling, ikke reproduceret på telefonen. Mekanismen hviler på SDK 0.11.0-kode + lokal kørsel mod samme schema-modeller; telefon-kørsel udestår (ikke-blokerende — ruten er unåelig i v1 alligevel).
 
 **Status efter bekræftelsesrunde 2 ●:** A9 korrigeret og dobbelt-verificeret (relæ + telefon). A8 uændret. A8+A9, parser-spec og transport-spec komplet. Ingen arkitekturvalg genåbnet.
+
+---
+
+## Rettelser fra PR-gennemlæsningen (relæ `606a4b06`) ● — optaget uden at ændre ovenstående
+
+PR-gennemlæsningen fandt tre præciseringer i dette dokument. Originalsektionerne ovenfor er bevaret (korrektur sker i nye afsnit); rettelserne gælder fra denne runde:
+
+1. **`callback_kinds` er ikke ubetinget `["approval"]` ●** (§2-tabel og §4): koden bygger listen som `["approval"]` og tilføjer `"user_input"`, når klienten annoncerer `elicitation.form` (`agent.py:679-681`, målt). Korrekt formulering: `approval` er **ubetinget** — så `session/request_permission` kan altid komme — men listen som helhed er betinget. I Skrynjas v1 (elicitation udeladt) er resultatet `["approval"]`, så konsekvensen for Skrynja er uændret.
+
+2. **R13 — sdist-linjenumre i §4 punkt 2 ●:** henvisningerne `_runtime.py:562`, `local.py:106`, `_client_provided_tools.py:150-155`, `_unified_harness_backend_adapter.py:3894-3902` citerer sdist-linjenumre i strid med dette dokumentets egen R13-regel. Fremadrettet citeres **udtrykkene**: `LocalHarnessOptions(client=…, session_options=…, session=…, client_tool_handler=…)` (intet `client_tools`), `client_tools=options.client_tools`, `self._groups = () if tools is None else …`, `if context.client_tools.group_names:`. Kædens semantik er uændret ●.
+
+3. **§3 — `AttributeError`-spekulationen skåret væk ●:** den oprindelige sætning hævdede, at en `AttributeError`-vej «kun» ville være nåelig via `request_optional_model`-ruterne — ulogisk, for netop de ruter (`release`/`kill`) får `{}` fra SDK'et, ikke `null`. Det målte står alene: `validate_model(None, …)` → `ValidationError` → værktøjsfejl (`INVALID_PARAMS`) for de tre `null`-ruter; `{}` parses som tom respons → tavst succes for de to `{}`-ruter.
