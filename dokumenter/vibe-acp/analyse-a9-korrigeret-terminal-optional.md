@@ -135,3 +135,26 @@ Selv hvis Skrynja en dag annoncerede `terminal: true` eller `fs.*: true`, er der
 ## Status ●
 
 A9 korrigeret og lukket: to terminal-rækker (`null` ×3, `{}` ×2 i SDK'et; `-32601` ×5 i Skrynjas egen klient), `optional`-mekanismen verificeret endeligt (`_resolve_handler` → `_make_func` → `handle`), agent-null sporet til `ValidationError` → værktøjsfejl (ikke hæng), `terminal/*`/`fs/*` unåelige i v1 (kapabiliteter **og** manglende `client_tools`-grupper i Core). `clientCapabilities: {}` bekræftet. A8 uændret. Ingen arkitekturvalg genåbnet — A9's kernevalg (kun `request_permission` + `session/update` implementeret; resten afvist) står.
+
+---
+
+## Bekræftelsesrunde 2 — telefonens målinger mod sdist ● (relæ `5f898ad8`)
+
+Telefonen målte bekræftelserne lokalt i den installerede udgave og tilføjede to præciseringer. Begge verificeret igen i sdist/SDK denne session:
+
+| Telefonens måling | Verificeret her | Status |
+|---|---|---|
+| `acp/router.py:31-37`: `getattr(obj, attr, None)` i begge forgreninger; ingen `AttributeError` | identisk i SDK 0.11.0 (`_resolve_handler`) | ● |
+| **Omvendt fallback** (`router.py:38-43`): callable attribut **uden** underscore → signatur-inspektion for `params` → `legacy_api=True` | bekræftet — `elif callable(func) and "_" not in attr:` + `inspect.signature` + `len(parameters) == 2 and "params" in parameters` | ● |
+| `agent.py:601-611`: `LocalHarnessOptions(client=…, session_options=…, session=…, client_tool_handler=…)` — intet `client_tools` | bekræftet (`_start_session`-vejen) | ● |
+| `agent.py:1499-1502`: passiv vært (`_host_resources`) sætter kun `client` + `session_options` — heller intet `client_tools` | bekræftet (`LocalHarnessOptions(client=self._client_descriptor(), session_options=SessionOptions(cwd=…))`) | ● |
+| `terminal/kill` er femte `optional=True` (linje 143) med `default_result={}` | bekræftet (`client/router.py:139-146`: `optional=True, default_result={}, adapt_result=normalize_result`) | ● |
+
+**Nye præciseringer optaget i dokumentet:**
+
+1. **Omvendt fallback i `_resolve_handler`** (§1, sidefund): når attributten findes og navnet har **ingen** underscore, inspiceres signaturen — to parametre med ét ved navn `params` markerer legacy-formen (ét model-objekt i stedet for nøgleords-argumenter). Uden betydning for A9, men forklarer `legacy_api`-flaget og de to kaldeformer i `handle()`.
+2. **Passiv vært uden `client_tools`** (§4): også `_host_resources` (`agent.py:1499-1502`) konstruerer uden `client_tools` — unåelighedskæden gælder **begge** værtsveje, ikke kun `_start_session`.
+
+**Telefonens forbehold ○ (stående):** `model_validate(None)` → `ValidationError` er relæets lokale måling, ikke reproduceret på telefonen. Mekanismen hviler på SDK 0.11.0-kode + lokal kørsel mod samme schema-modeller; telefon-kørsel udestår (ikke-blokerende — ruten er unåelig i v1 alligevel).
+
+**Status efter bekræftelsesrunde 2 ●:** A9 korrigeret og dobbelt-verificeret (relæ + telefon). A8 uændret. A8+A9, parser-spec og transport-spec komplet. Ingen arkitekturvalg genåbnet.
