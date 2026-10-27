@@ -3,7 +3,7 @@
 Måleresultater og scripts fra arbejdet med vejkortet for Skrynja mod `vibe-acp`
 (ACP-klient, jf. `../vejkort.md` Rev. 13).
 
-**To maskiner, to versioner:** måleserien er delt mellem **målmaskinen** (sandbox — `vibe-acp` **2.9.4**, runde 1-2, adfærdsmålinger før telefonen kom ind) og **telefonen** (Jolla Phone — `mistral_vibe` **3.0.2**, runde 3-4, wire-målinger og kodelinje-verifikationer). Hver måling hører til én af dem; «Hovedfund»-afsnittene nedenfor er mærket tilsvarende.
+**To maskiner, to versioner:** måleserien er delt mellem **målmaskinen** (sandbox — `vibe-acp` **2.9.4**, runde 1-2, adfærdsmålinger før telefonen kom ind) og **telefonen** (Jolla Phone — `mistral_vibe` **3.0.2** med `agent_client_protocol` **0.11.0**, runde 3-4, wire-målinger og kodelinje-verifikationer). Hver måling hører til én af dem; «Hovedfund»-afsnittene nedenfor er mærket tilsvarende. **Bemærk:** «3.0.2» er **programmelversionen** (`mistral_vibe`), «0.11.0» er **SDK-versionen** (`agent_client_protocol`) — to forskellige tal, ikke to builds af samme pakke.
 
 ## Indhold
 

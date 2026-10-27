@@ -144,3 +144,46 @@ Telefonen skrev tidligere «`resume` har ingen kapabilitet» — upræcist. Korr
 | 4 | Står `model_validate(None)` stadig som **○ relæets måling**? | ● Ja — i A9-korrektionsdoc §6 og «Bekræftelsesrunde 2»: «relæets lokale måling, ikke reproduceret på telefonen» (○ for telefon-kørsel) |
 
 **Status efter bekræftelsesrunde 3 ●:** A8 korrigeret og trippel-verificeret (relæ + telefon + SDK-læsning). Tre inkonsistensklasser dokumenteret. A9 uændret. Ingen arkitekturvalg genåbnet.
+
+---
+
+## Rettelser fra gennemlæsningen af `42a6302` (relæ `1165ce96`) ● — append-only
+
+Telefonen gennemlæste denne fil og fandt seks fejl. Originalsektionerne ovenfor er bevaret; rettelserne gælder fra denne runde:
+
+| # | Sted | Fejl | Rettelse |
+|---|---|---|---|
+| 1 | H1 | «`session/resume` har ingen frist» — modsiger §1, der vedtager 120 s fast | Titlen beskriver **problemet** (A8-dokumentets påstand), ikke beslutningen. Præciseret: H1 skal læses som «A8 påstod alle 11 ruter havde frist — `session/resume` havde ingen; §1 vedtager 120 s fast» |
+| 2 | §6, indgående linje | «`fs/*` + `elicitation/*` + `terminal/*` → `-32601` øjeblikkeligt» gendanner præcis den fejl, A9-korrektionen fjernede | **Rettet nedenfor:** for Skrynjas egen C++-klient er `-32601` på `terminal/*` korrekt (SDK'ets auto-svar findes ikke i Skrynja) — men formuleringen skal skelne: i **SDK'et** svarer `terminal/*` selv (`null` ×3, `{}` ×2); i **Skrynja** svarer Skrynja `-32601`. §6-linjen læses som Skrynja-kolonnen, men uden den præcisering var den tvetydig |
+| 3 | §1, titelforslag | «alle ruter, der kan kaldes … inklusive `session/resume`, som ikke kaldes» — selvmodsigende | Forslaget var internt modstridende. **Faktisk titel efter vedtagelsen:** «alle elleve request-ruter har frist — `session/resume` spec'et, ikke kaldt i v1» |
+| 4 | §4 række 6 | Påstod udtrykscitaterne står «i denne korrigeringsrække» og at README peger på R13-rettelsen | Udtrykscitaterne står i **A9-korrektionsdoc'ets append** («Rettelser fra PR-gennemlæsningen»); README's nye række nævner ikke R13. Rettet: henvisningen går til A9-doc'appendet |
+| 5 | §4 række 9 + Status | «PR #18 … opdateret» — **korrekt** (se nedenfor) | Telefonen mente, påstanden var falsk; ved efterprøvning med `gh pr view` **er** PR #18 opdateret (titel: «målejournal, analyser og arkitekturvalg for vibe-acp 3.0.2 — måleserien færdig», brødtekst dækker alle 48 commits, `updatedAt` bekræfter). Telefonens påstand skyldtes en forældet side. Påstanden står |
+| 6 | §1 | `resume_session`-adfærden kaldt «verificeret i sdist» uden udtrykscitat eller ○-mærkning (R13) | **Verificeret igen denne session med udtrykscitater** (se nedenfor) — påstanden holder ●, men mærkningen tilføjes |
+
+### §6, indgående — præciseret ●
+
+| Rute | I SDK'et (Python-klient) | I Skrynja (C++-klient) |
+|---|---|---|
+| `session/request_permission` | Skrynja implementerer: dialog, ingen klient-timeout, `cancelled` ved cancel | samme |
+| `session/update` | behandles (notification) | samme |
+| `fs/read_text_file`, `fs/write_text_file` | ikke optional → `-32601` | Skrynja svarer `-32601` øjeblikkeligt |
+| `elicitation/create`, `elicitation/complete` | unstable; agenten kalder ikke (ingen `elicitation.form`) | Skrynja svarer `-32601` / ignorerer |
+| `terminal/create`, `output`, `wait_for_exit` | **SDK svarer selv `null`** (`optional=True`) | Skrynja svarer `-32601` øjeblikkeligt (defensivt; unåeligt i v1) |
+| `terminal/release`, `kill` | **SDK svarer selv `{}`** (`optional=True`) | Skrynja svarer `-32601` øjeblikkeligt |
+
+### §1, `resume_session` — udtrykscitater tilføjet ● (R13)
+
+Verificeret i sdist 3.0.2 denne session:
+
+- `load_session` (udtryk: `async def load_session(`): bygger `_create_session(Path(cwd), ResumeSessionIntent(session_id), …)` og kalder derefter **`await self._load_complete_history(session)`** + `replay_session_updates(...)` — historik **replay'es**.
+- `resume_session` (udtryk: `async def resume_session(`): bygger samme `ResumeSessionIntent(session_id)` via `_create_session`, men kalder **ikke** `_load_complete_history` (forekomsten af `_load_complete_history` i `agent.py` ligger kun i `load_session` og i selve hjælperens `def`) — ingen replay. Returnerer `ResumeSessionResponse()`.
+
+A2's begrundelse holder ●: `session/load` replay'er, `session/resume` gør ikke.
+
+### PR #18 — faktisk tilstand ●
+
+Telefonen mente, PR-beskrivelsen stadig var «runde 1». Ved efterprøvning (`gh pr view 18`): **titel og brødtekst er opdateret** — titel «docs(vibe-acp): målejournal, analyser og arkitekturvalg for vibe-acp 3.0.2 — måleserien færdig», brødtekst dækker alle 48 commits, låste arkitekturvalg, korrekturhistorik, verification og åbne punkter. Telefonens påstand skyldtes en forældet/cached side. §4 række 9 og Status-linien «README og PR #18 opdateret» står korrekt.
+
+**Telefonens lokale git ○:** `42a6302` ukendt lokalt, `git log -- dokumenter/vibe-acp/README.md` tom — fordi klonen står på `main` (50 commits bagud) og ikke har hentet grenen siden `74c65a6`. For at læse grenen lokalt: `git fetch origin vibe/vibe-acp-maalejournal-ea9aca && git log --oneline origin/vibe/vibe-acp-maalejournal-ea9aca -- dokumenter/vibe-acp/README.md`.
+
+**Status efter denne rettelsesrunde ●:** seks fejl adresseret (fem rettet/præciseret, én — #5 — afvist som telefonens side-cache); `resume_session` verificeret med udtrykscitater; §6's indgående præciseret med SDK/Skrynja-skel. A8+A9 komplet. Ingen arkitekturvalg genåbnet.
