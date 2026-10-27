@@ -27,6 +27,8 @@ Måleresultater og scripts fra arbejdet med vejkortet for Skrynja mod `vibe-acp`
 | `analyse-lag3-positiv-evidens-r34.md` | **Lag 3 korrigeret:** lærer kun ved positiv evidens (`3051` + entydigt tekstmønster + første prompt efter skift til `low`); synlig «Nulstil»-vej. **R34 afgjort:** aktiv sti er `~/.config/org.skrynja/Skrynja/Skrynja.conf` |
 | `analyse-lag3-bekraeftet-laering-r41.md` | **Lag 3 endelig:** bekræftet læring (dialog ved `3051` efter skift til `low` — ingen tekstmatch, falsk positiv umulig). **R41 afgjort:** katalog-cache er flaggated (`experimental_enable_model_catalog=False` default), ikke en fejl |
 | `maalejournal-r34-konfigsti-lukket.md` | **R34 ● lukket på telefonen:** ekstra `~/.config/harbour-skrynja/` slettet (backup i `/tmp/skrynja-konf-backup-2026-10-27`); én aktiv sti — lag 2+3 ligger utvetydigt i `~/.config/org.skrynja/Skrynja/Skrynja.conf`. Nummereringsafklaring: relæets «R42» kaldes R34 her (R42 = tom katalog, allerede optaget) |
+| `gennemgang-journal-foer-kode.md` | **Gennemgang før kodning:** ID-konsistens ●, wire-format spec for Trin E, UTF-8/buffer-regler, Trin E-testplan. Afklaring: måleseriens «Trin E» ≠ vejkortets Trin E (Planer) |
+| `fixture-trin-e.ndjson` | **Trin E fixture:** 13 komplette målte wire-linjer + 1 delvis linje (EOF-test). Trin E bygges og testes mod denne fil fra første linje |
 | `maaling_m00_m01.py` | Script: stdio `initialize`-udveksling mod `vibe-acp` (M0.1) |
 | `maaling_m01b_fuld_frame.py` | Script: `initialize` med `protocolVersion` 99/2/0 — måler versionshåndtering (M0.1b) |
 | `m016-bro/` | Rust reference-bro: `AcpHttpServer` + `AcpAgent` spawner `vibe-acp`, loopback roundtrip (M0.16) |
@@ -61,7 +63,7 @@ Telefonen kører `mistral_vibe` **3.0.2** (identisk med PyPI), `agent_client_pro
 
 Se `maalejournal-afsluttende-status.md` for den fulde klientregel-tabel og risikoregister.
 
-1. **Trin E** — tolerant NDJSON-parser over `stdio` (første skridt)
+1. **Trin E** — tolerant NDJSON-parser over `stdio` (første skridt) — bygges mod `fixture-trin-e.ndjson`; spec i `gennemgang-journal-foer-kode.md`
 2. **Transport + session** — `initialize`/`session/new`/`session/prompt` + `cancel`
 3. **A7** — undertryk `low` for modeller på fravalgslisten (3 lag: hardcoded standard + `Skrynja.conf` override + **bekræftet** læring via dialog ved `3051` efter skift til `low`); vis `medium`/`max` med «samme som High» — ingen agent-lag afviser `low` før API'et giver `3051`
 4. **L5** — filtrér `used == 0`, guard `size <= 0` før procentberegning
