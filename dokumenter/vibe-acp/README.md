@@ -23,6 +23,7 @@ Måleresultater og scripts fra arbejdet med vejkortet for Skrynja mod `vibe-acp`
 | `analyse-session-cancel-sdk-dispatch.md` | `session/cancel` er fuldt understøttet (SDK dispatcher selv — tekstsøgning var ikke evidens); `session/resume` er unstable men implementeret uden historik-replay — `session/load` er metoden til genåbning med historik; lærd lektion R13 |
 | `analyse-arkitekturvalg-a1-a2-set-mode.md` | **Arkitekturvalg vedtaget:** A1 (cancel-rækkefølge m. cancelled-svar først), A2 (`session/load` med historik, `session/new` fallback); kun `session/set_config_option` — aldrig `session/set_mode` (ingen configOptions i svar, tavst None ved fejl) |
 | `analyse-a7-korrigeret-thinking-validering.md` | **A7 korrigeret:** ingen agent-lag afviser `low` før API'et — ACP tjekker kun generisk `THINKING_LEVELS`, model-laget accepterer `low` fordi zai-glm selv erklærer det; først harness-adapteren mapper `low→"none"` → `3051`. Fravalgslisten er **model-niveau**, ikke kun to aliaser |
+| `analyse-beslutning-thinking-ui-fravalgsliste.md` | **Beslutning:** `medium`/`max` vises med «samme som High» (skjules ikke); A7 som 3-lags tilstand — hardcoded standard + `Skrynja.conf` override + indlært ved `3051` |
 | `maaling_m00_m01.py` | Script: stdio `initialize`-udveksling mod `vibe-acp` (M0.1) |
 | `maaling_m01b_fuld_frame.py` | Script: `initialize` med `protocolVersion` 99/2/0 — måler versionshåndtering (M0.1b) |
 | `m016-bro/` | Rust reference-bro: `AcpHttpServer` + `AcpAgent` spawner `vibe-acp`, loopback roundtrip (M0.16) |
@@ -59,7 +60,7 @@ Se `maalejournal-afsluttende-status.md` for den fulde klientregel-tabel og risik
 
 1. **Trin E** — tolerant NDJSON-parser over `stdio` (første skridt)
 2. **Transport + session** — `initialize`/`session/new`/`session/prompt` + `cancel`
-3. **A7** — undertryk `low` for modeller på fravalgslisten (start: `glm-5-3`, `zai-glm-5-3-flash`; udvides ved nye ramte modeller — ingen agent-lag afviser `low` før API'et giver `3051`)
+3. **A7** — undertryk `low` for modeller på fravalgslisten (3 lag: hardcoded standard + `Skrynja.conf` override + indlært ved `3051`); vis `medium`/`max` med «samme som High» — ingen agent-lag afviser `low` før API'et giver `3051`
 4. **L5** — filtrér `used == 0`, guard `size <= 0` før procentberegning
 5. **N8 + R12** — mærk `size` som «kompaktionsgrænse»; advar kun ved `used → size` når vindue er kendt og > tærskel, ellers «ukendt» — aldrig udled vinduet af `size`
 6. **A5/H2** — vis altid `tool_call`/`tool_call_update`; læs og vis `permission` og `allowlist` fra `~/.vibe/config.toml`
