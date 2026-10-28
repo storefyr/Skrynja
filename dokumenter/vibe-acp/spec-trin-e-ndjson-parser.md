@@ -95,6 +95,25 @@ Parseren opererer på agent → klient-retningen af ACP over stdio. Følgende er
 
 **Vedtaget strategi ●** (tre valg vurderet; tredje vedtaget — genbruger JSON-parseren, ingen egen tokenizer): Del bufferen på `\n`; ved «Extra data»-fejl forsøg iterativ udtrækning svarende til Python's `json.JSONDecoder().raw_decode`. Qt 5.6-ækvivalenten er `QJsonParseError::offset` (siden Qt 5.0): positionen hvor parse fejlede = slutningen af første komplette objekt.
 
+### Udleveringsform: strøm ●
+
+Dette underafsnit besvarer ét spørgsmål: om et objekt gøres tilgængeligt for
+kalderen i det øjeblik, det er udtrukket, eller først når linjen er behandlet
+til ende. **Valgt: strøm ●** — objektet udleveres ved udtrækket, også når
+linjen senere forkastes.
+
+Valget er ikke en ny beslutning: den komplette algoritme nedenfor udleverer
+allerede ved hvert vellykket udtræk (`udlever objekt; return`,
+`udlever obj1-objekt`) og har ingen opsamling. Underafsnittet fastslår, at
+algoritmen er normativ, og at de sætninger i §4, §6 og §8, der udsagde det
+modsatte, var fejl — disse er rettet herefter. §7's beskrivelse af linje 1
+udsagde ikke et kontrolflow; den var faktuel forkert og er rettet i B7.
+
+Afgrænsning: underafsnittet ændrer ikke «Vedtaget strategi», ikke de tre
+regeloverskrifter og ikke rækkevidden af deres ●-mærker. Ordet «forkast»
+beholder sin betydning; at det dækker to hændelser (før og efter
+udlevering), afgøres ikke her.
+
 ### Den komplette algoritme (som skal kodes) ●
 
 ```
@@ -119,7 +138,9 @@ parseLinje(linje: QByteArray):
   loop:
     doc, err = fromJson(rest)
     hvis OK: udlever objekt; return
-    hvis err != ExtraData: log + return (forkast linje)          // regel 1
+    hvis err != ExtraData: log + return (forkast linje)          // regel 1;
+               gælder også senere gennemløb; udleverede objekter tilbagekaldes
+               ikke
     n = err.offset
     hvis n <= 0: log + return (forkast)                          // regel 3
     obj1 = rest.left(n)
@@ -132,15 +153,15 @@ parseLinje(linje: QByteArray):
 
 ### Regel 1 — kun `ExtraData` giver split-forsøg ●
 
-`fromJson(linje)` fejler: hvis fejlen ikke er `ExtraData` → log + forkast linjen, færdig. Hvis `ExtraData` → gå til split.
+`fromJson(rest)` fejler: hvis fejlen ikke er `ExtraData` → log + forkast linjen, færdig; udleverede objekter tilbagekaldes ikke. Ved første gennemløb er intet udleveret; ved andet gennemløb og frem kan objekter allerede være udleveret. Hvis `ExtraData` → gå til split.
 
 **Begrundelse ●:** `QJsonParseError::offset` er kun meningsfuld som objektgrænse ved `ExtraData` (parseren læste et komplet objekt, så fandt mere). Ved alle andre fejl (`UnterminatedString`, `ExpectingValue`, `IllegalValue`…) peger offset midt i noget ugyldigt — `linje[0:offset]` ville ikke selv parse, og resten ville være meningsløs.
 
 ### Regel 2 — valider første objekt; ved fejl forkast HELE linjen ●
 
-Split ved offset n: `obj1 = linje[0:n]`; hvis `fromJson(obj1)` fejler → log + forkast **hele** linjen, bryd løkken. Ellers accepter obj1, fortsæt med `linje[n:]`.
+Split ved offset n: `obj1 = linje[0:n]`; hvis `fromJson(obj1)` fejler → log + forkast **hele** linjen som kilde til videre udtrækning, bryd løkken. Allerede udleverede objekter tilbagekaldes ikke. Ellers udlever obj1-objektet, fortsæt med `linje[n:]`.
 
-**Begrundelse ●:** Uden reglen kører løkken videre på resten efter et ugyldigt første objekt — og kan gentage fejlen i tavshed eller miste meddelelser. Verificeret på `fixture-trin-e-ugyldig.ndjson` linje 1: linjen giver `[10, None, 'FEJL']` — to parsebare objekter før skraldet (id=10 og et id-løst objekt `{"ikke":"gyldig json"}`), tredje udtræk fejler → regel 2: **hele linjen forkastes, ingen af de to objekter udleveres**. Det id-løse mellemobjekt er ikke en parser-fejl — det er fixture'ens pointe: selv gyldige objekter før skrald udleveres ikke, når linjen som helhed forkastes.
+**Begrundelse ●:** Uden reglen kører løkken videre på resten efter et ugyldigt første objekt — og kan gentage fejlen i tavshed eller miste meddelelser. Verificeret på `fixture-trin-e-ugyldig.ndjson` linje 1: linjen giver `[10, None, 'FEJL']` — to parsebare objekter før skraldet (id=10 og et id-løst objekt `{"ikke":"gyldig json"}`), tredje udtræk fejler med en fejl, der ikke er ExtraData, og rammer returstenen i regel 1 anvendt på resten → **hele linjen forkastes som kilde til videre udtrækning**. De to objekter blev udtrukket og udleveret, før fejlen indtraf, og tilbagekaldes ikke. Det id-løse mellemobjekt er ikke en parser-fejl — det er fixture'ens pointe: et gyldigt objekt udleveres, når det er udtrukket, uanset at linjen derefter forkastes som helhed.
 
 ### Regel 3 — værn mod nul-fremgang (uendelig løkke) ●
 
@@ -206,8 +227,9 @@ Ved `QProcess::finished` (agentens proces er gået ned):
 hvis BUFFER ikke er tom:
   // delvis linje uden \n — forventet ved afbrydelse
   forsøg parseLinje(BUFFER)
-  hvis fejl: log «afbrudt ved EOF» (ikke en fejl-tilstand)
-  hvis OK: udlever (en komplet linje nåede at komme igennem før døden)
+  hvis den sidste del fejler: log «afbrudt ved EOF» (ikke en fejl-tilstand)
+  er der udleveret objekter under forsøget, tilbagekaldes de ikke — de to
+  grene kan indtræffe samtidigt
 BUFFER.clear()
 ```
 
@@ -219,7 +241,7 @@ Præcisering (lukker en tvetydighed i før-kode-review'en): «sidste linje uden 
 |---|---|---|---|---|
 | `fixture-trin-e.ndjson` | 4 587 bytes | 13 komplette linjer + 1 delvis (id=6, 28 bytes) | **uden** `\n` | 13 normale + **EOF-sti** (afbrudt ved procesdød) |
 | `fixture-trin-e-sammenklaebning.ndjson` | 275 bytes | linje 1: to objekter uden `\n` mellem dem (id=7, id=8); linje 2: delvis (id=9, 28 bytes) | **uden** `\n` | **ExtraData-split** + **EOF-sti** |
-| `fixture-trin-e-ugyldig.ndjson` | 237 bytes | linje 1: gyldigt objekt + skrald (`Extra data`, resten ugyldig); linje 2: gyldigt + `}}}`; linje 3: normalt; linje 4: delvis (id=13) | **uden** `\n` | **regel 2** (forkast hele linjen) + EOF-sti |
+| `fixture-trin-e-ugyldig.ndjson` | 237 bytes | linje 1: to gyldige objekter (id=10 + id-løst `{"ikke":"gyldig json"}`) + ét `}` skrald (`Extra data`, resten ugyldig); linje 2: gyldigt + `}}}`; linje 3: normalt; linje 4: delvis (id=13) | **uden** `\n` | **regel 1's retursti** (forkast hele linjen) + EOF-sti |
 
 Alle tre filer slutter uden `\n`, så EOF-stien er entydig; `UnterminatedString`-stien dækkes af hovedfixturens delvise linje.
 
@@ -235,18 +257,18 @@ Parser-niveau (normative krav — hvad fortolkeren skal):
 | hoved | 14 (delvis, id=6) | ◐ EOF: «afbrudt ved EOF», ikke udleveret, ikke crash | EOF-sti |
 | sammenklæbning | 1 (id=7+8) | ● **begge** udleveret | ExtraData-split |
 | sammenklæbning | 2 (delvis, id=9) | ◐ EOF: «afbrudt ved EOF» | EOF-sti |
-| ugyldig | 1 (id=10 + skrald) | ◐ **hele linjen forkastes**, id=10 IKKE udleveret | regel 2 |
-| ugyldig | 2 (id=11 + `}}}`) | ◐ **hele linjen forkastes** | regel 2 |
+| ugyldig | 1 (id=10 + id-løst objekt + skrald) | ◐ id=10 **og** det id-løse objekt udleveret, derefter **hele linjen forkastes** | regel 1's retursti |
+| ugyldig | 2 (id=11 + `}}}`) | ◐ id=11 udleveret, derefter **hele linjen forkastes** | regel 1's retursti |
 | ugyldig | 3 (id=12) | ● udleveret | normal (efter forkastede) |
 | ugyldig | 4 (delvis, id=13) | ◐ EOF: «afbrudt ved EOF» | EOF-sti |
 | syntetisk A6a | linje på 9 MiB med `\n` | ◐ linje forkastes, logges; næste linje parses normalt; forbindelse består | A6a |
 | syntetisk A6b | 9 MiB uden `\n` i buffer | ◐ transport-fejl, agent lukkes; ingen crash, ingen uendelig vækst | A6b |
 
-**Samlede kriterier ●:** 16 succes-udleveringer (13 + 2 + 1), 4 forventede forkastninger/EOF (ikke crashes), 0 uendelige løkker, 0 crashes, A6a ved komplet linje >8 MiB (forkast, forbindelse består), A6b ved buffer >8 MiB uden `\n` (transport-fejl, luk agent).
+**Samlede kriterier ●:** 19 succes-udleveringer (13 + 2 + 1 = 16 som før, plus 2 udleveret på ugyldig linje 1 og 1 på ugyldig linje 2 før forkastningen: 16 + 3 = 19), 6 forventede forkastninger/EOF (ikke crashes; tre EOF-rækker — hoved 14, sammenklæbning 2, ugyldig 4 — plus to forkastelsesrækker, ugyldig 1 og ugyldig 2, plus syntetisk A6a; A6b er transport-fejl og tælles ikke), 0 uendelige løkker, 0 crashes, A6a ved komplet linje >8 MiB (forkast, forbindelse består), A6b ved buffer >8 MiB uden `\n` (transport-fejl, luk agent). Tallene tælles på to akser: ugyldig linje 1 og 2 indgår i begge, så 19 + 6 er ikke antallet af udfald.
 
 Applikations-niveau (kontekst — ikke parser-krav, men forventet adfærd i laget over, når Trin E er kodet): `usage_update` med `used:0` filtreres (L5); `size` mærkes «kompaktionsgrænse» (N8); heltals-id bevares til permission-svar (A9); `config_option_update` erstatter lokale `configOptions` (R37); ukendt `sessionUpdate` logges og ignoreres.
 
-Denne testplan **afløser** den tidligere i `analyse-fixture-rettelse-objektgraenser.md` (15 succes-parses + 2 EOF-fejl, før tredje fixture) — tallet steg ved tredje fixture (`-ugyldig`): 16 udleveringer + 4 forkastninger/EOF.
+Denne testplan **afløser** den tidligere i `analyse-fixture-rettelse-objektgraenser.md` (15 succes-parses + 2 EOF-fejl, før tredje fixture) — tallet steg ved tredje fixture (`-ugyldig`): 19 udleveringer (16 + 2 + 1: to objekter på ugyldig linje 1, ét på ugyldig linje 2, udleveret før forkastningen) + 6 forkastninger/EOF (tre EOF-rækker + to forkastelsesrækker + syntetisk A6a; A6b ikke medregnet).
 
 ## 9 · Konsolideringsnoter og revisionsangivelse
 
