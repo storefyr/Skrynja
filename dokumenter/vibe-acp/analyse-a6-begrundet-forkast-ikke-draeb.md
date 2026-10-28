@@ -98,3 +98,9 @@ ved hver read:
 ## Status ●
 
 A6 er nu begrundet (8 MiB, 2x margin over største kendte legitime linje) og reaktionen differentieret (A6a forkast-én-linje / A6b dræb-ved-desynk). Parser-spec'en er komplet. Ingen arkitekturvalg genåbnes.
+
+---
+
+## Statusnote — begrundelsesdokument ● (runde 12, relæ `83268bd1`)
+
+A6-beslutningen her (8 MiB, A6a/A6b) er uændret og gældende; begrundelsen er konsolideret i `spec-trin-e-ndjson-parser.md` §5, som fra runde 12 er den gældende, selvstændige specifikation for Trin E. Denne fil bevares som begrundelsesdokument og revisionsspor. «Lukket»-erklæringen gælder fortsat — konsolideringen genåbner intet; grænsen hæves kun ved en målt større legitim linje på telefonen.

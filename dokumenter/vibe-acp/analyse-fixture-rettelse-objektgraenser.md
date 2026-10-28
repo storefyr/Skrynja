@@ -76,3 +76,9 @@ Begge er driftsforhold omkring merge, ikke omkring denne rettelse.
 ## Uændret låst ●
 
 Alle arkitekturvalg. Denne beslutning tilføjer kun: parser-strategi (offset-loop) + fixture-rettelse + navngivet sammenklæbnings-tilfælde.
+
+---
+
+## Statusnote — historik ● (runde 12, relæ `83268bd1`)
+
+Fixture-rettelsen og offset-beslutningen her er uændret og gældende; indholdet er konsolideret i `spec-trin-e-ndjson-parser.md` (§4, §7), som fra runde 12 er den gældende specifikation for Trin E. Testplanen i denne fil (15 succes-parses + 2 EOF-fejl) var før tredje fixture og er **afløst** af den endelige testplan i den nye spec §8 (16 udleveringer + 4 forkastninger/EOF). Denne fil bevares som historik og revisionsspor.

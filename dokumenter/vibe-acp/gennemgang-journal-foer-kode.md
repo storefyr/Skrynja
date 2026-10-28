@@ -110,3 +110,9 @@ Begge er dokumentationsarbejde, ikke kode. Når de er på plads, er Trin E fuldt
 ## Kropsrettelse i runde 11 ● (relæ `6fc943d2`)
 
 Filens byte 3809 var et råt NUL-byte (`\x00`), hvor der skulle stå `\u0007` i «escapes `\u0007`-form» — git/grep behandlede derfor filen som binær. Bytet er rettet in-place; ingen anden tekst er ændret, og filen dekoder nu som ren UTF-8.
+
+---
+
+## Statusnote — ikke gældende for buffer ● (runde 12, relæ `83268bd1`)
+
+Denne fil er før-kode-review'en — ikke parser-spec'en. Wire-format-fakta (§2) og UTF-8-regler (§5) er konsolideret i `spec-trin-e-ndjson-parser.md` (§2-§3), som fra runde 12 er den gældende specifikation for Trin E. **§5's sidste regel («ingen antagelse om maksimal linjelængde») var et forslag fra før A6-beslutningen og er lukket af A6 (8 MiB, A6a/A6b)** — læs ikke denne regel som gældende for buffer. Fixture-forslaget i §4 er realiseret som de tre `fixture-trin-e-*.ndjson`-filer.

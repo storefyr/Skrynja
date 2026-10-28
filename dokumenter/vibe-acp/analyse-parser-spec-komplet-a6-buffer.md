@@ -143,3 +143,9 @@ Telefonen spurgte, hvilken fil der er den gældende parser-spec for Trin E, og p
 - **Mindre ●:** testplanens syntetiske A6-række bar ○ (tom cirkel, U+25CB) hvor projektet ellers bruger ◐ (halvfyldt, U+25D0) — erstattet sammen med rækken.
 
 **Status efter runde 11 ●:** parser-spec'en gældende og konsistent med A6-beslutningen; README's peg korrekte. Ingen arkitekturvalg genåbnet.
+
+---
+
+## Statusnote — erstattet som gældende spec ● (runde 12, relæ `83268bd1`)
+
+Fra og med runde 12 er dette dokument **ikke længere den gældende parser-specifikation for Trin E** — det er **erstattet af `spec-trin-e-ndjson-parser.md`**, der konsoliderer denne fil, `analyse-a6-begrundet-forkast-ikke-draeb.md`, `analyse-fixture-rettelse-objektgraenser.md` og `gennemgang-journal-foer-kode.md` i én selvstændig, normativ specifikation. Denne fil bevares uændret som revisionsspor (herunder runde 11-kropsrettelsen: 8 MiB, A6a/A6b). Alle «lukket»-erklæringer i denne fil gælder fortsat — konsolideringen genåbner intet. Trin E kodes mod den nye spec + de samme tre fixtures.
