@@ -101,7 +101,9 @@ Trin 1 er ikke høflighed: en agent, der skriver sit sidste svar uden afsluttend
 
 **§4.4 Indlejring.** `parseObject` og `parseArray` afviser ved `++nestingLevel > nestingLimit` med `DeepNesting`; loftet er 1024. Intet linjeloft erstatter det. ● (Bilag A, A5).
 
-**§4.5 Hukommelsesbudget.** Ved 63 MiB kan klienten samtidig holde bruttolinjen (~66 MiB), den binære form (op til ~132 MiB) og dokumentet oven på: ~198 MiB ○d. Belastningen skal stå i sporudskriften ved L1, så en senere hukommelsesfejl kan henføres til den rigtige årsag.
+**§4.5 Hukommelsesbudget.** Ved 63 MiB kan klienten samtidig holde bruttolinjen (~66 MiB), den binære form (op til ~132 MiB) og dokumentet oven på: ~222 MiB ○d (66 MiB bruttolinje + 34 MiB foregående buffer under omallokering + 132 MiB binær form, jf. A15/A16). Belastningen skal stå i sporudskriften ved L1, så en senere hukommelsesfejl kan henføres til den rigtige årsag.
+
+**§4.5a Forholdet til A6 i PR-beskrivelsen.** A6 i PR-beskrivelsen angiver 8 MiB pr. linje og lukning ved hale uden `0x0A`. v2 hæver loftet til 63 MiB (§4.2) og lader forbindelsen bestå ved hale (§6.2, L1). Ændringen er tilsigtet ○d: 8 MiB ville afvise dokumenter, som Qts `Value::MaxSize` ellers rummer, og lukning ved hale koster en hel session for én fejl. A6 i Bilag A er en anden post (dokumentgrænsen).
 
 **§4.6 Utæthed i Qt.** `Parser::parse` allokerer med `malloc` og skriver derefter headeren uden at kontrollere, om `malloc` returnerede nul. ● (Bilag A, A11). En meget stor linje på en presset enhed kan derfor give nul-pointer-dereference i stedet for en `QJsonParseError`. Klienten kan ikke rette det; den kan holde linjen under loftet ○d.
 
@@ -127,7 +129,7 @@ Ved en uafsluttet streng løber `parseString` til `json >= end`, rykker én frem
 2. Resultatet er et objekt → §6.
 3. Resultatet er en matrix → §8.
 4. Fortolkningen fejlede med `IllegalValue`, og linjen begynder (efter BOM og blanktegn) med noget andet end `[` eller `{` → **indpak i `[` … `]` og fortolk igen**.
-5. Indpakningen lykkes → gyldig, men ikke-meddelelsesformet JSON-værdi → −32600.
+5. Indpakningen lykkes med præcis ét element mellem `[` og `]`, og elementet er en skalarværdi → gyldig, men ikke-meddelelsesformet JSON-værdi → −32600. Er der flere elementer eller et objekt/en matrix som element, er linjen ikke en skalarlyprøve og afvises efter §5.1.
 6. Indpakningen mislykkes → ikke gyldig JSON → −32700.
 
 Indpakningen er nødvendig, fordi Qt's fortolker ikke har begrebet topniveau-skalar ⟨97⟩.
@@ -140,7 +142,7 @@ Indpakningen er nødvendig, fordi Qt's fortolker ikke har begrebet topniveau-ska
 
 ## §6 Fejl og svar
 
-**§6.1 Trådkoder.** Klienten sender kun disse:
+**§6.1 Trådkoder.** Klienten sender kun de koder, der står i tabellen. Koder klienten alene modtager, er noteret umiddelbart under den.
 
 | Kode | Betydning | Status |
 |---|---|---|
@@ -149,9 +151,10 @@ Indpakningen er nødvendig, fordi Qt's fortolker ikke har begrebet topniveau-ska
 | −32601 | Method not found | ■ JSON-RPC |
 | −32602 | Invalid params | ■ JSON-RPC |
 | −32603 | Internal error | ■ JSON-RPC |
-| −32002 | Resource not found | ● findes i agentens SDK 0.11.0 (`RequestError.resource_not_found`, `acp/exceptions.py`), læst 2026-10-29 |
-| −32800 | Request cancelled | ○ **findes ikke** i SDK 0.11.0-wheelen (alle forekomster af `-32xxx` i wheelen: −32700, −32600, −32601, −32602, −32603, −32000, −32002 — målt ved søgning 2026-10-29); sendes ikke i v2 |
 
+
+−32800 er ikke i SDK 0.11.0-wheelen og sendes ikke i v2.
+−32002 findes i SDK 0.11.0 (`RequestError.resource_not_found`). Klienten kan modtage den, men sender den ikke i dette omfang: ingen tilstand i §6.2 fremkalder den.
 −32768…−32000 er reserveret (■). Skrynja har ingen egen trådkode. ⟨123⟩: tabellen skal efterprøves igen, hvis agentens SDK-version ændres (§9.2d).
 
 **§6.2 Hændelsestabel**
@@ -304,7 +307,7 @@ Batch-svaret er selv en matrix og skal skrives på **én** linje, fordi ACP forb
 | 122 | Er agentstien nåbar fra den indespærrede app? | ⟨åben⟩ — **alpha-blokerende**; mål med 3004 |
 | 123 | §6.1 og §8 efterprøvet mod SDK-versionen | ⟨åben⟩ ved versionsskift (§9.2d) |
 | 124 | Binde til præcis 3.0.2 eller ≥3.0.2 | ⟨åben⟩, beslutning hos storefyr |
-| 125 | 3004 som egen L-kode for nåbarhed | foreslået: ja, medtaget i Bilag C |
+| 125 | 3004 som egen L-kode for nåbarhed | medtaget i Bilag C som klientintern kode; sendes ikke (§6.1) |
 
 ---
 
@@ -372,6 +375,7 @@ g++ -O2 -std=c++11 -fPIC p.cpp -o p $(pkg-config --cflags --libs Qt5Core) && ./p
 |---|---|---|
 | 1000 | reserveret, ubrugt | nej |
 | 1001 | L1, linje over loft | nej |
+| 1002 | klient-syntetisk timeout (`-33000`) | nej |
 | 2001 | P1, fortolkningsfejl | nej |
 | 2002 | L2, `DocumentTooLarge` | nej |
 | 2003 | L3, `DeepNesting` | nej |
@@ -391,7 +395,7 @@ g++ -O2 -std=c++11 -fPIC p.cpp -o p $(pkg-config --cflags --libs Qt5Core) && ./p
 | Kilde | Metode | Anvendt til |
 |---|---|---|
 | JSON-RPC 2.0 Specification, opdateret 2013-01-04, jsonrpc.org/specification | web-hentning, hele dokumentet læst | §0.3, §2.5, §5, §6.1, §6.3, §8 (koder, id:null, batch-eksempler) |
-| PyPI JSON-metadata for `agent-client-protocol` 0.11.0 + wheel `agent_client_protocol-0.11.0-py3-none-any.whl` (sha256 `2d8570cd…`, upload 2026-07-05) | web-hentning + `pip download` + udpakning | §0.1, §6.1, §9.2d; beskrivelsen »Releases track the upstream ACP schema« |
+| PyPI JSON-metadata for `agent-client-protocol` 0.11.0 + wheel `agent_client_protocol-0.11.0-py3-none-any.whl` (sha256 `⟨sha256 ikke målt — trunkeret i kilden; måles ved alpha⟩`, upload 2026-07-05) | web-hentning + `pip download` + udpakning | §0.1, §6.1, §9.2d; beskrivelsen »Releases track the upstream ACP schema« |
 | SDK 0.11.0 læst lokalt: `acp/exceptions.py` (alle `RequestError`-hjælpere + koder), `acp/connection.py` (stdio docstring), `acp/stdio.py` (`readline`) | fil-læsning i udpakket wheel | §2.1, §6.1 (−32002 ●, −32800 ikke fundet) |
 | sailjail-permissions README (master), raw.githubusercontent.com/sailfishos/sailjail-permissions/master/README.md | web-hentning, læst | §9.2e (tre skrivestier, tom-map-reglen, AppLaunch, Compatibility, Internet, én-binær-forudsætning) |
 | sailfishos/qtbase mer-5.6 @ `0f76bfed2ada0ffc9a653f13c2799094e8f7dbee` | sparse clone på målmaskinen, filer læst | hele Bilag A |
