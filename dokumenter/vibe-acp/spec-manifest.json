@@ -1,0 +1,105 @@
+{
+  "formaal": "Maskinlæsbar oversigt over normative spec-filer. Ingen egen hash — integriteten hviler på den commit, hvori manifestet ligger. Sektionsoversigten genereres af kontrolscriptet, aldrig håndskrevet.",
+  "bemærkning_main_beskyttet": "main er IKKE beskyttet (maalt 2026-10-29, GitHub API branches/main -> protected: false). Kontrollen i pr-build.yml er derfor en test paa PR'er, ikke en port.",
+  "filer": [
+    {
+      "alias": "V2",
+      "sti": "dokumenter/vibe-acp/spec-protokol-v2.md",
+      "commit_sha": null,
+      "blob_sha": "ddb2dccd487fcd8b102eea4ac196111b6ba7a4d5",
+      "bytes": 27389,
+      "linjer": 403,
+      "sektioner": [
+        {
+          "overskrift": "# Skrynja — protokol-specifikation v2 (ACP-klient over stdio)",
+          "start_linje": 1
+        },
+        {
+          "overskrift": "## §0 Formål og forudsætninger",
+          "start_linje": 13
+        },
+        {
+          "overskrift": "## §1 Terminologi",
+          "start_linje": 32
+        },
+        {
+          "overskrift": "## §2 Meddelelseslaget",
+          "start_linje": 46
+        },
+        {
+          "overskrift": "## §3 Læsning, buffer, hale",
+          "start_linje": 60
+        },
+        {
+          "overskrift": "## §4 Størrelsesgrænser",
+          "start_linje": 79
+        },
+        {
+          "overskrift": "## §5 Fortolkning",
+          "start_linje": 112
+        },
+        {
+          "overskrift": "## §6 Fejl og svar",
+          "start_linje": 141
+        },
+        {
+          "overskrift": "## §7 Livscyklus",
+          "start_linje": 190
+        },
+        {
+          "overskrift": "## §8 Batch",
+          "start_linje": 204
+        },
+        {
+          "overskrift": "## §9 Transport og agent",
+          "start_linje": 221
+        },
+        {
+          "overskrift": "### §9.2 Agentkonfiguration — ni felter",
+          "start_linje": 225
+        },
+        {
+          "overskrift": "## §10 Resumé",
+          "start_linje": 255
+        },
+        {
+          "overskrift": "## §11 Miljø og bygning",
+          "start_linje": 280
+        },
+        {
+          "overskrift": "## §12 Åbne punkter",
+          "start_linje": 292
+        },
+        {
+          "overskrift": "## Bilag A — Qt-kildegrundlag (læst i denne leverance)",
+          "start_linje": 311
+        },
+        {
+          "overskrift": "## Bilag B — målingen, der mangler (fordobling ved 63 MiB)",
+          "start_linje": 338
+        },
+        {
+          "overskrift": "#include <QJsonDocument>",
+          "start_linje": 341
+        },
+        {
+          "overskrift": "#include <QJsonParseError>",
+          "start_linje": 342
+        },
+        {
+          "overskrift": "#include <QDebug>",
+          "start_linje": 343
+        },
+        {
+          "overskrift": "## Bilag C — interne koder (spor kun, aldrig på tråden)",
+          "start_linje": 369
+        },
+        {
+          "overskrift": "## Bilag D — kilder, metode, dato, maskine",
+          "start_linje": 387
+        }
+      ],
+      "bekraeftet_i": null
+    }
+  ]
+}

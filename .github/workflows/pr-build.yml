@@ -13,6 +13,19 @@ permissions:
   contents: write
 
 jobs:
+  manifest-check:
+    name: "Spec manifest kontrol"
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout (fuld historik — kontrollen læser blob fra HEAD)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Kontrol af spec-manifest.json
+        run: python3 dokumenter/vibe-acp/kontrol-spec-manifest.py
+
   unit-tests:
     name: "Unit tests"
     runs-on: ubuntu-22.04
