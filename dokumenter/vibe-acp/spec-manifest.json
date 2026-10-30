@@ -5,7 +5,7 @@
     {
       "alias": "V2",
       "sti": "dokumenter/vibe-acp/spec-protokol-v2.md",
-      "commit_sha": null,
+      "commit_sha": "ad58fc296d36c75a5064075eb91af66c6af64a83",
       "blob_sha": "ddb2dccd487fcd8b102eea4ac196111b6ba7a4d5",
       "bytes": 27389,
       "linjer": 403,
@@ -99,7 +99,12 @@
           "start_linje": 387
         }
       ],
-      "bekraeftet_i": null
+      "bekraeftet_i": "ad58fc296d36c75a5064075eb91af66c6af64a83"
     }
-  ]
+  ],
+  "ophav": {
+    "regel": "Ingen fil indeholder sin egen blob-SHA som selvbeskrivelse; denne bagudrettede ophavslinje bærer FORRIGE revisions fulde commit-SHA og skrives af det commit, der følger efter den, den peger på.",
+    "forrige_revision": "efe40febf5004c78191025be1a3388775a3657a7",
+    "bemærkning": "efe40fe er grenens tip før denne leverance; v2 erklærer ikke denne forgængers status — hvad der sker med ældre dokumenter, afgøres i repoet, ikke i v2."
+  }
 }
