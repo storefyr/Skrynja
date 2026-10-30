@@ -14,7 +14,18 @@ import subprocess
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent.parent.parent.parent  # repo-rod (5 niveauer op fra dokumenter/vibe-acp/)
+def repo_root() -> Path:
+    """Repo-roden: gå op fra denne fil til første forælder med .git."""
+    p = Path(__file__).resolve().parent
+    while p != p.parent:
+        if (p / ".git").exists():
+            return p
+        p = p.parent
+    # fallback: to niveauer op (dokumenter/vibe-acp -> repo)
+    return Path(__file__).resolve().parent.parent.parent
+
+
+ROOT = repo_root()
 MANIFEST = ROOT / "dokumenter" / "vibe-acp" / "spec-manifest.json"
 
 
