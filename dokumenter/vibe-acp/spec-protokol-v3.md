@@ -450,11 +450,11 @@ skriver kun gyldige ACP-meddelelser til agentens standardind.
 |---|---|---|---|
 | 1 | programsti | `/home/defaultuser/.local/bin/vibe-acp` | [M] målt på enheden 2026-10-29 (Bilag D) |
 | 2 | argumenter | **tom liste** | [M] |
-| 3 | arbejdsmappe | projektets rodmappe, sat eksplicit før start | [B] |
+| 3 | arbejdsmappe | projektets rodmappe, sat eksplicit før start | [B] storefyr 2026-10-29 |
 | 4 | miljøvariable | `MISTRAL_API_KEY` arves eller sættes | [M] krævet mål/API-nøgle, målt runde 1 |
-| 5 | opsætningsvej | `uv tool install`, ikke `uvx` | [B] (§9.2c) |
+| 5 | opsætningsvej | `uv tool install`, ikke `uvx` | [B] storefyr 2026-10-29 (§9.2c) |
 | 6 | binærnavn og version | `vibe-acp` **3.0.2** | [M] målt på enheden (pip show, Bilag D) |
-| 7 | standardfejl | opsnappes, §7.2 | [B] |
+| 7 | standardfejl | opsnappes, §7.2 | [B] storefyr 2026-10-29 |
 | 8 | standardind | lukkes ved nedlukning, §7.4 | [K] |
 | 9 | frist for afslutning | konfigurationsværdi | [S] |
 
@@ -508,7 +508,7 @@ Bilag A's versionsangivelse er endelig.
 | 3 | `\r\n` | ikke accepteret | [V] [A126] |
 | 4 | BOM | overlades til Qt | [M] Bilag A |
 | 5 | Tom linje | ignoreres; kontakt ved kompilering | [V] [A95] |
-| 6 | Linjeloft | 66 060 288 byte | [B] 2026-10-29 |
+| 6 | Linjeloft | 66 060 288 byte | [B] storefyr 2026-10-29 |
 | 7 | Qts dokumentgrænse | `(1<<27) - 1` binært | [M] Bilag A |
 | 8 | Indlejringsgrænse | 1024 | [M] Bilag A |
 | 9 | Tolerance | fra | [V] [A96] |
@@ -517,7 +517,7 @@ Bilag A's versionsangivelse er endelig.
 | 12 | L1-svar | intet | [S] |
 | 13 | P1-svar | −32700, `id: null` | [K] JSON-RPC |
 | 14 | Batch | JSON-RPC's regler | [V] [A116] |
-| 15 | Interne koder | 1001 = L1, blokopdelt | [B] 2026-10-29 |
+| 15 | Interne koder | 1001 = L1, blokopdelt | [B] storefyr 2026-10-29 |
 | 16 | Egne trådkoder | ingen | [K] JSON-RPC |
 | 17 | Agentsti | `/home/defaultuser/.local/bin/vibe-acp` | [M] målt 2026-10-29 |
 | 18 | Agentversion | 3.0.2 / ACP 0.11.0 | [M] målt 2026-10-29 |
@@ -528,7 +528,7 @@ Bilag A's versionsangivelse er endelig.
 
 | Forhold | Værdi | Status |
 |---|---|---|
-| Apptype | Silica | [B] |
+| Apptype | Silica | [B] storefyr 2026-10-29 |
 | Qt | Qt 5 (Sailfish), præcis version [A110] | [M] rpm-spec |
 | Fortolker | `QJsonDocument::fromJson` | [M] |
 | Antal fortolkere | én | [K] §5.7 |
