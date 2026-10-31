@@ -96,6 +96,7 @@ Se `maalejournal-afsluttende-status.md` for den fulde klientregel-tabel og risik
 - **A1 — afbrydelse:** svar `cancelled` på udestående permission → send `session/cancel` → luk dialog lokalt → sæt tool calls `cancelled` lokalt → procesgenstart som fallback efter frist
 - **A2 — genoptagelse:** `session/load` (med historik-replay); `session/new` ved `SessionNotFoundError`; `session/resume` fravalgt (ingen replay)
 - **Mode/model/thinking:** kun via `session/set_config_option` — aldrig `session/set_mode`; svaret erstatter hele lokale `configOptions`; `thinking`-menu minus A7-forbudte par
+- **Sailjail/indespærring — uden for omfanget ● (storefyr, 2026-10-31):** appen køres ikke indespærret; `Internet`-tilladelsen som Sailjail-mekanisme udgået (netværksadgang selv står); N1/3004 bortfalder; v3 §9.2e, punkt 122 lukket
 
 ## Hovedfund (runde 2)
 

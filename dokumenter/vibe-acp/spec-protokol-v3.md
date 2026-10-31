@@ -344,7 +344,7 @@ den.
 
 | # | Hændelse | Svar | Spor | Forbindelse |
 |---|---|---|---|---|
-| **N1** | agentstien ikke nåbar (§9.2e) | intet | 3004 | startes ikke |
+| **N1** | udgået — Sailjail uden for omfanget [B] storefyr 2026-10-31 | — | 3004 reserveret, ubrugt | — |
 | **L1** | bruttolinje > §4.2's loft | intet | 1001 | består; byte kasseres til næste `0x0A` |
 | **L2** | Qt: `DocumentTooLarge` | intet | 2002 | består |
 | **L3** | Qt: `DeepNesting` | −32700, `id: null` | 2003 | består |
@@ -363,8 +363,7 @@ detecting the id in the Request object (e.g. Parse error/Invalid Request), it
 MUST be Null« ([K] jsonrpc.org/specification §5). Specifikationens eget eksempel
 viser det samme (§7, «rpc call with invalid JSON» → `"id": null`).
 
-*N1.* Nåbarhedsprøven sker før processen startes, så der er ingen forbindelse at
-svare på og intet id at knytte svaret til. At registrere den som egen hændelse
+*N1 udgået:* nåbarhedsmålingen (§9.2e) bortfalder med Sailjail-udmeldelsen [B] storefyr 2026-10-31; 3004 forbliver reserveret og ubrugt.
 holder den adskilt fra C1 og C2, der begge forudsætter, at der *var* en
 forbindelse [S].
 
@@ -475,22 +474,9 @@ forkerte led [S].
 §8 efterprøves igen. [A124]: om bindingen skal være præcis 3.0.2 eller ≥3.0.2, er
 ikke besluttet.
 
-**§9.2e Indespærring.** Sailjail giver skriveadgang til præcis tre stier under
-hjemmemappen — `$HOME/.local/share/{org}/{app}`, `$HOME/.cache/{org}/{app}`,
-`$HOME/.config/{org}/{app}` — og hvis appen ikke har tilladelse til en mappe, ser
-den kun en tom, skrivebeskyttet mappe der ([M] sailjail-permissions README, læst
-2026-10-29, Bilag D). Tilladelseslisten indeholder ingen tilladelse, der giver
-»kør en vilkårlig binær i hjemmemappen«; den nærmeste er `AppLaunch`
-(systemd-tjenester), og `Compatibility` frarådes. Standardprofilen forudsætter
-desuden præcis én binær (Exec i desktop-filen). Følgelig [S]: en pakket,
-indespærret Skrynja kan sandsynligvis ikke starte
-`/home/defaultuser/.local/bin/vibe-acp`. **Klienten skal måle stiens nåbarhed
-(`QFileInfo::exists`) før spawn og logge resultatet som hændelse N1 (3004).**
-[A122] åben indtil målt.
+**§9.2e Indespærring — udgået af omfanget.** Sailjail/indespærring tages ud af Skrynja-projektets omfang; appen køres ikke indespærret. [B] beslutning truffet af projektejer storefyr, 2026-10-31. De hidtidige [M]-påstande om Sailjail-stier og tom-map-regel (§9.2e før denne ændring, kilde sailjail-permissions README) beholdes ikke som grundlag, fordi emnet ikke længere er i omfang. N1 (3004) bortfalder: der måles ikke nåbarhed, fordi der ikke indespærres. Se §12 punkt 122 (lukket).
 
-**§9.2f Netværk.** Agenten taler med en fjerntjeneste. Appen skal have
-`Internet`-tilladelsen ([M] sailjail-permissions README). Uden den er klienten en
-parser uden modpart.
+**§9.2f Netværk.** Agenten taler med en fjerntjeneste; klienten skal have netværksadgang. [B] `Internet`-tilladelsen som Sailjail-mekanisme er udgået sammen med §9.2e (storefyr, 2026-10-31); kravet om netværksadgang selv står. Uden netværk er klienten en parser uden modpart.
 
 **§9.3 Miljø.** Skrynja er en Silica-app. [A110] Qt-bindingen (præcis
 qtbase-version) skal bekræftes med `ldd` på enheden eller mod rpm-spec, før
@@ -547,13 +533,13 @@ Bilag A's versionsangivelse er endelig.
 | 116 | Accepterer ACP batch | [A], [V]: ja |
 | 117 | L3: −32700 eller −32600 | [A], [V]: −32700 |
 | 118 | Agentens faktiske fejlkoder på wire | [A], kræver kørsel |
-| 122 | Er agentstien nåbar fra den indespærrede app? | [A] — **alpha-blokerende**; mål med N1 (3004) |
+| 122 | Sailjail/indespærring i omfang? | **lukket [B]:** nej — taget ud af omfanget, storefyr 2026-10-31; N1/3004 bortfalder |
 | 123 | §6.1 og §8 efterprøvet mod SDK-versionen | [A] ved versionsskift (§9.2d) |
 | 124 | Binde til præcis 3.0.2 eller ≥3.0.2 | [A], beslutning hos storefyr |
-| 125 | 3004 som egen L-kode for nåbarhed | medtaget i Bilag C og §6.2 som N1; sendes ikke (§6.1) |
+| 125 | 3004 som egen kode | **lukket [B]:** bortfalder med 122, storefyr 2026-10-31; 3004 reserveret, ubrugt |
 | 126 | `\r\n` som linjeafslutning | [A], [V]: accepteres ikke. Nyt i v3; nummeret er tildelt ved redigeringen og skal bekræftes af storefyr |
 
-**Ikke målt:** punkt 122 (nåbarhed fra indespærret app), Bilag B (fordobling ved
+**Ikke målt:** Bilag B (fordobling ved
 63 MiB), punkt 118 (agentens faktiske fejlkoder på wire), [A110] (præcis
 qtbase-version på enheden).
 
@@ -647,7 +633,7 @@ dato + maskine her.
 | 3001 | P2/P3, ikke en meddelelse | P2, P3 | nej |
 | 3002 | P4, ukendt svar-id | P4 | nej |
 | 3003 | P5, ukendt metode | P5 | nej |
-| 3004 | agentstien ikke nåbar (§9.2e) | N1 | nej |
+| 3004 | reserveret — var N1 (Sailjail-nåbarhed), udgået [B] storefyr 2026-10-31 | — | nej |
 | 4001 | C1, EOF med udestående | C1 | nej |
 | 4002 | C2, unormal afslutning | C2 | nej |
 
@@ -667,7 +653,7 @@ og nogen skal beslutte, at den findes.
 | JSON-RPC 2.0 Specification, opdateret 2013-01-04, jsonrpc.org/specification | web-hentning, hele dokumentet læst | §0.3, §2.5, §5, §6.1, §6.3, §8 (koder, id:null, batch-eksempler) |
 | PyPI JSON-metadata for `agent-client-protocol` 0.11.0 + wheel `agent_client_protocol-0.11.0-py3-none-any.whl` (sha256 ikke målt; måles ved alpha, upload 2026-07-05) | web-hentning + `pip download` + udpakning | §0.1, §6.1, §9.2d; beskrivelsen »Releases track the upstream ACP schema« |
 | SDK 0.11.0 læst lokalt: `acp/exceptions.py` (alle `RequestError`-hjælpere + koder), `acp/connection.py` (stdio docstring), `acp/stdio.py` (`readline`) | fil-læsning i udpakket wheel | §2.1, §6.1 (−32002 [M], −32800 ikke fundet) |
-| sailjail-permissions README (master), raw.githubusercontent.com/sailfishos/sailjail-permissions/master/README.md | web-hentning, læst | §9.2e (tre skrivestier, tom-map-reglen, AppLaunch, Compatibility, Internet, én-binær-forudsætning) |
+| sailjail-permissions README (master), raw.githubusercontent.com/sailfishos/sailjail-permissions/master/README.md | web-hentning, læst 2026-10-29 | læst før §9.2e blev taget ud af omfanget [B] storefyr 2026-10-31; ikke længere grundlag for noget krav |
 | sailfishos/qtbase mer-5.6 @ `0f76bfed2ada0ffc9a653f13c2799094e8f7dbee` | sparse clone på målmaskinen, filer læst | hele Bilag A |
 | doc.qt.io/qt-5/qjsonparseerror.html (Qt 5.15.19) | web-hentning | Bilag A enum-krydstjek |
 | mistralai/mistral-vibe tag `v3.0.2`, `vibe/acp/entrypoint.py` | GitHub API `contents` + base64 | §9.2a (`--setup` → onboarding → `sys.exit(0)`) |
@@ -679,7 +665,7 @@ og nogen skal beslutte, at den findes.
 3-4. Se dette repos målejournaler for detaljer — men bemærk: denne spec forudsætter
 ikke dem; værdierne står her med dato og maskine.
 
-**Ikke målt:** punkt 122 (nåbarhed fra indespærret app), Bilag B (fordobling ved
+**Ikke målt:** Bilag B (fordobling ved
 63 MiB), punkt 118 (agentens faktiske fejlkoder på wire), [A110] (præcis
 qtbase-version på enheden).
 
