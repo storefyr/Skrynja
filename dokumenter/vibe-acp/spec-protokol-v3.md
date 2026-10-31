@@ -6,7 +6,6 @@ dokuments status. Beslutningstager: storefyr, 2026-10-29.
 **Målgruppe:** den agent, der implementerer Skrynja.
 **Grundlag:** ACP v1 [K], JSON-RPC 2.0 [K], Qt (mer-5.6-grenen, [M] nedenfor),
 `vibe-acp` 3.0.2 med `agent-client-protocol==0.11.0` [M].
-**Erstatter:** v2. Ændringerne er angivet i M.8 og i §12.
 
 **Praktisk prøve (gælder hver sætning i dette dokument):** Kan en læser, der
 aldrig har set noget andet dokument i dette projekt, forstå sætningen på dens

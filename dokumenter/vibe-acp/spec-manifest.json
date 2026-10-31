@@ -5,10 +5,10 @@
     {
       "alias": "V2",
       "sti": "dokumenter/vibe-acp/spec-protokol-v2.md",
-      "commit_sha": "ad58fc296d36c75a5064075eb91af66c6af64a83",
-      "blob_sha": "ddb2dccd487fcd8b102eea4ac196111b6ba7a4d5",
-      "bytes": 27389,
-      "linjer": 403,
+      "commit_sha": "b12d67a88c96f1dc3a8029f6a03ff0d3c1855b1f",
+      "blob_sha": "1886d2dc8265b96a7d611717be8246089b455935",
+      "bytes": 28173,
+      "linjer": 407,
       "sektioner": [
         {
           "overskrift": "# Skrynja — protokol-specifikation v2 (ACP-klient over stdio)",
@@ -36,75 +36,210 @@
         },
         {
           "overskrift": "## §5 Fortolkning",
-          "start_linje": 112
+          "start_linje": 114
         },
         {
           "overskrift": "## §6 Fejl og svar",
-          "start_linje": 141
+          "start_linje": 143
         },
         {
           "overskrift": "## §7 Livscyklus",
-          "start_linje": 190
+          "start_linje": 193
         },
         {
           "overskrift": "## §8 Batch",
-          "start_linje": 204
+          "start_linje": 207
         },
         {
           "overskrift": "## §9 Transport og agent",
-          "start_linje": 221
+          "start_linje": 224
         },
         {
           "overskrift": "### §9.2 Agentkonfiguration — ni felter",
-          "start_linje": 225
+          "start_linje": 228
         },
         {
           "overskrift": "## §10 Resumé",
-          "start_linje": 255
+          "start_linje": 258
         },
         {
           "overskrift": "## §11 Miljø og bygning",
-          "start_linje": 280
+          "start_linje": 283
         },
         {
           "overskrift": "## §12 Åbne punkter",
-          "start_linje": 292
+          "start_linje": 295
         },
         {
           "overskrift": "## Bilag A — Qt-kildegrundlag (læst i denne leverance)",
-          "start_linje": 311
+          "start_linje": 314
         },
         {
           "overskrift": "## Bilag B — målingen, der mangler (fordobling ved 63 MiB)",
-          "start_linje": 338
-        },
-        {
-          "overskrift": "#include <QJsonDocument>",
           "start_linje": 341
         },
         {
+          "overskrift": "#include <QJsonDocument>",
+          "start_linje": 344
+        },
+        {
           "overskrift": "#include <QJsonParseError>",
-          "start_linje": 342
+          "start_linje": 345
         },
         {
           "overskrift": "#include <QDebug>",
-          "start_linje": 343
+          "start_linje": 346
         },
         {
           "overskrift": "## Bilag C — interne koder (spor kun, aldrig på tråden)",
-          "start_linje": 369
+          "start_linje": 372
         },
         {
           "overskrift": "## Bilag D — kilder, metode, dato, maskine",
-          "start_linje": 387
+          "start_linje": 391
         }
       ],
-      "bekraeftet_i": "ad58fc296d36c75a5064075eb91af66c6af64a83"
+      "bekraeftet_i": "b12d67a88c96f1dc3a8029f6a03ff0d3c1855b1f"
+    },
+    {
+      "alias": "V3",
+      "sti": "dokumenter/vibe-acp/spec-protokol-v3.md",
+      "commit_sha": "b12d67a88c96f1dc3a8029f6a03ff0d3c1855b1f",
+      "blob_sha": "d7f158f15eb4a987c4e799437202b55699317147",
+      "bytes": 33482,
+      "linjer": 685,
+      "sektioner": [
+        {
+          "overskrift": "# Skrynja — protokol-specifikation v3 (ACP-klient over stdio)",
+          "start_linje": 1
+        },
+        {
+          "overskrift": "## M Mærkning af påstande",
+          "start_linje": 16
+        },
+        {
+          "overskrift": "### M.1 Formål",
+          "start_linje": 18
+        },
+        {
+          "overskrift": "### M.2 De seks former",
+          "start_linje": 25
+        },
+        {
+          "overskrift": "### M.3 Skrevne former",
+          "start_linje": 41
+        },
+        {
+          "overskrift": "### M.4 Tilstand og reference",
+          "start_linje": 54
+        },
+        {
+          "overskrift": "### M.5 Placering",
+          "start_linje": 68
+        },
+        {
+          "overskrift": "### M.6 Hvad `[M]` ikke garanterer",
+          "start_linje": 78
+        },
+        {
+          "overskrift": "### M.7 Kontrol",
+          "start_linje": 88
+        },
+        {
+          "overskrift": "### M.8 Ændringer fra v2",
+          "start_linje": 106
+        },
+        {
+          "overskrift": "## §0 Formål og forudsætninger",
+          "start_linje": 121
+        },
+        {
+          "overskrift": "## §1 Terminologi",
+          "start_linje": 147
+        },
+        {
+          "overskrift": "## §2 Meddelelseslaget",
+          "start_linje": 161
+        },
+        {
+          "overskrift": "## §3 Læsning, buffer, hale",
+          "start_linje": 188
+        },
+        {
+          "overskrift": "## §4 Størrelsesgrænser",
+          "start_linje": 213
+        },
+        {
+          "overskrift": "## §5 Fortolkning",
+          "start_linje": 272
+        },
+        {
+          "overskrift": "## §6 Fejl og svar",
+          "start_linje": 323
+        },
+        {
+          "overskrift": "## §7 Livscyklus",
+          "start_linje": 399
+        },
+        {
+          "overskrift": "## §8 Batch",
+          "start_linje": 421
+        },
+        {
+          "overskrift": "## §9 Transport og agent",
+          "start_linje": 441
+        },
+        {
+          "overskrift": "### §9.2 Agentkonfiguration — ni felter",
+          "start_linje": 446
+        },
+        {
+          "overskrift": "## §10 Resumé",
+          "start_linje": 501
+        },
+        {
+          "overskrift": "## §11 Miljø og bygning",
+          "start_linje": 526
+        },
+        {
+          "overskrift": "## §12 Åbne punkter",
+          "start_linje": 538
+        },
+        {
+          "overskrift": "## Bilag A — Qt-kildegrundlag (læst i denne leverance)",
+          "start_linje": 562
+        },
+        {
+          "overskrift": "## Bilag B — målingen, der mangler (fordobling ved 63 MiB)",
+          "start_linje": 605
+        },
+        {
+          "overskrift": "#include <QJsonDocument>",
+          "start_linje": 608
+        },
+        {
+          "overskrift": "#include <QJsonParseError>",
+          "start_linje": 609
+        },
+        {
+          "overskrift": "#include <QDebug>",
+          "start_linje": 610
+        },
+        {
+          "overskrift": "## Bilag C — interne koder (spor kun, aldrig på tråden)",
+          "start_linje": 638
+        },
+        {
+          "overskrift": "## Bilag D — kilder, metode, dato, maskine",
+          "start_linje": 661
+        }
+      ],
+      "bekraeftet_i": "b12d67a88c96f1dc3a8029f6a03ff0d3c1855b1f"
     }
   ],
   "ophav": {
     "regel": "Ingen fil indeholder sin egen blob-SHA som selvbeskrivelse; denne bagudrettede ophavslinje bærer FORRIGE revisions fulde commit-SHA og skrives af det commit, der følger efter den, den peger på.",
-    "forrige_revision": "efe40febf5004c78191025be1a3388775a3657a7",
-    "bemærkning": "efe40fe er grenens tip før denne leverance; v2 erklærer ikke denne forgængers status — hvad der sker med ældre dokumenter, afgøres i repoet, ikke i v2."
+    "forrige_revision": "b12d67a88c96f1dc3a8029f6a03ff0d3c1855b1f",
+    "bemærkning": "b12d67a er main-tip før denne rettelse. Hver række bærer den revision, hvori rækken blev bekræftet (commit_sha/bekraeftet_i), ikke en fremtidig."
   }
 }
