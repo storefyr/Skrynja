@@ -168,9 +168,15 @@ skriver newline-afsluttede frames ([M] `acp/connection.py` docstring
 læst 2026-10-29).
 
 **§2.2 Linjeafslutning.** Et `\r` før `0x0A` er del af bruttolinjen og fjernes
-ikke. En rå `0x0D` uden for en JSON-streng er ugyldig JSON og giver
-fortolkningsfejl. [A126] Standardværdi [V]: `\r\n` accepteres **ikke** som
-linjeafslutning. Kan ændres ved kompilering, ikke ved kørsel.
+ikke. [B] `\r\n` accepteres som linjeafslutning på indgående trafik: et råt
+`0x0D` uden for en JSON-streng er insignifikant hvidt tegn efter JSON's
+grammatik og giver ikke fortolkningsfejl — Qt's `eatSpace()` spiser `0x0D`
+sammen med `0x20`, `0x09` og `0x0A` [K RFC 8259 §2 «ws = *( %x20 / %x09 / %x0A /
+%x0D )»; M qjsonparser.cpp 219-223, 253-263, Bilag A A17]. `0x0A` forbliver den
+eneste afgrænsning; `0x0D` bliver aldrig afgrænsning, og §1's definition af
+»linje« ændres ikke. Skrynja skriver selv kun `0x0A` på udgående trafik.
+Beslutningen dækker ikke tomme linjer (§2.4) og ikke, hvad agenten sender.
+storefyr, 2026-11-01.
 
 **§2.3 BOM.** Qt's fortolker spiser selv `EF BB BF` i starten (`Parser::eatBOM()`).
 Klienten fjerner derfor **ikke** BOM, da det ville forskyde positionerne i §5.3
@@ -299,11 +305,18 @@ struktur, når input ender midt i et tal (Bilag A, A3).
 4. Fortolkningen fejlede med `IllegalValue`, og linjen begynder (efter BOM og
    blanktegn) med noget andet end `[` eller `{` → **indpak i `[` … `]` og
    fortolk igen**.
-5. Indpakningen lykkes med præcis ét element mellem `[` og `]`, og elementet er
+5. Er der intet tegn tilbage efter BOM og blanktegn, eller lykkes indpakningen
+   med nul elementer, er linjen ikke en skalarlyprøve: den er ikke gyldig JSON
+   («JSON-text = ws value ws» — en tekst uden value er ikke en JSON-text) og
+   afvises som P1: −32700 med `id: null`. [K RFC 8259 §2; M qjsonparser.cpp
+   270-271 (`if (!eatSpace()) return 0;` → token 0 → `IllegalValue` ved
+   topniveau) og 538-539 (`if (*json == EndArray) { nextToken(); }` — indpakning
+   af en tom rest giver en gyldig, tom matrix); Bilag A A17-A18]
+6. Indpakningen lykkes med præcis ét element mellem `[` og `]`, og elementet er
    en skalarværdi → gyldig, men ikke-meddelelsesformet JSON-værdi → −32600. Er
    der flere elementer eller et objekt/en matrix som element, er linjen ikke en
-   skalarlyprøve og afvises efter §5.1.
-6. Indpakningen mislykkes → ikke gyldig JSON → −32700.
+   skalarlyprøve og afvises som P1: −32700 med `id: null`.
+7. Indpakningen mislykkes → ikke gyldig JSON → −32700.
 
 Indpakningen er nødvendig, fordi Qt's fortolker ikke har begrebet
 topniveau-skalar [A97].
@@ -507,9 +520,9 @@ alene (læst 2026-10-29) dækker ikke qtbase-pakken og lukker ikke punktet.
 |---|---|---|---|
 | 1 | Afgrænsning | `0x0A` | [K] |
 | 2 | Indlejrede linjeskift | forbudt | [K] |
-| 3 | `\r\n` | ikke accepteret | [V] [A126] |
+| 3 | `\r\n` | accepteret indgående; `0x0A` eneste afgrænsning og eneste udgående afslutning | [B] storefyr 2026-11-01 |
 | 4 | BOM | overlades til Qt | [M] Bilag A |
-| 5 | Tom linje | ignoreres; kontakt ved kompilering | [V] [A95] |
+| 5 | Tom linje (n = 0) | ignoreres; kan slås fra ved kompilering | [V] [A95] |
 | 6 | Linjeloft | 66 060 288 byte | [B] storefyr 2026-10-29 |
 | 7 | Qts dokumentgrænse | `(1<<27) - 1` binært | [M] Bilag A |
 | 8 | Indlejringsgrænse | 1024 | [M] Bilag A |
@@ -542,7 +555,7 @@ alene (læst 2026-10-29) dækker ikke qtbase-pakken og lukker ikke punktet.
 
 | # | Punkt | Status |
 |---|---|---|
-| 95 | Tomme linjer | [A], [V]: ignoreres, ved kompilering |
+| 95 | Tomme linjer | [A], [V]: kun bruttolinje med n = 0 ignoreres; en blanktegnslinje er et dokument efter §5. §2.4 står uændret [B] storefyr 2026-11-01; punktet forbliver åbent (§2.4 mod §7.3 uafklaret) |
 | 96 | Tolerance som standard | [A], [V]: fra |
 | 97 | Skalarlyprøven erstatter fallback | [A], [V]: ja, §5.6 kun til spor |
 | 110 | Præcis Qt-binding (`ldd`/spec) | [A], blokerer Bilag A's endelige versionsangivelse |
@@ -554,7 +567,7 @@ alene (læst 2026-10-29) dækker ikke qtbase-pakken og lukker ikke punktet.
 | 123 | §6.1 og §8 efterprøvet mod SDK-versionen | betingelse [A123]: udløses ved afvigelse i agentens versionsstreng ved initialize (§9.2d) |
 | 124 | Binde til præcis 3.0.2 eller ≥3.0.2 | **lukket [B]:** ≥3.0.2, storefyr 2026-11-01; adfærd ved afvigelse: log + fortsæt (§9.2d) |
 | 125 | 3004 som egen kode | **lukket [B]:** bortfalder med 122, storefyr 2026-10-31; 3004 reserveret, ubrugt |
-| 126 | `\r\n` som linjeafslutning | [A], [V]: accepteres ikke. Nyt i v3; nummeret er tildelt ved redigeringen og skal bekræftes af storefyr |
+| 126 | `\r\n` som linjeafslutning | **lukket [B]:** accepteres på indgående trafik; `0x0A` eneste afgrænsning og kun `0x0A` på udgående; storefyr 2026-11-01 (§2.2) |
 
 **Ikke målt:** Bilag B (fordobling ved
 63 MiB), [A110] (præcis qtbase-version på enheden). Punkt 118 er målt, men ikke
@@ -597,6 +610,8 @@ forskellige versioner af filen og skal måles igen, hvis commit'en ændres.
 | A14 | BOM | `eatBOM()` spiser `EF BB BF` | qjsonparser.cpp 242-248, 310 |
 | A15 | QByteArray-loft | `MaxAllocSize = (1<<30)-1` (~1 GiB, 32-bit int også på 64-bit); over → `qBadAlloc()` (std::bad_alloc) | qtools_p.h 85; qbytearray.cpp 1616-1617 |
 | A16 | QByteArray-vækst | `qAllocMore` = næste potens af 2; `QIODevice` intern buffer 16 384 byte | qbytearray.cpp 125-135; qiodevice_p.h 60 |
+| A17 | Hvidt tegn | `eatSpace()` spiser `0x20`, `0x09`, `0x0A`, `0x0D`; `nextToken()` returnerer 0 når intet tegn er tilbage → token 0 → `IllegalValue` ved topniveau | qjsonparser.cpp 219-223, 253-263, 268-271, 321 |
+| A18 | Tom matrix | `parseArray()`: `if (*json == EndArray) { nextToken(); }` — `[]` parses uden fejl | qjsonparser.cpp 538-539 |
 
 Enum-navne i Qt (verificeret mod samme kilde, qjsonparser.cpp 100-108):
 `NoError, UnterminatedObject, MissingNameSeparator, UnterminatedArray,
@@ -678,7 +693,7 @@ og nogen skal beslutte, at den findes.
 
 ## Bilag D — kilder, metode, dato, maskine
 
-**Hentet/læst i denne leverance (2026-10-29, målmaskine medmindre andet står):**
+**Hentet/læst i denne leverance (2026-10-29 og 2026-11-01, målmaskine medmindre andet står):**
 
 | Kilde | Metode | Anvendt til |
 |---|---|---|
@@ -686,7 +701,8 @@ og nogen skal beslutte, at den findes.
 | PyPI JSON-metadata for `agent-client-protocol` 0.11.0 + wheel `agent_client_protocol-0.11.0-py3-none-any.whl` (sha256 ikke målt; måles ved alpha, upload 2026-07-05) | web-hentning + `pip download` + udpakning | §0.1, §6.1, §9.2d; beskrivelsen »Releases track the upstream ACP schema« |
 | SDK 0.11.0 læst lokalt: `acp/exceptions.py` (alle `RequestError`-hjælpere + koder), `acp/connection.py` (stdio docstring), `acp/stdio.py` (`readline`) | fil-læsning i udpakket wheel | §2.1, §6.1 (−32002 [M], −32800 ikke fundet) |
 | sailjail-permissions README (master), raw.githubusercontent.com/sailfishos/sailjail-permissions/master/README.md | web-hentning, læst 2026-10-29 | læst før §9.2e blev taget ud af omfanget [B] storefyr 2026-10-31; ikke længere grundlag for noget krav |
-| sailfishos/qtbase mer-5.6 @ `0f76bfed2ada0ffc9a653f13c2799094e8f7dbee` | sparse clone på målmaskinen, filer læst | hele Bilag A |
+| sailfishos/qtbase mer-5.6 @ `0f76bfed2ada0ffc9a653f13c2799094e8f7dbee` | sparse clone på målmaskinen; `qjsonparser.cpp` genhentet og læst igen 2026-11-01 via GitHub API `contents` (1 008 linjer) | hele Bilag A (A1-A18) |
+| RFC 8259, *The JavaScript Object Notation (JSON) Data Interchange Format*, december 2017, rfc-editor.org/rfc/rfc8259.txt | web-hentning 2026-11-01, hele dokumentet læst | §2.2 og §5.5 trin 5 (ws omfatter %x0D; «JSON-text = ws value ws»; §7 unescaped; §9 parser MUST accept) |
 | doc.qt.io/qt-5/qjsonparseerror.html (Qt 5.15.19) | web-hentning | Bilag A enum-krydstjek |
 | mistralai/mistral-vibe tag `v3.0.2`, `vibe/acp/entrypoint.py` | GitHub API `contents` + base64 | §9.2a (`--setup` → onboarding → `sys.exit(0)`) |
 
