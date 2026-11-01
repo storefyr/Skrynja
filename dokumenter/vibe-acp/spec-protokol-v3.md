@@ -4,6 +4,10 @@
 ACP-klient. Det erklærer sin egen gyldighed; det udtaler sig ikke om noget andet
 dokuments status. Beslutningstager: storefyr, 2026-10-29.
 **Revision [B]:** 2026-11-01, storefyr — punkt 95 og 96 afgjort, §2.4 slettet; se §12.
+**Revision [B]:** 2026-11-01, storefyr — L1 omformet: loftet måles på modtagne byte i den
+aktuelle linje (kasserede byte medregnet), byte over loftet kasseres ved ankomsten,
+linje hvor L1 er indtrådt fortolkes ikke, L1 svarer ikke; punkt 117 lukket (−32700);
+nyt punkt 127; se §3, §6, §12.
 **Målgruppe:** den agent, der implementerer Skrynja.
 **Grundlag:** ACP v1 [K], JSON-RPC 2.0 [K], Qt (mer-5.6-grenen, [M] nedenfor),
 `vibe-acp` 3.0.2 med `agent-client-protocol==0.11.0` [M].
@@ -154,6 +158,7 @@ Skrynja bruger den ikke.
 | **n** | bruttolinjens længde i byte |
 | **dokument** | det JSON-dokument, en bruttolinje indeholder |
 | **hale** | byte akkumuleret ved strømmens slutning uden afsluttende `0x0A` |
+| **tæller** | antal byte modtaget i den aktuelle linje, kasserede byte medregnet; nulstilles ved hver `0x0A` |
 | **spor** | klientens lokale log; går aldrig på tråden |
 | **L-kode** | intern hændelseskode (§6.5, Bilag C); aldrig en trådkode |
 
@@ -192,25 +197,34 @@ Klienten må ikke »retningskorrigere« ugyldige byte.
 ## §3 Læsning, buffer, hale
 
 **§3.1 Buffermodel.** Én buffer pr. forbindelse. Byte lægges til i ankomstorden.
-Bufferen tømmes til og med den `0x0A`, der afslutter linjen.
+Bufferen tømmes til og med den `0x0A`, der afslutter linjen. Tælleren (§1) løber på
+modtagne byte i den aktuelle linje og nulstilles ved hver `0x0A`. [B] Passerer
+tælleren §4.2's loft, lægges intet byte ud over loftet i bufferen — de kasseres ved
+ankomsten; `0x0A` konsumeres stadig, så tømningen ikke svigter, og L1 udløses én
+gang pr. linje (§6.2). Uden denne kassering findes en tilstand, hvor klienten
+hverken har svaret, sporet eller en forbindelse [S]. Beslutning: storefyr,
+2026-11-01.
 
 **§3.2 Udtrækning.** Når `0x0A` er set, er linjen komplet og overgives til §4
-og §5.
+og §5. [B] Er L1 indtrådt på linjen (§3.1), overgives den **ikke** til §4 og §5 —
+der findes ingen komplet bruttolinje at fortolke. Beslutning: storefyr, 2026-11-01.
 
 **§3.3 Hale.** Byte ved strømmens slutning uden `0x0A`:
 
 1. fortolkes som et dokument efter §5,
 2. leveres, hvis fortolkningen lykkes,
-3. registreres som »afsluttet af EOF, ikke af `0x0A`«,
+3. registreres som »afsluttet af EOF, ikke af `0x0A`« — medmindre L1 allerede er
+   indtrådt på linjen, så sporet ikke skrives to gange,
 4. besvares **ikke**.
 
 Trin 1 er ikke høflighed: en agent, der skriver sit sidste svar uden afsluttende
-linjeskift, har stadig sendt et svar [S]. Trin 4 følger af, at der ikke findes en
-linje at besvare.
+linjeskift, har stadig sendt et svar [S]. [B] Trin 4 følger af, at halen ikke er en
+linje (§1), så §6.2's svar-rækker — der alle forudsætter en linje — ikke gælder for
+den; halen besvares ikke. Beslutning: storefyr, 2026-11-01.
 
-**§3.4 Halens øvre grænse.** Halen kan ikke vokse forbi §4.2's loft. Uden loft
-findes en tilstand, hvor klienten hverken har svaret, sporet eller en forbindelse
-[S].
+**§3.4 Halens øvre grænse — udgået.** Halen er del af bufferen og tælleren (§3.1),
+så loftet gælder den uden egen regel. Begrundelsen for loftet står i §3.1. [B]
+Beslutning: storefyr, 2026-11-01.
 
 ---
 
@@ -251,8 +265,9 @@ linjeloft erstatter det. [M] (Bilag A, A5).
 
 **§4.5 Hukommelsesbudget.** Ved 63 MiB kan klienten samtidig holde bruttolinjen
 (~66 MiB) og den binære form (op til ~132 MiB): ~198 MiB [S] (66 + 132, jf. A12/A16;
-A15's omallokering kan kortvarigt kræve mere, men tælles ikke med her). Belastningen skal stå i sporudskriften ved L1, så en
-senere hukommelsesfejl kan henføres til den rigtige årsag.
+A15's omallokering kan kortvarigt kræve mere, men tælles ikke med her). [B] Ved L1 findes ingen binær form (linjen blev aldrig fortolket, §3.2), så
+sporudskriften bærer tællerens værdi og loftet, ikke denne belastning. Beslutning:
+storefyr, 2026-11-01.
 
 **§4.5a Forholdet til A6 i PR-beskrivelsen.** A6 i PR-beskrivelsen angiver 8 MiB
 pr. linje og lukning ved hale uden `0x0A`. Denne specifikation hæver loftet til
@@ -368,7 +383,7 @@ og §8 mod den faktiske SDK.
 | # | Hændelse | Svar | Spor | Forbindelse |
 |---|---|---|---|---|
 | **N1** | udgået — Sailjail uden for omfanget [B] storefyr 2026-10-31 | — | 3004 reserveret, ubrugt | — |
-| **L1** | bruttolinje > §4.2's loft | intet | 1001 | består; byte kasseres til næste `0x0A` |
+| **L1** | tæller > §4.2's loft (§3.1) | intet | 1001 | består; byte over loftet kasseres ved ankomsten, `0x0A` konsumeres stadig |
 | **L2** | Qt: `DocumentTooLarge` | intet | 2002 | består |
 | **L3** | Qt: `DeepNesting` | −32700, `id: null` | 2003 | består |
 | **P1** | ikke gyldig JSON (øvrige `ParseError`) | −32700, `id: null` | 2001 | består |
@@ -390,19 +405,22 @@ står noget andet end hvidt tegn tilbage. `id: null` bruges alligevel, selv om e
 id kan læses i det fortolkede dokument, fordi linjen som helhed ikke er en
 meddelelse. [B] storefyr, 2026-11-01.
 
-*N1 udgået:* nåbarhedsmålingen (§9.2e) bortfalder med Sailjail-udmeldelsen [B] storefyr 2026-10-31; 3004 forbliver reserveret og ubrugt.
-holder den adskilt fra C1 og C2, der begge forudsætter, at der *var* en
-forbindelse [S].
+*N1 udgået:* nåbarhedsmålingen (§9.2e) bortfalder med Sailjail-udmeldelsen [B] storefyr 2026-10-31; 3004 forbliver reserveret og ubrugt. Koden 3004 holder N1 adskilt fra C1 og C2,
+der begge forudsætter, at der *var* en forbindelse [S].
 
-*L1 og L2.* Intet svar. Meddelelsen er ikke modtaget i sin helhed, så det er ikke
-kendt, om den var en anmodning, og hvilket id den havde. Et svar med `id: null`
-ville være formelt i orden, men ville besvare en meddelelse, afsenderen muligvis
-aldrig færdiggjorde. At tie og registrere påstår intet om det ukendte [S].
+*L1.* Intet svar. Linjen, hvor L1 er indtrådt, overgives ikke til §4 og §5 (§3.2),
+så den er ikke fortolket og ikke modtaget i sin helhed; det er ikke kendt, om den
+var en anmodning, og hvilket id den havde. At tie og registrere påstår intet om det
+ukendte [S]. [B] Beslutning: storefyr, 2026-11-01.
+
+*L2.* Intet svar. Linjen er modtaget i sin helhed, men Qt kunne ikke fortolke den
+(DocumentTooLarge), så meddelelsen ikke er tilgængelig for klienten. [B] Beslutning:
+storefyr, 2026-11-01.
 
 *L3.* `DeepNesting` er en egenskab ved dokumentet, ikke ved dets størrelse. Linjen
 **er** modtaget i sin helhed. Derfor svares der — med −32700, fordi dokumentet
-ikke er fortolkeligt for klienten [A117] (−32600 er alternativet; valget er ikke
-bundet til nogen kilde).
+ikke er fortolkeligt for klienten. [B] −32700 (ikke −32600: −32600 forudsætter et
+parset Request-objekt), besluttet for L3 i §12 punkt 117. storefyr, 2026-11-01.
 
 *P4.* Et svar uden modpart er ikke en protokolfejl hos klienten, men et tegn på,
 at parterne er ude af trit. Det spores og kasseres ([K] jsonrpc.org §5: svarets
@@ -413,7 +431,8 @@ af en linje, den ikke har fortolket.
 
 **§6.5 Interne koder.** Positive heltal, blokopdelt (Bilag C). De har deres egen
 type i koden, kan ikke tildeles `error.code` uden eksplicit konvertering, skrives
-til sporet med linjens længde, position og tidspunkt, går **aldrig** på tråden —
+til sporet med bufferens størrelse (ved L1: tællerens værdi og loftet, §4.5),
+position og tidspunkt, går **aldrig** på tråden —
 heller ikke i `error.data` — og ændres ikke, når §4.2's loft ændres.
 
 1000 er reserveret og ubrugt: en fejlagtig standardværdi skal give et
@@ -532,7 +551,7 @@ alene (læst 2026-10-29) dækker ikke qtbase-pakken og lukker ikke punktet.
 | 9 | Tolerance | findes ikke; én bruttolinje = ét dokument | [B] storefyr 2026-11-01 |
 | 10 | Skalarlyprøve | indpakning i `[` … `]` | [V] [A97] |
 | 11 | Position | byte, klem til `[0, n]` | [M] Bilag A |
-| 12 | L1-svar | intet | [S] |
+| 12 | L1-svar | intet | [B] storefyr 2026-11-01 |
 | 13 | P1-svar | −32700, `id: null` | [K] JSON-RPC |
 | 14 | Batch | JSON-RPC's regler | [V] [A116] |
 | 15 | Interne koder | 1001 = L1, blokopdelt | [B] storefyr 2026-10-29 |
@@ -564,13 +583,14 @@ alene (læst 2026-10-29) dækker ikke qtbase-pakken og lukker ikke punktet.
 | 110 | Præcis Qt-binding (`ldd`/spec) | [A], blokerer Bilag A's endelige versionsangivelse |
 | 115 | Holder fordoblingen ved 63 MiB | [A], Bilag B (udledning i Bilag B; kørsel i SDK) |
 | 116 | Accepterer ACP batch | [A], [V]: ja |
-| 117 | L3: −32700 eller −32600 | [A], [V]: −32700 |
+| 117 | L3: −32700 eller −32600 | **lukket [B]:** −32700, fordi −32600 forudsætter et parset Request-objekt; storefyr 2026-11-01 (§6.3) |
 | 118 | Agentens faktiske fejlkoder på wire | [M] fire fremkaldte kald 2026-11-01 (se §6.1); ikke udtømmende |
 | 122 | Sailjail/indespærring i omfang? | **lukket [B]:** nej — taget ud af omfanget, storefyr 2026-10-31; N1/3004 bortfalder |
 | 123 | §6.1 og §8 efterprøvet mod SDK-versionen | betingelse [A123]: udløses ved afvigelse i agentens versionsstreng ved initialize (§9.2d) |
 | 124 | Binde til præcis 3.0.2 eller ≥3.0.2 | **lukket [B]:** ≥3.0.2, storefyr 2026-11-01; adfærd ved afvigelse: log + fortsæt (§9.2d) |
 | 125 | 3004 som egen kode | **lukket [B]:** bortfalder med 122, storefyr 2026-10-31; 3004 reserveret, ubrugt |
 | 126 | `\r\n` som linjeafslutning | **lukket [B]:** accepteres på indgående trafik; `0x0A` eneste afgrænsning og kun `0x0A` på udgående; storefyr 2026-11-01 (§2.2) |
+| 127 | L1's udformning: målepunkt, kassering, fortolkning, svar | **lukket [B]:** tæller på modtagne byte (kasserede medregnet); byte over loftet kasseres ved ankomsten, `0x0A` konsumeres; linje hvor L1 er indtrådt fortolkes ikke; intet svar; storefyr 2026-11-01 (§3.1, §3.2, §6.2) |
 
 **Ikke målt:** Bilag B (fordobling ved
 63 MiB), [A110] (præcis qtbase-version på enheden). Punkt 118 er målt, men ikke
@@ -676,7 +696,7 @@ enhedens. Resultat skrives her med resultat, dato og maskine.
 | Kode | Hændelse | Række i §6.2 | Tråden |
 |---|---|---|---|
 | 1000 | reserveret, ubrugt | — | nej |
-| 1001 | L1, linje over loft | L1 | nej |
+| 1001 | L1, tæller over loft (§3.1) | L1 | nej |
 | 2001 | P1, fortolkningsfejl | P1 | nej |
 | 2002 | L2, `DocumentTooLarge` | L2 | nej |
 | 2003 | L3, `DeepNesting` | L3 | nej |
