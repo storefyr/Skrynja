@@ -246,9 +246,8 @@ ikke dokumentets begyndelse. Grænsen gælder den binære form, ikke tekstlængd
 linjeloft erstatter det. [M] (Bilag A, A5).
 
 **§4.5 Hukommelsesbudget.** Ved 63 MiB kan klienten samtidig holde bruttolinjen
-(~66 MiB), den binære form (op til ~132 MiB) og dokumentet oven på: ~222 MiB [S]
-(66 MiB bruttolinje + 34 MiB foregående buffer under omallokering + 132 MiB
-binær form, jf. A15/A16). Belastningen skal stå i sporudskriften ved L1, så en
+(~66 MiB) og den binære form (op til ~132 MiB): ~198 MiB [S] (66 + 132, jf. A12/A16;
+A15's omallokering kan kortvarigt kræve mere, men tælles ikke med her). Belastningen skal stå i sporudskriften ved L1, så en
 senere hukommelsesfejl kan henføres til den rigtige årsag.
 
 **§4.5a Forholdet til A6 i PR-beskrivelsen.** A6 i PR-beskrivelsen angiver 8 MiB
@@ -336,9 +335,21 @@ klienten alene modtager, er noteret umiddelbart under den.
 −32800 er ikke i SDK 0.11.0-wheelen og sendes ikke i v3.
 −32002 findes i SDK 0.11.0 (`RequestError.resource_not_found`). Klienten kan
 modtage den, men sender den ikke i dette omfang: ingen tilstand i §6.2 fremkalder
-den.
+den. [M] fire fremkaldte kald 2026-11-01 på JollaPhone2026 mod agenten i
+`/home/defaultuser/.local/bin/vibe-acp` (ét `initialize`, derefter kald med id
+501-504): `skrynja/ukendt` → −32601; `session/prompt` med ukendt sessionId →
+−32602 «Session not found»; `session/new` med `cwd: 123` → −32602 «Invalid
+params»; `session/new` med ikke-eksisterende `cwd` → **resultat** (sessionen
+oprettes; cwd afvises ikke). −32002 blev ikke set i disse fire kald — det er ikke
+det samme som at agenten aldrig bruger den. Konsekvens: −32602 bærer mindst to
+betydninger hos denne agent (ugyldig parameter og ukendt session); koden alene
+skelner dem ikke, `message` må læses. Forbehold: fire fremkaldte kald, ikke en
+ugtømmelse; proben kaster agentens stderr væk; −32603 og godkendelsesfejl blev
+ikke fremkaldt. [M] fire kald 2026-11-01, ikke udtømmende.
 −32768…−32000 er reserveret [K]. Skrynja har ingen egen trådkode.
-[A123]: tabellen skal efterprøves igen, hvis agentens SDK-version ændres (§9.2d).
+[A123] **betingelse, ikke blokering:** udløser = agentens versionsstreng ved
+`initialize` svarer ikke til den bundne 3.0.2/0.11.0 (§9.2d); da efterprøves §6.1
+og §8 mod den faktiske SDK.
 
 **§6.2 Hændelsestabel**
 
@@ -479,8 +490,10 @@ ikke besluttet.
 **§9.2f Netværk.** Agenten taler med en fjerntjeneste; klienten skal have netværksadgang. [B] `Internet`-tilladelsen som Sailjail-mekanisme er udgået sammen med §9.2e (storefyr, 2026-10-31); kravet om netværksadgang selv står. Uden netværk er klienten en parser uden modpart.
 
 **§9.3 Miljø.** Skrynja er en Silica-app. [A110] Qt-bindingen (præcis
-qtbase-version) skal bekræftes med `ldd` på enheden eller mod rpm-spec, før
-Bilag A's versionsangivelse er endelig.
+qtbase-version) lukkes med én måling, to metoder på samme enhed: `ldd` på den
+binær, der faktisk køres, og derefter `rpm -qf` på den sti, `ldd` peger på.
+Afviger de to, er det det vigtigste mulige udfald og skal stå i §11. rpm-spec'en
+alene (læst 2026-10-29) dækker ikke qtbase-pakken og lukker ikke punktet.
 
 ---
 
@@ -514,7 +527,7 @@ Bilag A's versionsangivelse er endelig.
 | Forhold | Værdi | Status |
 |---|---|---|
 | Apptype | Silica | [B] storefyr 2026-10-29 |
-| Qt | Qt 5 (Sailfish), præcis version [A110] | [M] rpm-spec |
+| Qt | Qt 5 (Sailfish), præcis version [A110] | [M] «Qt5» fra rpm-spec; præcis qtbase lukkes ved ldd+rpm -qf (§9.3) |
 | Fortolker | `QJsonDocument::fromJson` | [M] |
 | Antal fortolkere | én | [K] §5.7 |
 | Sprog i meddelelser | UTF-8 | [K] |
@@ -529,19 +542,22 @@ Bilag A's versionsangivelse er endelig.
 | 96 | Tolerance som standard | [A], [V]: fra |
 | 97 | Skalarlyprøven erstatter fallback | [A], [V]: ja, §5.6 kun til spor |
 | 110 | Præcis Qt-binding (`ldd`/spec) | [A], blokerer Bilag A's endelige versionsangivelse |
-| 115 | Holder fordoblingen ved 63 MiB | [A], Bilag B |
+| 115 | Holder fordoblingen ved 63 MiB | [A], Bilag B (udledning i Bilag B; kørsel i SDK) |
 | 116 | Accepterer ACP batch | [A], [V]: ja |
 | 117 | L3: −32700 eller −32600 | [A], [V]: −32700 |
-| 118 | Agentens faktiske fejlkoder på wire | [A], kræver kørsel |
+| 118 | Agentens faktiske fejlkoder på wire | [M] fire fremkaldte kald 2026-11-01 (se §6.1); ikke udtømmende |
 | 122 | Sailjail/indespærring i omfang? | **lukket [B]:** nej — taget ud af omfanget, storefyr 2026-10-31; N1/3004 bortfalder |
-| 123 | §6.1 og §8 efterprøvet mod SDK-versionen | [A] ved versionsskift (§9.2d) |
-| 124 | Binde til præcis 3.0.2 eller ≥3.0.2 | [A], beslutning hos storefyr |
+| 123 | §6.1 og §8 efterprøvet mod SDK-versionen | betingelse [A123]: udløses ved afvigelse i agentens versionsstreng ved initialize (§9.2d) |
+| 124 | Binde til præcis 3.0.2 eller ≥3.0.2 | [A], beslutning hos storefyr. Konsekvens uanset udfald: [M] agenten accepterer enhver `protocolVersion` og svarer med sin egen (målt runde 1, målmaskine 2.9.4) — der findes ingen versionsforhandling at læne sig på. Ved præcis 3.0.2: klienten sammenligner selv agentens versionsstreng ved `initialize` og afbryder ved afvigelse. Ved ≥3.0.2: specifikationen skal sige, hvad klienten gør ved en afvigelse (log + fortsæt, eller afbryd) — dette står ikke i teksten endnu og skal skrives ind ved beslutningen |
 | 125 | 3004 som egen kode | **lukket [B]:** bortfalder med 122, storefyr 2026-10-31; 3004 reserveret, ubrugt |
 | 126 | `\r\n` som linjeafslutning | [A], [V]: accepteres ikke. Nyt i v3; nummeret er tildelt ved redigeringen og skal bekræftes af storefyr |
 
 **Ikke målt:** Bilag B (fordobling ved
-63 MiB), punkt 118 (agentens faktiske fejlkoder på wire), [A110] (præcis
-qtbase-version på enheden).
+63 MiB), [A110] (præcis qtbase-version på enheden). Punkt 118 er målt, men ikke
+ugtømmende (fire kald 2026-11-01). **Belæg for 118-målingen:** tallene er
+ett-trins-målinger rapporteret via relæ 2026-11-01; de er ikke reproduceret her og
+ikke i nogen målejournal på denne gren endnu — før de bruges som andet end [M]-note,
+kræves en ny kørsel eller en journal med rå output.
 
 ---
 
@@ -615,9 +631,21 @@ int main() {
 g++ -O2 -std=c++11 -fPIC p.cpp -o p $(pkg-config --cflags --libs Qt5Core) && ./p
 ```
 
-`NoError` → fordoblingen holder ved 63 MiB. `DocumentTooLarge` → loftet i §4.2
-skal **ned**. Kør på målmaskinen mod samme Qt5 som CI bruger, og noter resultat +
-dato + maskine her.
+**Udledning af dokumentets egne tal [S], ikke måling:** teststreng = 66 000 001
+byte; §4.2's loft = 66 060 288 byte, så testen ligger 60 287 byte under loftet.
+Binær form for matrix af heltal ifølge A12: 12 + 4 × 33 000 000 = 132 000 012 byte,
+altså 2 217 715 byte under `Value::MaxSize` = 134 217 727. Testen ligger under
+begge grænser, så `NoError` og `DocumentTooLarge` er **ikke** symmetriske udfald:
+`DocumentTooLarge` ville ikke vise, at fordoblingen svigter ved 63 MiB, men at
+A12's størrelsestabel ikke gælder for en matrix af heltal. Forbehold: at hvert
+element koster 4 byte, er en antagelse udledt af A9's int/double-regel, ikke en
+måling.
+
+**Tolkning:** `NoError` → fordoblingen holder ved 63 MiB. `DocumentTooLarge` →
+A12 gælder ikke for denne dokumenttype; undersøg størrelsestabellen før loftet i
+§4.2 ændres. **Blokering uændret:** g++ og `pkg-config --cflags --libs Qt5Core`
+findes ikke på enheden; Bilag B køres i Sailfish SDK mod en Qt af samme serie som
+enhedens. Resultat skrives her med resultat, dato og maskine.
 
 ---
 
@@ -666,6 +694,9 @@ og nogen skal beslutte, at den findes.
 ikke dem; værdierne står her med dato og maskine.
 
 **Ikke målt:** Bilag B (fordobling ved
-63 MiB), punkt 118 (agentens faktiske fejlkoder på wire), [A110] (præcis
-qtbase-version på enheden).
+63 MiB), [A110] (præcis qtbase-version på enheden). Punkt 118 er målt, men ikke
+ugtømmende (fire kald 2026-11-01). **Belæg for 118-målingen:** tallene er
+ett-trins-målinger rapporteret via relæ 2026-11-01; de er ikke reproduceret her og
+ikke i nogen målejournal på denne gren endnu — før de bruges som andet end [M]-note,
+kræves en ny kørsel eller en journal med rå output.
 
