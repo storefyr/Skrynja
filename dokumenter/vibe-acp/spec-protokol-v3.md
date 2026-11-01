@@ -3,6 +3,7 @@
 **Status [B]:** Dette dokument er gældende protokol-specifikation for Skrynjas
 ACP-klient. Det erklærer sin egen gyldighed; det udtaler sig ikke om noget andet
 dokuments status. Beslutningstager: storefyr, 2026-10-29.
+**Revision [B]:** 2026-11-01, storefyr — punkt 95 og 96 afgjort, §2.4 slettet; se §12.
 **Målgruppe:** den agent, der implementerer Skrynja.
 **Grundlag:** ACP v1 [K], JSON-RPC 2.0 [K], Qt (mer-5.6-grenen, [M] nedenfor),
 `vibe-acp` 3.0.2 med `agent-client-protocol==0.11.0` [M].
@@ -35,8 +36,8 @@ intet om, hvorvidt påstanden er sand.
 
 Der findes ingen symbolformer. `[K] [M] [B] [S] [A] [V]` er den eneste form.
 
-Hvor en `[B]`-række ikke selv nævner en dato, gælder dokumentets dato,
-2026-10-29. Datoen er ikke målt pr. række.
+[B] Hvor en `[B]`-række ikke selv nævner en dato, gælder revisionsdatoen i
+statusfeltet. Datoen er ikke målt pr. række. storefyr, 2026-11-01.
 
 ### M.3 Skrevne former
 
@@ -175,15 +176,12 @@ sammen med `0x20`, `0x09` og `0x0A` [K RFC 8259 §2 «ws = *( %x20 / %x09 / %x0A
 %x0D )»; M qjsonparser.cpp 219-223, 253-263, Bilag A A17]. `0x0A` forbliver den
 eneste afgrænsning; `0x0D` bliver aldrig afgrænsning, og §1's definition af
 »linje« ændres ikke. Skrynja skriver selv kun `0x0A` på udgående trafik.
-Beslutningen dækker ikke tomme linjer (§2.4) og ikke, hvad agenten sender.
+Beslutningen dækker ikke tomme linjer (§5.5 trin 5) og ikke, hvad agenten sender.
 storefyr, 2026-11-01.
 
 **§2.3 BOM.** Qt's fortolker spiser selv `EF BB BF` i starten (`Parser::eatBOM()`).
 Klienten fjerner derfor **ikke** BOM, da det ville forskyde positionerne i §5.3
 i forhold til Qt's egne. [M] læst i qtbase-kilde (Bilag A, A14).
-
-**§2.4 Tomme linjer.** [A95] Standardværdi [V]: bruttolinje med n = 0 ignoreres
-uden spor. Kan slås fra ved kompilering, ikke ved kørsel.
 
 **§2.5 Tegnsæt.** JSON-RPC-meddelelser er UTF-8 ([K] jsonrpc.org/specification,
 §1 «Overview»). Klienten validerer ikke selv; Qt rapporterer `IllegalUTF8String`.
@@ -276,12 +274,13 @@ målt. Bilag B viser måleprogrammet. [A115]
 
 ## §5 Fortolkning
 
-**§5.1 Tolerancen.** [A96] Standardværdi [V]: **fra**. Klienten fortolker én
-bruttolinje som præcis ét dokument. Kan slås til ved kompilering.
+**§5.1 Én bruttolinje, ét dokument.** [B] Klienten fortolker én bruttolinje som
+præcis ét dokument. Der findes ingen tolerance og ingen kompileringstilstand.
+Beslutning: storefyr, 2026-11-01.
 
-**§5.2 Klæbede dokumenter.** Er tolerancen slået til, og rapporterer Qt
-`GarbageAtEnd`, fortolkes resten af linjen som et nyt dokument fra
-fejlpositionen, indtil linjen er opbrugt eller en anden fejl indtræder.
+**§5.2 Klæbede dokumenter — udgået.** [B] Tolerance findes ikke (§5.1);
+afsnittet er ikke længere regel. Nummeret bevares, så henvisningerne til
+§5.3–§5.7 står uændret. Beslutning: storefyr, 2026-11-01.
 
 **§5.3 Position og snit.** `QJsonParseError::offset` er et **byte**-offset fra
 bruttolinjens begyndelse (`error->offset = json - head`). [M] (Bilag A, A7).
@@ -289,7 +288,7 @@ bruttolinjens begyndelse (`error->offset = json - head`). [M] (Bilag A, A7).
 Ved en uafsluttet streng løber `parseString` til `json >= end`, rykker én frem
 og rapporterer først derefter fejlen: offset kan blive **n + 1**. Klienten skal
 derfor **klemme** positionen til `[0, n]` før ethvert snit. Uden klemning kan
-§5.2 læse ud over bruttolinjens slutning [S]. (Bilag A, A8).
+sporet vise en position ud over bruttolinjens slutning [S]. (Bilag A, A8).
 
 **§5.4 Hvad Qt afviser ved toppen.** Kun `[` og `{` accepteres som første
 strukturtegn; alt andet giver `IllegalValue`. [M] (Bilag A, A1, A2). Et nøgent
@@ -386,6 +385,10 @@ og §8 mod den faktiske SDK.
 detecting the id in the Request object (e.g. Parse error/Invalid Request), it
 MUST be Null« ([K] jsonrpc.org/specification §5). Specifikationens eget eksempel
 viser det samme (§7, «rpc call with invalid JSON» → `"id": null`).
+`GarbageAtEnd` er P1. Linjen er fortolket til og med et helt dokument, og der
+står noget andet end hvidt tegn tilbage. `id: null` bruges alligevel, selv om et
+id kan læses i det fortolkede dokument, fordi linjen som helhed ikke er en
+meddelelse. [B] storefyr, 2026-11-01.
 
 *N1 udgået:* nåbarhedsmålingen (§9.2e) bortfalder med Sailjail-udmeldelsen [B] storefyr 2026-10-31; 3004 forbliver reserveret og ubrugt.
 holder den adskilt fra C1 og C2, der begge forudsætter, at der *var* en
@@ -522,11 +525,11 @@ alene (læst 2026-10-29) dækker ikke qtbase-pakken og lukker ikke punktet.
 | 2 | Indlejrede linjeskift | forbudt | [K] |
 | 3 | `\r\n` | accepteret indgående; `0x0A` eneste afgrænsning og eneste udgående afslutning | [B] storefyr 2026-11-01 |
 | 4 | BOM | overlades til Qt | [M] Bilag A |
-| 5 | Tom linje (n = 0) | ignoreres; kan slås fra ved kompilering | [V] [A95] |
+| 5 | Tom linje (n = 0) | P1: −32700, `id: null` | [B] storefyr 2026-11-01 |
 | 6 | Linjeloft | 66 060 288 byte | [B] storefyr 2026-10-29 |
 | 7 | Qts dokumentgrænse | `(1<<27) - 1` binært | [M] Bilag A |
 | 8 | Indlejringsgrænse | 1024 | [M] Bilag A |
-| 9 | Tolerance | fra | [V] [A96] |
+| 9 | Tolerance | findes ikke; én bruttolinje = ét dokument | [B] storefyr 2026-11-01 |
 | 10 | Skalarlyprøve | indpakning i `[` … `]` | [V] [A97] |
 | 11 | Position | byte, klem til `[0, n]` | [M] Bilag A |
 | 12 | L1-svar | intet | [S] |
@@ -551,12 +554,12 @@ alene (læst 2026-10-29) dækker ikke qtbase-pakken og lukker ikke punktet.
 
 ---
 
-## §12 Åbne punkter
+## §12 Punkter og afgørelser
 
 | # | Punkt | Status |
 |---|---|---|
-| 95 | Tomme linjer | [A], [V]: kun bruttolinje med n = 0 ignoreres; en blanktegnslinje er et dokument efter §5. §2.4 står uændret [B] storefyr 2026-11-01; punktet forbliver åbent (§2.4 mod §7.3 uafklaret) |
-| 96 | Tolerance som standard | [A], [V]: fra |
+| 95 | Tomme linjer | **lukket [B]:** n = 0 er P1; ingen undtagelse, ingen kompileringstilstand; §2.4 slettet, §2.5 beholder sit nummer; storefyr 2026-11-01 |
+| 96 | Tolerance som standard | **lukket [B]:** tolerance findes ikke; én bruttolinje = ét dokument; §5.2 udgået; storefyr 2026-11-01 |
 | 97 | Skalarlyprøven erstatter fallback | [A], [V]: ja, §5.6 kun til spor |
 | 110 | Præcis Qt-binding (`ldd`/spec) | [A], blokerer Bilag A's endelige versionsangivelse |
 | 115 | Holder fordoblingen ved 63 MiB | [A], Bilag B (udledning i Bilag B; kørsel i SDK) |
