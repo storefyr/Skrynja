@@ -480,10 +480,14 @@ arbejdsmappen i spawn-kaldet, før processen startes.
 bruges som spawn-form: den indfører uv som ekstra led, så §7.5's signal rammer det
 forkerte led [S].
 
-**§9.2d Versionsbinding.** §6 og §8 er bundet til `vibe-acp` 3.0.2 og
-`agent-client-protocol` 0.11.0 ([M] PyPI, Bilag D). Ændres en af de to, skal §6 og
-§8 efterprøves igen. [A124]: om bindingen skal være præcis 3.0.2 eller ≥3.0.2, er
-ikke besluttet.
+**§9.2d Versionsbinding.** Bindingen er `vibe-acp` **≥3.0.2** med
+`agent-client-protocol` 0.11.0 [B] beslutning: storefyr, 2026-11-01. [M] agenten
+accepterer enhver `protocolVersion` og svarer med sin egen (målt runde 1,
+målmaskine 2.9.4) — der findes ingen versionsforhandling at læne sig på, så
+klienten sammenligner selv agentens versionsstreng ved `initialize`. Ved afvigelse
+fra ≥3.0.2: [V] log afvigelsen i sporet (versionsstreng + forventet område) og
+**fortsæt** — afbrydelse er ikke standardadfærden. Ved ændring af SDK-versionen
+udløses [A123]: §6 og §8 efterprøves mod den faktiske SDK.
 
 **§9.2e Indespærring — udgået af omfanget.** Sailjail/indespærring tages ud af Skrynja-projektets omfang; appen køres ikke indespærret. [B] beslutning truffet af projektejer storefyr, 2026-10-31. De hidtidige [M]-påstande om Sailjail-stier og tom-map-regel (§9.2e før denne ændring, kilde sailjail-permissions README) beholdes ikke som grundlag, fordi emnet ikke længere er i omfang. N1 (3004) bortfalder: der måles ikke nåbarhed, fordi der ikke indespærres. Se §12 punkt 122 (lukket).
 
@@ -548,7 +552,7 @@ alene (læst 2026-10-29) dækker ikke qtbase-pakken og lukker ikke punktet.
 | 118 | Agentens faktiske fejlkoder på wire | [M] fire fremkaldte kald 2026-11-01 (se §6.1); ikke udtømmende |
 | 122 | Sailjail/indespærring i omfang? | **lukket [B]:** nej — taget ud af omfanget, storefyr 2026-10-31; N1/3004 bortfalder |
 | 123 | §6.1 og §8 efterprøvet mod SDK-versionen | betingelse [A123]: udløses ved afvigelse i agentens versionsstreng ved initialize (§9.2d) |
-| 124 | Binde til præcis 3.0.2 eller ≥3.0.2 | [A], beslutning hos storefyr. Konsekvens uanset udfald: [M] agenten accepterer enhver `protocolVersion` og svarer med sin egen (målt runde 1, målmaskine 2.9.4) — der findes ingen versionsforhandling at læne sig på. Ved præcis 3.0.2: klienten sammenligner selv agentens versionsstreng ved `initialize` og afbryder ved afvigelse. Ved ≥3.0.2: specifikationen skal sige, hvad klienten gør ved en afvigelse (log + fortsæt, eller afbryd) — dette står ikke i teksten endnu og skal skrives ind ved beslutningen |
+| 124 | Binde til præcis 3.0.2 eller ≥3.0.2 | **lukket [B]:** ≥3.0.2, storefyr 2026-11-01; adfærd ved afvigelse: log + fortsæt (§9.2d) |
 | 125 | 3004 som egen kode | **lukket [B]:** bortfalder med 122, storefyr 2026-10-31; 3004 reserveret, ubrugt |
 | 126 | `\r\n` som linjeafslutning | [A], [V]: accepteres ikke. Nyt i v3; nummeret er tildelt ved redigeringen og skal bekræftes af storefyr |
 

@@ -5,7 +5,7 @@
     {
       "alias": "V2",
       "sti": "dokumenter/vibe-acp/spec-protokol-v2.md",
-      "commit_sha": "807747319b810a7c4913f1081bb5c7ceafe44b95",
+      "commit_sha": "c8d3ca717421396386eab3a9ad8dc4cddeea560a",
       "blob_sha": "1886d2dc8265b96a7d611717be8246089b455935",
       "bytes": 28173,
       "linjer": 407,
@@ -99,15 +99,15 @@
           "start_linje": 391
         }
       ],
-      "bekraeftet_i": "807747319b810a7c4913f1081bb5c7ceafe44b95"
+      "bekraeftet_i": "c8d3ca717421396386eab3a9ad8dc4cddeea560a"
     },
     {
       "alias": "V3",
       "sti": "dokumenter/vibe-acp/spec-protokol-v3.md",
-      "commit_sha": "807747319b810a7c4913f1081bb5c7ceafe44b95",
-      "blob_sha": "aebafd29e225f31b409c9b8bcf53a28d1b01ffa3",
-      "bytes": 36515,
-      "linjer": 702,
+      "commit_sha": "c8d3ca717421396386eab3a9ad8dc4cddeea560a",
+      "blob_sha": "c2fe9ef254e4674dec4391f3ec44b20c63bfad84",
+      "bytes": 36450,
+      "linjer": 706,
       "sektioner": [
         {
           "overskrift": "# Skrynja — protokol-specifikation v3 (ACP-klient over stdio)",
@@ -195,51 +195,51 @@
         },
         {
           "overskrift": "## §10 Resumé",
-          "start_linje": 500
+          "start_linje": 504
         },
         {
           "overskrift": "## §11 Miljø og bygning",
-          "start_linje": 525
+          "start_linje": 529
         },
         {
           "overskrift": "## §12 Åbne punkter",
-          "start_linje": 537
+          "start_linje": 541
         },
         {
           "overskrift": "## Bilag A — Qt-kildegrundlag (læst i denne leverance)",
-          "start_linje": 564
+          "start_linje": 568
         },
         {
           "overskrift": "## Bilag B — målingen, der mangler (fordobling ved 63 MiB)",
-          "start_linje": 607
-        },
-        {
-          "overskrift": "#include <QJsonDocument>",
-          "start_linje": 610
-        },
-        {
-          "overskrift": "#include <QJsonParseError>",
           "start_linje": 611
         },
         {
+          "overskrift": "#include <QJsonDocument>",
+          "start_linje": 614
+        },
+        {
+          "overskrift": "#include <QJsonParseError>",
+          "start_linje": 615
+        },
+        {
           "overskrift": "#include <QDebug>",
-          "start_linje": 612
+          "start_linje": 616
         },
         {
           "overskrift": "## Bilag C — interne koder (spor kun, aldrig på tråden)",
-          "start_linje": 652
+          "start_linje": 656
         },
         {
           "overskrift": "## Bilag D — kilder, metode, dato, maskine",
-          "start_linje": 675
+          "start_linje": 679
         }
       ],
-      "bekraeftet_i": "807747319b810a7c4913f1081bb5c7ceafe44b95"
+      "bekraeftet_i": "c8d3ca717421396386eab3a9ad8dc4cddeea560a"
     }
   ],
   "ophav": {
     "regel": "Ingen fil indeholder sin egen blob-SHA som selvbeskrivelse; denne bagudrettede ophavslinje bærer FORRIGE revisions fulde commit-SHA og skrives af det commit, der følger efter den, den peger på.",
-    "forrige_revision": "807747319b810a7c4913f1081bb5c7ceafe44b95",
+    "forrige_revision": "c8d3ca717421396386eab3a9ad8dc4cddeea560a",
     "bemærkning": "92745a0 er main-tip før denne ændring (Sailjail ud af omfanget). Hver række bærer den revision, hvori rækken blev bekræftet."
   }
 }
