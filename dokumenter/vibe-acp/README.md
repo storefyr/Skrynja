@@ -13,6 +13,7 @@ Måleresultater og scripts fra arbejdet med vejkortet for Skrynja mod `vibe-acp`
 | `maalejournal-runde1-tilfoejelse.md` | Afslutning af M0.15/M0.1 + forberedelse af M0.16 |
 | `maalejournal-runde2.md` | Anden målerunde: M0.0b (integritet), M0.1b (fuld frame), M0.16 (bro, halvt), versionsaudit |
 | `maalejournal-runde3-wire.md` | Tredje målerunde: wire-bekræftelser fra telefonen via relæ — N8 lukket, L5 korrigeret, N6 åben, N7 lukket |
+| `maalejournal-runde5-acp-initialize-telefon.md` | **Runde 5:** første wire-måling fra selve appen på telefonen (PR #19, byg `afe0df9` via `test-pr.sh 19`) — initialize-håndtryk OK, agent 3.0.2, `protocolVersion 1` begge veje, `loadSession: true`, clean exit 0 ved lukning, ingen P1/P2/L1/hale |
 | `analyse-mistral-vibe-302-kode.md` | Kodelæsning af mistral-vibe 3.0.2 sdist: R30 svar (ikke rettet), betinget `_reasoning_effort()`, glm-modeller ikke i statisk katalog, ACP configOptions-validering |
 | `analyse-harness-r30-r42-verifikation.md` | Verifikation af R30–R42 i både harness- og kernepakken |
 | `analyse-r32-katalog-vs-kode.md` | R32 afgørende: kataloglaget kasserer `auto_compact_threshold`; `experiment_eval_cache.json` er GrowthBook; harness `_core_config` har disabled kompaktion (senere korrigeret, se næste) |
@@ -74,6 +75,8 @@ ACP-klienten (alpha, `src/acpclient.*`) ligger på `main` og kompileres ind i aa
 1. Når CI på en PR er færdig, ligger der en aarch64-RPM på grenen `pr-<nummer>-rpm` (filnavn `skrynja-pr<nummer>.rpm`) — skubbet af trinnet "Push RPM to pr-rpm branch" i `pr-build.yml`.
 2. På telefonen: `sh test-pr.sh <nummer>` — henter RPM'en fra raw.githubusercontent.com og installerer med `devel-su pkcon install-local --allow-reinstall`.
 3. `update.sh` henter derimod altid nyeste *release* (pt. v0.9.10, 2026-10-25) — aldrig et PR-byg.
+
+**Målt 2026-11-02:** håndtrykket kører på telefonen — start appen fra terminalen (`harbour-skrynja 2>&1 | tee /tmp/skrynja-start.log`) og grep efter `\[acp\]`; se `maalejournal-runde5-acp-initialize-telefon.md` for rå log og fund.
 
 ## Hovedfund (runde 3–4 — målt på telefonen via relæ)
 
