@@ -27,11 +27,10 @@ AcpClient::AcpClient(QObject *parent)
 {
     m_process.setProcessChannelMode(QProcess::SeparateChannels);
     connect(&m_process, &QProcess::readyReadStandardOutput, this, &AcpClient::onReadyRead);
-    connect(&m_process, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
-            this, [this](int exitCode, QProcess::ExitStatus status) {
-                handleTail();
-                emit finished(exitCode, status);
-            });
+    // Qt 5.6 (Sailfish) has no QOverload; use the old SIGNAL/SLOT syntax for the
+    // overloaded finished() signal.
+    connect(&m_process, SIGNAL(finished(int,QProcess::ExitStatus)),
+            this, SLOT(onFinished(int,QProcess::ExitStatus)));
     connect(&m_process, &QProcess::errorOccurred, this, &AcpClient::onErrorOccurred);
 }
 
@@ -66,6 +65,12 @@ void AcpClient::stop()
     m_process.closeWriteChannel();
     if (!m_process.waitForFinished(5000))
         m_process.kill();
+}
+
+void AcpClient::onFinished(int exitCode, QProcess::ExitStatus status)
+{
+    handleTail();
+    emit finished(exitCode, status);
 }
 
 void AcpClient::onErrorOccurred(QProcess::ProcessError error)
