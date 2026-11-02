@@ -10,7 +10,6 @@
 #include <QTranslator>
 #include <QLocale>
 
-#include "mistralapi.h"
 #include "conversationmodel.h"
 #include "conversationmanager.h"
 #include "settingsmanager.h"
@@ -41,21 +40,14 @@ int main(int argc, char *argv[])
     QTranslator *translator = new QTranslator(app);
 
     // Create instances of C++ classes
-    MistralAPI mistralApi;
+    // ACP clean slate (storefyr, 2026-11-02): no MistralAPI / Conversations
+    // API in this build. The only backend is the ACP agent over stdio.
     ConversationManager conversationManager;
     SettingsManager settingsManager;
     AudioRecorder audioRecorder;
     VoiceAnonymizer voiceAnonymizer;
 
     qmlRegisterType<AudioRecorder>("harbour.skrynja", 1, 0, "AudioRecorder");
-
-    // The manager owns the streaming lifecycle so an answer survives the chat
-    // page being popped off the stack mid-response.
-    conversationManager.bindApi(&mistralApi);
-
-    // Mistral AI is the only provider: the Conversations API exists nowhere
-    // else. The endpoint is fixed in MistralAPI's constructor; nothing here
-    // reconfigures it.
 
     // Load initial translation based on settings
     QString language = settingsManager.language();
@@ -84,7 +76,6 @@ int main(int argc, char *argv[])
 
     // Expose objects to QML context
     QQmlContext *context = view->rootContext();
-    context->setContextProperty("mistralApi", &mistralApi);
     context->setContextProperty("conversationManager", &conversationManager);
     context->setContextProperty("conversationModel", conversationManager.currentConversation());
     context->setContextProperty("settingsManager", &settingsManager);
@@ -95,16 +86,21 @@ int main(int argc, char *argv[])
     view->setSource(SailfishApp::pathTo("qml/harbour-skrynja.qml"));
     view->show();
 
-    // --- ACP agent (alpha): spawn vibe-acp and run the initialize handshake.
+    // --- ACP agent (alpha, clean slate): spawn vibe-acp, run the
+    // initialize handshake, then open one session and route the agent's
+    // session/update chunks into the current conversation model.
     // All wire frames and internal log events go to stderr as [acp]..., so a
     // terminal start shows the handshake live:
     //   harbour-skrynja 2>&1 | tee /tmp/skrynja-start.log
     AcpClient acpClient;
+    context->setContextProperty("acpClient", &acpClient);
+
+    // Streaming state for agent_message_chunk accumulation.
+    QString streamBuf;
+    bool assistantOpen = false;
+
     QObject::connect(&acpClient, &AcpClient::frameWritten, [](const QByteArray &frame) {
         qWarning() << "[acp][out]" << QString::fromUtf8(frame);
-    });
-    QObject::connect(&acpClient, &AcpClient::messageReceived, [](const QJsonObject &msg) {
-        qWarning() << "[acp][in]" << QJsonDocument(msg).toJson(QJsonDocument::Compact);
     });
     QObject::connect(&acpClient, &AcpClient::haleReceived, [](const QJsonObject &msg) {
         qWarning() << "[acp][hale]" << QJsonDocument(msg).toJson(QJsonDocument::Compact);
@@ -120,6 +116,60 @@ int main(int argc, char *argv[])
     });
     QObject::connect(&acpClient, &AcpClient::finished, [](int exitCode, QProcess::ExitStatus status) {
         qWarning() << "[acp] agent finished, exitCode" << exitCode << "status" << int(status);
+    });
+    QObject::connect(&acpClient, &AcpClient::promptSent, [&](qint64, const QString &) {
+        streamBuf.clear();
+        assistantOpen = false;
+    });
+    QObject::connect(&acpClient, &AcpClient::messageReceived, [&](const QJsonObject &msg) {
+        qWarning() << "[acp][in]" << QJsonDocument(msg).toJson(QJsonDocument::Compact);
+        ConversationModel *model = conversationManager.currentConversation();
+        if (msg.contains(QStringLiteral("id"))) {
+            const qint64 id = qint64(msg.value(QStringLiteral("id")).toDouble());
+            if (msg.contains(QStringLiteral("error"))) {
+                qWarning() << "[acp][err] id" << id << msg.value(QStringLiteral("error")).toObject().value(QStringLiteral("code")).toInt()
+                           << msg.value(QStringLiteral("error")).toObject().value(QStringLiteral("message")).toString();
+                return;
+            }
+            const QJsonObject result = msg.value(QStringLiteral("result")).toObject();
+            if (id == 1) {
+                // initialize answered: open the session (measured on the phone
+                // 2026-11-02: session/new needs no extra auth in accept-edits).
+                const qint64 sid = acpClient.sendSessionNew(QDir::homePath());
+                qWarning() << "[acp] sent session/new, id" << sid;
+            } else if (id == 2) {
+                acpClient.setSessionId(result.value(QStringLiteral("sessionId")).toString());
+                qWarning() << "[acp] session ready:" << acpClient.sessionId();
+            } else {
+                qWarning() << "[acp] result id" << id << "stopReason"
+                           << result.value(QStringLiteral("stopReason")).toString();
+            }
+            return;
+        }
+        const QString method = msg.value(QStringLiteral("method")).toString();
+        if (method == QStringLiteral("session/update")) {
+            const QJsonObject upd = msg.value(QStringLiteral("params")).toObject()
+                    .value(QStringLiteral("update")).toObject();
+            const QString kind = upd.value(QStringLiteral("sessionUpdate")).toString();
+            if (kind == QStringLiteral("agent_message_chunk")) {
+                const QString text = upd.value(QStringLiteral("content")).toObject()
+                        .value(QStringLiteral("text")).toString();
+                if (!text.isEmpty() && model) {
+                    if (!assistantOpen) {
+                        model->addAssistantMessage(QString());
+                        assistantOpen = true;
+                    }
+                    streamBuf += text;
+                    model->updateLastAssistantMessage(streamBuf);
+                }
+            } else {
+                qWarning() << "[acp][update]" << kind;
+            }
+        } else if (method == QStringLiteral("request_permission")) {
+            // Alpha: no permission UI yet; log only. accept-edits mode does
+            // not ask (measured 2026-11-02).
+            qWarning() << "[acp][permission] request received, not answered (alpha)";
+        }
     });
 
     const QString agentPath = AcpClient::defaultAgentPath();

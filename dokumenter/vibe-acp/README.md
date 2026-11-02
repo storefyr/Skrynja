@@ -105,6 +105,7 @@ Se `maalejournal-afsluttende-status.md` for den fulde klientregel-tabel og risik
 
 ## Arkitekturvalg (vedtaget ●)
 
+- **ACP clean slate — hele appen forfra ● ([B] storefyr, 2026-11-02):** Skrynja med ACP er clean slate fra alt foregående. ACP-bygget kasserer `mistralApi`/Conversations-API helt (fjernes fra `harbour-skrynja.pro` på PR #19; filen bliver på `main`); kun ACP-klient + nyt UI (`qml/pages/AcpChatPage.qml`). `ConversationManager` bevares til lokal historik, men uden `bindApi`/remote-sync. Beslutningen gælder PR #19-grenen; merge til main er separat beslutning hos storefyr.
 - **A1 — afbrydelse:** svar `cancelled` på udestående permission → send `session/cancel` → luk dialog lokalt → sæt tool calls `cancelled` lokalt → procesgenstart som fallback efter frist
 - **A2 — genoptagelse:** `session/load` (med historik-replay); `session/new` ved `SessionNotFoundError`; `session/resume` fravalgt (ingen replay)
 - **Mode/model/thinking:** kun via `session/set_config_option` — aldrig `session/set_mode`; svaret erstatter hele lokale `configOptions`; `thinking`-menu minus A7-forbudte par

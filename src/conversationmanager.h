@@ -16,8 +16,6 @@
 // QSettings constructor would use an inaccessible path outside the sandbox.
 QString skrynjaSettingsPath(const QString &fileName);
 
-class MistralAPI;
-
 struct Conversation {
     QString id;
     QString title;
@@ -54,8 +52,8 @@ public:
     int conversationCount() const { return m_conversations.count(); }
     QString streamingConversationId() const { return m_streamingConversationId; }
 
-    // The model is chosen here and fixed for the life of the conversation:
-    // the Conversations API locks it at creation time.
+    // The model is chosen here and fixed for the life of the conversation
+    // (legacy rule from the Conversations API; ACP keeps the local record).
     Q_INVOKABLE void createNewConversation(const QString &model = QString());
     Q_INVOKABLE void loadConversation(const QString &conversationId);
     Q_INVOKABLE void deleteConversation(const QString &conversationId);
@@ -113,8 +111,8 @@ public:
     Q_INVOKABLE QString conversationModel(const QString &conversationId) const;
 
     // The remote conversation id of the current conversation, empty when the
-    // remote conversation has not been created yet. Pass it to
-    // MistralAPI::sendMessage: empty creates, set appends.
+    // remote conversation has not been created yet. Kept for the stored
+    // format; the ACP build does not use a remote Conversations API.
     Q_INVOKABLE QString remoteConversationId() const;
     // The text of the last user message in the current conversation, for the
     // caller to send as the new turn.
@@ -124,9 +122,8 @@ public:
     // The remote file id of the last user message's uploaded image, empty
     // when the image has not been uploaded yet (or was inlined as base64).
     Q_INVOKABLE QString pendingUserImageFileId() const;
-    // Records the file id returned by MistralAPI::uploadImage on the last
-    // user message and persists it, so a retry or a later turn references the
-    // same server-side file instead of uploading again.
+    // Records the file id of the last user message's image and persists it
+    // (legacy Conversations API field, kept for the stored format).
     Q_INVOKABLE void setLastUserImageFileId(const QString &fileId);
 
     // Copy a picked image into the app data directory so the conversation keeps
@@ -134,10 +131,9 @@ public:
     // path, or the input unchanged on failure.
     Q_INVOKABLE QString retainImage(const QString &filePath) const;
 
-    // Takes ownership of the streaming lifecycle: the answer is accumulated
-    // and written into the model here, so it keeps arriving even when the chat
-    // page is destroyed (navigating back to the history pops it).
-    void bindApi(MistralAPI *api);
+    // ACP clean slate (storefyr, 2026-11-02): the streaming lifecycle used to
+    // live in MistralAPI via bindApi(); in the ACP build the AcpClient drives
+    // the model directly, so there is no api binding here anymore.
 
     // Model the in-flight request is using, recorded for the token statistics.
     Q_INVOKABLE void setActiveModel(const QString &model);
@@ -213,8 +209,8 @@ private:
     bool m_streamDirty;
     qint64 m_totalPromptTokens;
     qint64 m_totalCompletionTokens;
-    // F17b: auto-sync state
-    MistralAPI *m_api;
+    // F17b: auto-sync state (kept for the stored format; no remote backend in
+    // the ACP build, storefyr 2026-11-02)
     QString m_autoSyncApiKey;
     QVariantList m_autoSyncPending;   // remote conversations not yet attached
     QVariantMap m_autoSyncNameModel;   // remoteId → {name, model}

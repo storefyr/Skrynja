@@ -10,8 +10,9 @@ isEmpty(VERSION) {
 }
 DEFINES += APP_VERSION=\\\"$$VERSION\\\"
 
+# ACP clean slate (storefyr, 2026-11-02): src/mistralapi.cpp is NOT in this
+# build; the file stays on main, only the ACP app build drops it.
 SOURCES += src/harbour-skrynja.cpp \
-    src/mistralapi.cpp \
     src/acpclient.cpp \
     src/conversationmodel.cpp \
     src/conversationmanager.cpp \
@@ -21,8 +22,7 @@ SOURCES += src/harbour-skrynja.cpp \
     src/audiorecorder.cpp \
     src/voiceanonymizer.cpp
 
-HEADERS += src/mistralapi.h \
-    src/acpclient.h \
+HEADERS += src/acpclient.h \
     src/conversationmodel.h \
     src/conversationmanager.h \
     src/settingsmanager.h \
@@ -33,6 +33,7 @@ HEADERS += src/mistralapi.h \
 
 DISTFILES += qml/harbour-skrynja.qml \
     qml/cover/CoverPage.qml \
+    qml/pages/AcpChatPage.qml \
     qml/pages/ChatPage.qml \
     qml/pages/ConversationHistoryPage.qml \
     qml/pages/ConversationDetailPage.qml \

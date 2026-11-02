@@ -209,6 +209,11 @@ qint64 AcpClient::sendRequest(const QString &method, const QJsonObject &params)
 {
     if (m_process.state() != QProcess::Running)
         return -1;
+    return sendRequestRaw(method, params);
+}
+
+qint64 AcpClient::sendRequestRaw(const QString &method, const QJsonObject &params)
+{
     const qint64 id = m_nextId++;
     QJsonObject req;
     req.insert(QStringLiteral("jsonrpc"), QStringLiteral("2.0"));
@@ -217,6 +222,37 @@ qint64 AcpClient::sendRequest(const QString &method, const QJsonObject &params)
     if (!params.isEmpty())
         req.insert(QStringLiteral("params"), params);
     writeFrame(req);
+    return id;
+}
+
+void AcpClient::setSessionId(const QString &id)
+{
+    if (m_sessionId == id)
+        return;
+    m_sessionId = id;
+    emit sessionIdChanged();
+}
+
+qint64 AcpClient::sendSessionNew(const QString &cwd)
+{
+    QJsonObject params;
+    params.insert(QStringLiteral("cwd"), cwd);
+    params.insert(QStringLiteral("mcpServers"), QJsonArray());
+    return sendRequestRaw(QStringLiteral("session/new"), params);
+}
+
+qint64 AcpClient::sendPrompt(const QString &text)
+{
+    if (m_sessionId.isEmpty())
+        return -1;
+    QJsonObject content;
+    content.insert(QStringLiteral("type"), QStringLiteral("text"));
+    content.insert(QStringLiteral("text"), text);
+    QJsonObject params;
+    params.insert(QStringLiteral("sessionId"), m_sessionId);
+    params.insert(QStringLiteral("prompt"), QJsonArray{content});
+    const qint64 id = sendRequestRaw(QStringLiteral("session/prompt"), params);
+    emit promptSent(id, text);
     return id;
 }
 
