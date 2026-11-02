@@ -34,6 +34,12 @@ App startet i baggrund fra terminalen med log til fil; besked skrevet i AcpChatP
 | 6 | session/new-resultat indeholder `configOptions` (mode/model/thinking med currentValue) og `workspace_trust: untrusted` — relevant for set_config_option/A7 | [M] |
 | 7 | Ingen `request_permission` ved denne runde (mode accept-edits, kun læsning) | [M] |
 
+## Runde 6c: transport-fund (samme dag, REPL på telefonen)
+
+- Agenten **kræver pipe/socket/char-device på stdin/stdout**: ved redirect af stdout til en almindelig fil (`> /tmp/va.out`) crasher den ved opstart med `ValueError: Pipe transport is only for pipes, sockets and character devices`, rc=1, ingen output. Derfor: stdout skal gennem et pipe (`| tee fil`). QProcess i appen bruger pipes — upåvirket. [M] 2026-11-02, telefonen
+- Konsekvens: målescripts må ikke redirecte agentens stdout til fil; de skal pipe den (scriptet `maaling-ask-permission.py` håndterer det selv via subprocess.PIPE).
+- Scriptet `maaling-ask-permission.py` (i dette repo) kører hele ask-mode-kæden automatisk og besvarer request_permission med "cancelled"; rå wire i `/tmp/acp-perm-wire.ndjson`. Hentes på telefonen med én curl-linje (ingen lang kode at kopiere).
+
 ## Runde 6b: tool-kald målt gennem UI (samme byg, samme dag)
 
 Prompt i AcpChatPage: "Kør ls i /home/defaultuser og fortæl hvad der ligger der" — agenten svarede med mappens indhold (vist i UI; kopiering fra UI ikke muligt endnu, wire-log er kilden). Udtræk af `/tmp/skrynja-ui2.log` (93 linjer, 17 `[acp]`-linjer, sessionId `1611d73e-...`):
