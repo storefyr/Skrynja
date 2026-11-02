@@ -8,6 +8,9 @@ dokuments status. Beslutningstager: storefyr, 2026-10-29.
 aktuelle linje (kasserede byte medregnet), byte over loftet kasseres ved ankomsten,
 linje hvor L1 er indtrådt fortolkes ikke, L1 svarer ikke; punkt 117 lukket (−32700);
 nyt punkt 127; se §3, §6, §12.
+**Revision [B]:** 2026-11-02, storefyr — hale (§3.3: nul byte er ikke en hale, leveres,
+besvares ikke, 1003), batch afvises som P2 (§8 udgået), hale udløser ingen række i §6.2;
+se §3, §6, §8, §12.
 **Målgruppe:** den agent, der implementerer Skrynja.
 **Grundlag:** ACP v1 [K], JSON-RPC 2.0 [K], Qt (mer-5.6-grenen, [M] nedenfor),
 `vibe-acp` 3.0.2 med `agent-client-protocol==0.11.0` [M].
@@ -207,20 +210,25 @@ hverken har svaret, sporet eller en forbindelse [S]. Beslutning: storefyr,
 
 **§3.2 Udtrækning.** Når `0x0A` er set, er linjen komplet og overgives til §4
 og §5. [B] Er L1 indtrådt på linjen (§3.1), overgives den **ikke** til §4 og §5 —
-der findes ingen komplet bruttolinje at fortolke. Beslutning: storefyr, 2026-11-01.
+linjen er da ikke modtaget i sin helhed, så et dokument uddraget af den ville være
+et snit, ikke en meddelelse. Beslutning: storefyr, 2026-11-01.
 
-**§3.3 Hale.** Byte ved strømmens slutning uden `0x0A`:
+**§3.3 Hale.** Byte ved strømmens slutning uden `0x0A`. En hale på nul byte findes
+ikke: strømmens slutning uden foregående byte udløser intet. [B] storefyr, 2026-11-02.
 
-1. fortolkes som et dokument efter §5,
-2. leveres, hvis fortolkningen lykkes,
-3. registreres som »afsluttet af EOF, ikke af `0x0A`« — medmindre L1 allerede er
-   indtrådt på linjen, så sporet ikke skrives to gange,
+1. fortolkes som et dokument efter §5 — medmindre L1 er indtrådt på linjen (§3.1),
+   så fortolkningen springes over,
+2. leveres, hvis fortolkningen lykkes; hvad der modtager den, er uden for dette
+   dokuments omfang (§0.2) [S],
+3. registreres som »afsluttet af EOF, ikke af `0x0A`« med spor-koden 1003 —
+   medmindre L1 allerede er indtrådt på linjen, så sporet ikke skrives to gange,
 4. besvares **ikke**.
 
 Trin 1 er ikke høflighed: en agent, der skriver sit sidste svar uden afsluttende
 linjeskift, har stadig sendt et svar [S]. [B] Trin 4 følger af, at halen ikke er en
-linje (§1), så §6.2's svar-rækker — der alle forudsætter en linje — ikke gælder for
-den; halen besvares ikke. Beslutning: storefyr, 2026-11-01.
+linje (§1), så de rækker i §6.2, der forudsætter et dokument uddraget af en linje,
+ikke gælder for den; halen besvares ikke. Beslutning: storefyr, 2026-11-02 (afløser
+2026-11-01).
 
 **§3.4 Halens øvre grænse — udgået.** Halen er del af bufferen og tælleren (§3.1),
 så loftet gælder den uden egen regel. Begrundelsen for loftet står i §3.1. [B]
@@ -271,7 +279,7 @@ storefyr, 2026-11-01.
 
 **§4.5a Forholdet til A6 i PR-beskrivelsen.** A6 i PR-beskrivelsen angiver 8 MiB
 pr. linje og lukning ved hale uden `0x0A`. Denne specifikation hæver loftet til
-63 MiB (§4.2) og lader forbindelsen bestå ved hale (§6.2, L1). Ændringen er
+63 MiB (§4.2) og lader forbindelsen bestå ved hale (§3.3). Ændringen er
 tilsigtet [S]: 8 MiB ville afvise dokumenter, som Qts `Value::MaxSize` ellers
 rummer, og lukning ved hale koster en hel session for én fejl. A6 i Bilag A er en
 anden post (dokumentgrænsen).
@@ -376,9 +384,12 @@ ikke fremkaldt. [M] fire kald 2026-11-01, ikke udtømmende.
 −32768…−32000 er reserveret [K]. Skrynja har ingen egen trådkode.
 [A123] **betingelse, ikke blokering:** udløser = agentens versionsstreng ved
 `initialize` svarer ikke til den bundne 3.0.2/0.11.0 (§9.2d); da efterprøves §6.1
-og §8 mod den faktiske SDK.
+mod den faktiske SDK.
 
 **§6.2 Hændelsestabel**
+
+Tabellen dækker linjer (§1). En hale (§3.3) er ikke en linje og udløser ingen række
+her; dens spor er 1003, skrevet ved strømmens slutning. [S]
 
 | # | Hændelse | Svar | Spor | Forbindelse |
 |---|---|---|---|---|
@@ -431,9 +442,13 @@ af en linje, den ikke har fortolket.
 
 **§6.5 Interne koder.** Positive heltal, blokopdelt (Bilag C). De har deres egen
 type i koden, kan ikke tildeles `error.code` uden eksplicit konvertering, skrives
-til sporet med bufferens størrelse (ved L1: tællerens værdi og loftet, §4.5),
-position og tidspunkt, går **aldrig** på tråden —
+til sporet med bufferens størrelse (ved L1: tællerens værdi og loftet, §4.5; ved
+hale: halens længde i byte), position og tidspunkt, går **aldrig** på tråden —
 heller ikke i `error.data` — og ændres ikke, når §4.2's loft ændres.
+
+[B] For en hale måles position fra halens første byte og klemmes til `[0, h]`, hvor
+h er halens længde. §5.3's klemning til `[0, n]` gælder kun bruttolinjer. storefyr,
+2026-11-02.
 
 1000 er reserveret og ubrugt: en fejlagtig standardværdi skal give et
 genkendeligt spor, ikke en tavs succes [S]. Et svar fra agenten med koden 1001 er
@@ -463,23 +478,10 @@ mellemled (§9.2c).
 
 ---
 
-## §8 Batch
+## §8 Batch — udgået
 
-En bruttolinje, hvis dokument er en matrix, er et batch [K] (jsonrpc.org §6).
-
-| Tilfælde | Klientens svar |
-|---|---|
-| tom matrix `[]` | **ét** objekt, −32600, `id: null` [K] (§7 eksempel «empty Array») |
-| matrix uden gyldige anmodninger | ét svar **pr. element**, −32600, `id: null` [K] (§7 eksempel `[1,2,3]`) |
-| kun notifikationer | **intet** svar [K] (§7 eksempel «all notifications») |
-| blandet | ét svar pr. anmodning, intet for notifikationer [K] (§6, §7) |
-
-Batch-svaret er selv en matrix og skal skrives på **én** linje, fordi ACP forbyder
-indlejrede linjeskift (§2.1).
-
-**§8.1 Forbehold.** [A116] Det er ikke målt, om ACP's transport tillader batch.
-Standardværdi [V]: batch understøttes som ovenfor. En alpha må gerne svare −32600
-på batch, hvis den logger det som en afvigelse.
+En matrix afvises under ét som P2: −32600, `id: null` (§6.2). Afvigelsen fra
+JSON-RPC's svar-pr.-element er vedtaget, ikke målt. [B] storefyr, 2026-11-02.
 
 ---
 
@@ -522,7 +524,7 @@ målmaskine 2.9.4) — der findes ingen versionsforhandling at læne sig på, s�
 klienten sammenligner selv agentens versionsstreng ved `initialize`. Ved afvigelse
 fra ≥3.0.2: [V] log afvigelsen i sporet (versionsstreng + forventet område) og
 **fortsæt** — afbrydelse er ikke standardadfærden. Ved ændring af SDK-versionen
-udløses [A123]: §6 og §8 efterprøves mod den faktiske SDK.
+udløses [A123]: §6 efterprøves mod den faktiske SDK.
 
 **§9.2e Indespærring — udgået af omfanget.** Sailjail/indespærring tages ud af Skrynja-projektets omfang; appen køres ikke indespærret. [B] beslutning truffet af projektejer storefyr, 2026-10-31. De hidtidige [M]-påstande om Sailjail-stier og tom-map-regel (§9.2e før denne ændring, kilde sailjail-permissions README) beholdes ikke som grundlag, fordi emnet ikke længere er i omfang. N1 (3004) bortfalder: der måles ikke nåbarhed, fordi der ikke indespærres. Se §12 punkt 122 (lukket).
 
@@ -550,11 +552,11 @@ alene (læst 2026-10-29) dækker ikke qtbase-pakken og lukker ikke punktet.
 | 8 | Indlejringsgrænse | 1024 | [M] Bilag A |
 | 9 | Tolerance | findes ikke; én bruttolinje = ét dokument | [B] storefyr 2026-11-01 |
 | 10 | Skalarlyprøve | indpakning i `[` … `]` | [V] [A97] |
-| 11 | Position | byte, klem til `[0, n]` | [M] Bilag A |
+| 11 | Position | byte, klem til `[0, n]`; for hale `[0, h]` | [M] Bilag A; [B] storefyr 2026-11-02 |
 | 12 | L1-svar | intet | [B] storefyr 2026-11-01 |
 | 13 | P1-svar | −32700, `id: null` | [K] JSON-RPC |
-| 14 | Batch | JSON-RPC's regler | [V] [A116] |
-| 15 | Interne koder | 1001 = L1, blokopdelt | [B] storefyr 2026-10-29 |
+| 14 | Batch | afvises: ét svar, −32600, `id: null` | [B] storefyr 2026-11-02 |
+| 15 | Interne koder | 1001 = L1, 1003 = hale, blokopdelt | [B] storefyr 2026-11-02 |
 | 16 | Egne trådkoder | ingen | [K] JSON-RPC |
 | 17 | Agentsti | `/home/defaultuser/.local/bin/vibe-acp` | [M] målt 2026-10-29 |
 | 18 | Agentversion | 3.0.2 / ACP 0.11.0 | [M] målt 2026-10-29 |
@@ -582,15 +584,18 @@ alene (læst 2026-10-29) dækker ikke qtbase-pakken og lukker ikke punktet.
 | 97 | Skalarlyprøven erstatter fallback | [A], [V]: ja, §5.6 kun til spor |
 | 110 | Præcis Qt-binding (`ldd`/spec) | [A], blokerer Bilag A's endelige versionsangivelse |
 | 115 | Holder fordoblingen ved 63 MiB | [A], Bilag B (udledning i Bilag B; kørsel i SDK) |
-| 116 | Accepterer ACP batch | [A], [V]: ja |
+| 116 | Accepterer ACP batch | **lukket [B]:** bortfalder — klienten afviser matrix (§8); ACP's batch-evne er uden betydning; §8.1's [V] uden samme sætnings [A] bortfalder med den; storefyr 2026-11-02 |
 | 117 | L3: −32700 eller −32600 | **lukket [B]:** −32700, fordi −32600 forudsætter et parset Request-objekt; storefyr 2026-11-01 (§6.3) |
 | 118 | Agentens faktiske fejlkoder på wire | [M] fire fremkaldte kald 2026-11-01 (se §6.1); ikke udtømmende |
 | 122 | Sailjail/indespærring i omfang? | **lukket [B]:** nej — taget ud af omfanget, storefyr 2026-10-31; N1/3004 bortfalder |
-| 123 | §6.1 og §8 efterprøvet mod SDK-versionen | betingelse [A123]: udløses ved afvigelse i agentens versionsstreng ved initialize (§9.2d) |
+| 123 | §6.1 efterprøvet mod SDK-versionen | betingelse [A123]: udløses ved afvigelse i agentens versionsstreng ved initialize (§9.2d) |
 | 124 | Binde til præcis 3.0.2 eller ≥3.0.2 | **lukket [B]:** ≥3.0.2, storefyr 2026-11-01; adfærd ved afvigelse: log + fortsæt (§9.2d) |
 | 125 | 3004 som egen kode | **lukket [B]:** bortfalder med 122, storefyr 2026-10-31; 3004 reserveret, ubrugt |
 | 126 | `\r\n` som linjeafslutning | **lukket [B]:** accepteres på indgående trafik; `0x0A` eneste afgrænsning og kun `0x0A` på udgående; storefyr 2026-11-01 (§2.2) |
 | 127 | L1's udformning: målepunkt, kassering, fortolkning, svar | **lukket [B]:** tæller på modtagne byte (kasserede medregnet); byte over loftet kasseres ved ankomsten, `0x0A` konsumeres; linje hvor L1 er indtrådt fortolkes ikke; intet svar; storefyr 2026-11-01 (§3.1, §3.2, §6.2) |
+| 128 | Hale: fortolkning, levering, svar | **lukket [B]:** fortolkes efter §5 (medmindre L1), leveres, besvares ikke; nul byte er ikke en hale; storefyr 2026-11-02 (§3.3) |
+| 129 | Spor-kode for hale | **lukket [B]:** 1003, skrevet ved strømmens slutning; 1002 forbliver hul; storefyr 2026-11-02 (Bilag C) |
+| 130 | Hale uden række i §6.2 | **lukket [B]:** tabellen dækker linjer; hale udløser ingen række, kun spor 1003; storefyr 2026-11-02 (§6.2) |
 
 **Ikke målt:** Bilag B (fordobling ved
 63 MiB), [A110] (præcis qtbase-version på enheden). Punkt 118 er målt, men ikke
@@ -697,6 +702,7 @@ enhedens. Resultat skrives her med resultat, dato og maskine.
 |---|---|---|---|
 | 1000 | reserveret, ubrugt | — | nej |
 | 1001 | L1, tæller over loft (§3.1) | L1 | nej |
+| 1003 | hale, afsluttet af EOF uden `0x0A` (§3.3) | — (se §3.3) | nej |
 | 2001 | P1, fortolkningsfejl | P1 | nej |
 | 2002 | L2, `DocumentTooLarge` | L2 | nej |
 | 2003 | L3, `DeepNesting` | L3 | nej |
@@ -710,7 +716,9 @@ enhedens. Resultat skrives her med resultat, dato og maskine.
 `1002` er udgået i v3. Koden beskrev en klient-syntetisk timeout og bar
 trådkoden −33000, som §0.3 og §6.1 forbyder. Den havde ingen hændelse i §6.2.
 Hullet i 1-blokken må ikke genbruges: et nyt punkt i blokken kræver en hændelse,
-og nogen skal beslutte, at den findes.
+og nogen skal beslutte, at den findes. I rækken for 1003 betyder »—«, at hændelsen
+ikke er en række i §6.2, ikke at koden er ubrugt; 3001 viser, at én kode kan dække
+to rækker.
 
 ---
 
