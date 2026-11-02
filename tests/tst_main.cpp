@@ -2826,6 +2826,24 @@ private slots:
         c.feedEof();
         QCOMPARE(haleSpy.count(), 0);
     }
+
+    // v3 §2.1: every written frame is emitted as frameWritten — compact JSON
+    // plus exactly one trailing 0x0A. Here: the P1 error frame for an invalid
+    // line (-32700, id: null per v3 §6.3).
+    void frameWrittenCarriesCompactErrorFrame()
+    {
+        AcpClient c;
+        QSignalSpy frameSpy(&c, SIGNAL(frameWritten(QByteArray)));
+        c.feedBytes("{oops\n");
+        QCOMPARE(frameSpy.count(), 1);
+        const QByteArray frame = frameSpy.at(0).at(0).toByteArray();
+        QVERIFY(frame.endsWith('\n'));
+        QCOMPARE(frame.count('\n'), 1);
+        const QJsonObject obj = QJsonDocument::fromJson(frame).object();
+        QCOMPARE(obj.value(QStringLiteral("jsonrpc")).toString(), QStringLiteral("2.0"));
+        QCOMPARE(obj.value(QStringLiteral("error")).toObject().value(QStringLiteral("code")).toInt(), -32700);
+        QVERIFY(obj.value(QStringLiteral("id")).isNull());
+    }
 };
 
 int main(int argc, char *argv[])

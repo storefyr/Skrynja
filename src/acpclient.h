@@ -77,6 +77,10 @@ signals:
     void haleReceived(const QJsonObject &message);
     // Internal log event; code is a LogCode, never a wire code.
     void logEvent(int code, const QString &detail);
+    // Every frame handed to the agent's stdin, including the trailing 0x0A
+    // (v3 §2.1). Emitted even when the process is not running (the write is a
+    // no-op then), so unit tests can capture the wire without spawning.
+    void frameWritten(const QByteArray &frame);
     void started();
     void finished(int exitCode, QProcess::ExitStatus status);
 

@@ -239,4 +239,5 @@ void AcpClient::writeFrame(const QJsonObject &obj)
     QByteArray frame = QJsonDocument(obj).toJson(QJsonDocument::Compact);
     frame.append('\n');
     m_process.write(frame);
+    emit frameWritten(frame);
 }
