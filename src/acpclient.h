@@ -77,6 +77,9 @@ public:
     // session/prompt with one text content block. Returns -1 when no session
     // exists yet (nothing is written in that case).
     Q_INVOKABLE qint64 sendPrompt(const QString &text);
+    // Answers an incoming request (e.g. session/request_permission, measured
+    // with id 0/1 on the phone 2026-11-02) with a result object.
+    void sendResult(qint64 id, const QJsonObject &result);
 
 signals:
     // A complete, parsed message from the agent (response or notification).

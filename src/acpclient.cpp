@@ -256,6 +256,15 @@ qint64 AcpClient::sendPrompt(const QString &text)
     return id;
 }
 
+void AcpClient::sendResult(qint64 id, const QJsonObject &result)
+{
+    QJsonObject resp;
+    resp.insert(QStringLiteral("jsonrpc"), QStringLiteral("2.0"));
+    resp.insert(QStringLiteral("id"), id);
+    resp.insert(QStringLiteral("result"), result);
+    writeFrame(resp);
+}
+
 void AcpClient::sendNotification(const QString &method, const QJsonObject &params)
 {
     if (m_process.state() != QProcess::Running)

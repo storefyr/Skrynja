@@ -61,6 +61,7 @@ Fund:
 - Ved skrivende prompt i ask-mode sender agenten **to** `session/request_permission`-anmodninger (id 0 og id 1 — ikke sekventielle klient-id'er); params har nøglerne `options`, `sessionId`, `toolCall`; options er målt: `allow_once`, `allow_session_exact`, `allow_permanent_exact`, `reject_once` [M]
 - Besvares anmodningen med `{"outcome":{"outcome":"cancelled"}}`, bliver filen IKKE oprettet (`file_exists: False`) og prompt ender `stopReason: "end_turn"` [M]
 - Efter stdin-luk: `exit: 0` også med besvaret permission [M]
+- **App-kode konsekvens (rettet på PR #19 samme dag):** routing i `harbour-skrynja.cpp` matcher nu både `session/request_permission` og `request_permission`, logger tool/options og auto-svarer `cancelled` indtil en dialog findes; `AcpClient::sendResult(id, result)` skriver svarrammen (id 0 målt). [M]+kode
 - Script-fund (ikke agent): watchdog-`threading.Timer` uden daemon=True holdt python-processen ~90 s i live efter `exit: 0` — rettet i scriptet (daemon + cancel)
 
 ## Runde 6b: tool-kald målt gennem UI (samme byg, samme dag)

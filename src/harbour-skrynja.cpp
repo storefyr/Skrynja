@@ -165,10 +165,28 @@ int main(int argc, char *argv[])
             } else {
                 qWarning() << "[acp][update]" << kind;
             }
-        } else if (method == QStringLiteral("request_permission")) {
-            // Alpha: no permission UI yet; log only. accept-edits mode does
-            // not ask (measured 2026-11-02).
-            qWarning() << "[acp][permission] request received, not answered (alpha)";
+        } else if (method == QStringLiteral("session/request_permission")
+                   || method == QStringLiteral("request_permission")) {
+            // Målt 2026-11-02 på telefonen: anmodningen kommer namespaced
+            // ("session/request_permission") med id 0/1 og params-nøglerne
+            // options/sessionId/toolCall; options målt til allow_once,
+            // allow_session_exact, allow_permanent_exact, reject_once.
+            // Alpha: ingen dialog endnu — log og svar "cancelled" med det
+            // samme, så et prompt i ask-mode ikke hænger.
+            const QJsonObject pr = msg.value(QStringLiteral("params")).toObject();
+            const QJsonObject tc = pr.value(QStringLiteral("toolCall")).toObject();
+            QStringList opts;
+            const QJsonArray arr = pr.value(QStringLiteral("options")).toArray();
+            for (const QJsonValue &v : arr)
+                opts << v.toObject().value(QStringLiteral("optionId")).toString();
+            const qint64 reqId = qint64(msg.value(QStringLiteral("id")).toDouble());
+            qWarning() << "[acp][permission] id" << reqId << "tool" << tc.value(QStringLiteral("title")).toString()
+                       << "options" << opts << "-> auto-cancelled (alpha, ingen dialog endnu)";
+            QJsonObject outcome;
+            outcome.insert(QStringLiteral("outcome"), QStringLiteral("cancelled"));
+            QJsonObject result;
+            result.insert(QStringLiteral("outcome"), outcome);
+            acpClient.sendResult(reqId, result);
         }
     });
 

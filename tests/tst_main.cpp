@@ -2723,6 +2723,28 @@ private slots:
         QCOMPARE(spy.count(), 2);
         QCOMPARE(c.sessionId(), QStringLiteral("b"));
     }
+
+    // sendResult: svarramme til en indgående anmodning. Målt på telefonen
+    // 2026-11-02: session/request_permission kommer med id 0, så svaret skal
+    // også bære id 0 (ikke et sekventielt klient-id).
+    void resultFrameCarriesRequestId()
+    {
+        AcpClient c;
+        QSignalSpy frameSpy(&c, SIGNAL(frameWritten(QByteArray)));
+        QJsonObject outcome;
+        outcome.insert(QStringLiteral("outcome"), QStringLiteral("cancelled"));
+        QJsonObject result;
+        result.insert(QStringLiteral("outcome"), outcome);
+        c.sendResult(0, result);
+        QCOMPARE(frameSpy.count(), 1);
+        const QJsonObject resp = QJsonDocument::fromJson(frameSpy.at(0).at(0).toByteArray()).object();
+        QCOMPARE(resp.value(QStringLiteral("jsonrpc")).toString(), QStringLiteral("2.0"));
+        QCOMPARE(resp.value(QStringLiteral("id")).toDouble(), 0.0);
+        QCOMPARE(resp.value(QStringLiteral("result")).toObject()
+                     .value(QStringLiteral("outcome")).toObject()
+                     .value(QStringLiteral("outcome")).toString(),
+                 QStringLiteral("cancelled"));
+    }
 };
 
 int main(int argc, char *argv[])
