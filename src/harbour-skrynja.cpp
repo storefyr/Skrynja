@@ -22,6 +22,7 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QFile>
+#include <unistd.h>
 
 #ifndef APP_VERSION
 #define APP_VERSION "0.9.8"
@@ -209,6 +210,12 @@ int main(int argc, char *argv[])
     });
 
     const QString agentPath = AcpClient::defaultAgentPath();
+    // Diagnostik (runde 6f): grid-start så "agent not found", terminal-start ikke.
+    qWarning() << "[acp][diag] uid" << getuid() << "home" << QDir::homePath()
+               << "cwd" << QDir::currentPath()
+               << "exists" << QFileInfo::exists(agentPath)
+               << "isSymLink" << QFileInfo(agentPath).isSymLink()
+               << "canonical" << QFileInfo(agentPath).canonicalFilePath();
     if (QFileInfo::exists(agentPath)) {
         acpClient.start(agentPath, QDir::homePath());
         // initialize handshake: the agent negotiates only protocolVersion 1
