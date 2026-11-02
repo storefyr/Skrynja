@@ -21,13 +21,29 @@
 #include <QJsonObject>
 #include <QFileInfo>
 #include <QDir>
+#include <QFile>
 
 #ifndef APP_VERSION
 #define APP_VERSION "0.9.8"
 #endif
 
+// Alpha-diagnostik: spejl alle Qt-loglinjer til fil, så grid-start (hvor
+// invoker ikke sender stderr til en terminal) kan inspiceres i
+// /tmp/skrynja-app.log. Målt behov 2026-11-02 (runde 6f).
+static QFile g_logFile(QStringLiteral("/tmp/skrynja-app.log"));
+
 int main(int argc, char *argv[])
 {
+    g_logFile.open(QIODevice::Append | QIODevice::Text);
+    qInstallMessageHandler([](QtMsgType, const QMessageLogContext &, const QString &msg) {
+        if (g_logFile.isOpen()) {
+            g_logFile.write(msg.toUtf8());
+            g_logFile.write("\n");
+            g_logFile.flush();
+        }
+        fprintf(stderr, "%s\n", msg.toUtf8().constData());
+        fflush(stderr);
+    });
     QGuiApplication *app = SailfishApp::application(argc, argv);
     // Set in code (the desktop file has no [X-Sailjail] section anymore —
     // punkt 122, lukket [B] storefyr 2026-10-31, appen kører ikke indespærret).
