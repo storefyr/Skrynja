@@ -13,6 +13,7 @@ Måleresultater og scripts fra arbejdet med vejkortet for Skrynja mod `vibe-acp`
 | `maalejournal-runde1-tilfoejelse.md` | Afslutning af M0.15/M0.1 + forberedelse af M0.16 |
 | `maalejournal-runde2.md` | Anden målerunde: M0.0b (integritet), M0.1b (fuld frame), M0.16 (bro, halvt), versionsaudit |
 | `maalejournal-runde3-wire.md` | Tredje målerunde: wire-bekræftelser fra telefonen via relæ — N8 lukket, L5 korrigeret, N6 åben, N7 lukket |
+| `maalejournal-runde6-acp-ui-prompt.md` | **Runde 6:** første prompt gennem app-UI'et (byg 5448808 via test-pr.sh 19) — session/prompt id 3, agent_message_chunk OK, end_turn, usage 7976/7973/3; configOptions i session/new-svaret målt |
 | `maalejournal-runde5-acp-initialize-telefon.md` | **Runde 5:** første wire-måling fra selve appen på telefonen (PR #19, byg `afe0df9` via `test-pr.sh 19`) — initialize-håndtryk OK, agent 3.0.2, `protocolVersion 1` begge veje, `loadSession: true`, clean exit 0 ved lukning, ingen P1/P2/L1/hale |
 | `analyse-mistral-vibe-302-kode.md` | Kodelæsning af mistral-vibe 3.0.2 sdist: R30 svar (ikke rettet), betinget `_reasoning_effort()`, glm-modeller ikke i statisk katalog, ACP configOptions-validering |
 | `analyse-harness-r30-r42-verifikation.md` | Verifikation af R30–R42 i både harness- og kernepakken |
