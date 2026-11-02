@@ -33,7 +33,9 @@ TESTFILE = "/tmp/acp-perm-test.txt"
 def main():
     p = subprocess.Popen([AGENT], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                          stderr=subprocess.DEVNULL, text=True, bufsize=1)
-    threading.Timer(90, p.kill).start()  # watchdog: hæng aldrig
+    wd = threading.Timer(90, p.kill)  # watchdog: hæng aldrig; daemon så den ikke holder processen i live efter exit 0
+    wd.daemon = True
+    wd.start()
     wire = open(WIRE, "w", encoding="utf-8")
 
     def S(o):
@@ -109,6 +111,7 @@ def main():
     except Exception:
         p.kill()
     print("exit:", p.returncode)
+    wd.cancel()
     wire.close()
 
 

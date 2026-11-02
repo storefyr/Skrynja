@@ -42,6 +42,27 @@ App startet i baggrund fra terminalen med log til fil; besked skrevet i AcpChatP
 - **Metodenavn målt:** agentens tilladelsesanmodning kommer som **`session/request_permission`** (namespaced) — ikke `request_permission`. Scriptet matchede først forkert og så aldrig anmodningen, hvorfor agenten hang til watchdog. [M] 2026-11-02, telefonen (`/tmp/acp-perm-wire.ndjson`, 21 frames, därav 1 `session/request_permission`, 13 `session/update`)
 - Scriptet `maaling-ask-permission.py` (i dette repo) kører hele ask-mode-kæden automatisk og besvarer request_permission med "cancelled"; rå wire i `/tmp/acp-perm-wire.ndjson`. Hentes på telefonen med én curl-linje (ingen lang kode at kopiere).
 
+## Runde 6d: ask-mode komplet målt (maaling-ask-permission.py, 2026-11-02, telefonen)
+
+Kørsel: `curl -sfL <raw-url på denne gren>/maaling-ask-permission.py -o /tmp/perm.py && python3 /tmp/perm.py`. Output verbatim:
+
+    SID: 7974165b-9762-e2b5-d11b-510971a9368e
+    CFG: {"jsonrpc": "2.0", "id": 4, "result": {"configOptions": [{"currentValue": "ask", "options": [{"value": "ask", "name": "Ask", "description": ...}]...   (svaret erstatter hele configOptions-listen — jf. vedtaget om set_config_option)
+    PERM_REQ id=0 keys=['options', 'sessionId', 'toolCall'] tool=None options=['allow_once', 'allow_session_exact', 'allow_permanent_exact', 'reject_once']
+    PERM_REQ id=1 keys=['options', 'sessionId', 'toolCall'] tool=None options=['allow_once', 'allow_session_exact', 'allow_permanent_exact', 'reject_once']
+    RESULT: {"jsonrpc": "2.0", "id": 5, "result": {"stopReason": "end_turn", "usage": {"totalTokens": 24493, "inputTokens": 24208, "outputTokens": 285, "cachedReadTokens": 18432}}}
+    answered_permission: True
+    file_exists: False
+    exit: 0
+
+Fund:
+
+- `session/set_config_option` mode=ask accepteres; svaret er `result.configOptions` (hele listen, currentValue "ask") [M]
+- Ved skrivende prompt i ask-mode sender agenten **to** `session/request_permission`-anmodninger (id 0 og id 1 — ikke sekventielle klient-id'er); params har nøglerne `options`, `sessionId`, `toolCall`; options er målt: `allow_once`, `allow_session_exact`, `allow_permanent_exact`, `reject_once` [M]
+- Besvares anmodningen med `{"outcome":{"outcome":"cancelled"}}`, bliver filen IKKE oprettet (`file_exists: False`) og prompt ender `stopReason: "end_turn"` [M]
+- Efter stdin-luk: `exit: 0` også med besvaret permission [M]
+- Script-fund (ikke agent): watchdog-`threading.Timer` uden daemon=True holdt python-processen ~90 s i live efter `exit: 0` — rettet i scriptet (daemon + cancel)
+
 ## Runde 6b: tool-kald målt gennem UI (samme byg, samme dag)
 
 Prompt i AcpChatPage: "Kør ls i /home/defaultuser og fortæl hvad der ligger der" — agenten svarede med mappens indhold (vist i UI; kopiering fra UI ikke muligt endnu, wire-log er kilden). Udtræk af `/tmp/skrynja-ui2.log` (93 linjer, 17 `[acp]`-linjer, sessionId `1611d73e-...`):
