@@ -67,6 +67,14 @@ export PYTHONPATH=<denne mappe>   # aktiverer malelab-sitecustomize.py
 python3 maaling_m00_m01.py
 ```
 
+## Test af ACP-alpha på telefonen (PR-RPM)
+
+ACP-klienten (alpha, `src/acpclient.*`) ligger på `main` og kompileres ind i aarch64-RPM'en, men klassen instantieres endnu ikke noget sted i UI-koden. Dette afsnit beskriver, hvordan et PR-byg testes på telefonen:
+
+1. Når CI på en PR er færdig, ligger der en aarch64-RPM på grenen `pr-<nummer>-rpm` (filnavn `skrynja-pr<nummer>.rpm`) — skubbet af trinnet "Push RPM to pr-rpm branch" i `pr-build.yml`.
+2. På telefonen: `sh test-pr.sh <nummer>` — henter RPM'en fra raw.githubusercontent.com og installerer med `devel-su pkcon install-local --allow-reinstall`.
+3. `update.sh` henter derimod altid nyeste *release* (pt. v0.9.10, 2026-10-25) — aldrig et PR-byg.
+
 ## Hovedfund (runde 3–4 — målt på telefonen via relæ)
 
 Telefonen kører `mistral_vibe` **3.0.2** (identisk med PyPI), `agent_client_protocol` **0.11.0**, `mistralai` **2.6.0**; harness-pakken er indlejret i kernepakken (ingen egen dist-info).
