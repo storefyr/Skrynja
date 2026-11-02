@@ -44,6 +44,9 @@ int main(int argc, char *argv[])
     // API in this build. The only backend is the ACP agent over stdio.
     ConversationManager conversationManager;
     SettingsManager settingsManager;
+    // Declared here (before setSource) so the QML context property exists
+    // when the QML loads — Qt 5.6 evaluates bindings at load time.
+    AcpClient acpClient;
     AudioRecorder audioRecorder;
     VoiceAnonymizer voiceAnonymizer;
 
@@ -81,6 +84,7 @@ int main(int argc, char *argv[])
     context->setContextProperty("settingsManager", &settingsManager);
     context->setContextProperty("globalAudioRecorder", &audioRecorder);
     context->setContextProperty("voiceAnonymizer", &voiceAnonymizer);
+    context->setContextProperty("acpClient", &acpClient);
 
     // Load main QML
     view->setSource(SailfishApp::pathTo("qml/harbour-skrynja.qml"));
@@ -92,8 +96,6 @@ int main(int argc, char *argv[])
     // All wire frames and internal log events go to stderr as [acp]..., so a
     // terminal start shows the handshake live:
     //   harbour-skrynja 2>&1 | tee /tmp/skrynja-start.log
-    AcpClient acpClient;
-    context->setContextProperty("acpClient", &acpClient);
 
     // Streaming state for agent_message_chunk accumulation.
     QString streamBuf;

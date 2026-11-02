@@ -68,6 +68,10 @@ Fund:
 
 Symptom 2026-11-02: app fra grid viste "Venter paa agent..." (sessionId aldrig sat), samme byg fra terminalen fik `[acp] session ready`. Årsag: `harbour-skrynja.desktop` havde stadig en `[X-Sailjail] Permissions=...`-sektion, så grid-start kørte appen indespærret — i strid med punkt 122 (lukket [B] storefyr 2026-10-31, spec v3 §9.2e: appen kører IKKE indespærret). Rettet på PR #19: sektionen fjernet fra desktop-filen; `setOrganizationName` i koden er uændret, så config-stien bliver. [M]+kode
 
+## Runde 6f: "Venter paa session" vedvarende — årsag: context property sat efter setSource
+
+Symptom 2026-11-02 (efter genstart + korrekt installeret byg uden [X-Sailjail]): grid-start og terminal-start vise begge stadig "ACP: venter paa session...", selvom terminalen loggede `[acp] session ready`. Årsag i kode: `acpClient` blev deklareret og sat som context property EFTER `view->setSource()` — Qt 5.6 evaluerer QML-bindings ved load, så `acpClient.sessionId` i AcpChatPage blev aldrig bundet til NOTIFY-signalet. Rettet på PR #19: deklaration + setContextProperty flyttet før setSource. [M]+kode
+
 ## Runde 6b: tool-kald målt gennem UI (samme byg, samme dag)
 
 Prompt i AcpChatPage: "Kør ls i /home/defaultuser og fortæl hvad der ligger der" — agenten svarede med mappens indhold (vist i UI; kopiering fra UI ikke muligt endnu, wire-log er kilden). Udtræk af `/tmp/skrynja-ui2.log` (93 linjer, 17 `[acp]`-linjer, sessionId `1611d73e-...`):
