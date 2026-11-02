@@ -64,9 +64,9 @@ Fund:
 - **App-kode konsekvens (rettet på PR #19 samme dag):** routing i `harbour-skrynja.cpp` matcher nu både `session/request_permission` og `request_permission`, logger tool/options og auto-svarer `cancelled` indtil en dialog findes; `AcpClient::sendResult(id, result)` skriver svarrammen (id 0 målt). [M]+kode
 - Script-fund (ikke agent): watchdog-`threading.Timer` uden daemon=True holdt python-processen ~90 s i live efter `exit: 0` — rettet i scriptet (daemon + cancel)
 
-## Runde 6e: grid-start fejlede, terminal-start virkede — årsag: X-Sailjail i desktop-filen
+## Runde 6e: målt 2026-11-02 — grid-start kører i firejail, terminalstart gør ikke
 
-Symptom 2026-11-02: app fra grid viste "Venter paa agent..." (sessionId aldrig sat), samme byg fra terminalen fik `[acp] session ready`. Årsag: `harbour-skrynja.desktop` havde stadig en `[X-Sailjail] Permissions=...`-sektion, så grid-start kørte appen indespærret — i strid med punkt 122 (lukket [B] storefyr 2026-10-31, spec v3 §9.2e: appen kører IKKE indespærret). Rettet på PR #19: sektionen fjernet fra desktop-filen; `setOrganizationName` i koden er uændret, så config-stien bliver. [M]+kode
+Målt på telefonen 2026-11-02 (byg 467fde7/6931cf4 via pr-19-rpm): grid-start af appen kører i firejail — `/proc/<pid>/mountinfo` for app-processen (pid 15257) viser tmpfs over `/home` plus bind-mounts kun for udvalgte undermapper (Documents, Pictures, Videos, Desktop, `.config/...`, `.cache/...`, `.local/share/harbour-skrynja`, `.local/share/applications`, `.local/nemo-transferengine`); `.local/bin` er IKKE monteret, hvorfor appens diag loggede `exists false` for `/home/defaultuser/.local/bin/vibe-acp`. Terminalstart af samme byg kører ikke i firejail og så `[acp] session ready`. Der er målt én startmåde ad gangen: grid-start = firejail, terminalstart = ikke. [M] 2026-11-02, Jolla Phone 2026. Rettet på PR #19: `[X-Sailjail]`-sektionen fjernet fra desktop-filen (uændret adfærd målt bagefter: grid-start stadig i firejail); `setOrganizationName` i koden uændret.
 
 ## Runde 6f: "Venter paa session" vedvarende — årsag: context property sat efter setSource
 
