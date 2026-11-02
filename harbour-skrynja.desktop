@@ -7,7 +7,6 @@ Exec=harbour-skrynja
 Comment=Chat med Mistral AI med websøgning
 Categories=Network;Chat;
 
-[X-Sailjail]
-Permissions=Internet;Pictures;Documents;Microphone
-OrganizationName=org.skrynja
-ApplicationName=Skrynja
+# Ingen [X-Sailjail]-sektion: appen køres IKKE indespærret — beslutning
+# punkt 122, lukket [B] storefyr 2026-10-31 (spec v3 §9.2e). Uden sektionen
+# kan grid-start spawne agenten i ~/.local/bin.

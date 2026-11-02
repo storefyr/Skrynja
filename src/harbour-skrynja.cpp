@@ -29,8 +29,8 @@
 int main(int argc, char *argv[])
 {
     QGuiApplication *app = SailfishApp::application(argc, argv);
-    // Must match OrganizationName/ApplicationName in the [X-Sailjail] section
-    // of the desktop file so SailJail whitelists the right data/config dirs.
+    // Set in code (the desktop file has no [X-Sailjail] section anymore —
+    // punkt 122, lukket [B] storefyr 2026-10-31, appen kører ikke indespærret).
     app->setOrganizationName("org.skrynja");
     app->setApplicationName("Skrynja");
 

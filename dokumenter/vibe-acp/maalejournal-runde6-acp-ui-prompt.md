@@ -64,6 +64,10 @@ Fund:
 - **App-kode konsekvens (rettet på PR #19 samme dag):** routing i `harbour-skrynja.cpp` matcher nu både `session/request_permission` og `request_permission`, logger tool/options og auto-svarer `cancelled` indtil en dialog findes; `AcpClient::sendResult(id, result)` skriver svarrammen (id 0 målt). [M]+kode
 - Script-fund (ikke agent): watchdog-`threading.Timer` uden daemon=True holdt python-processen ~90 s i live efter `exit: 0` — rettet i scriptet (daemon + cancel)
 
+## Runde 6e: grid-start fejlede, terminal-start virkede — årsag: X-Sailjail i desktop-filen
+
+Symptom 2026-11-02: app fra grid viste "Venter paa agent..." (sessionId aldrig sat), samme byg fra terminalen fik `[acp] session ready`. Årsag: `harbour-skrynja.desktop` havde stadig en `[X-Sailjail] Permissions=...`-sektion, så grid-start kørte appen indespærret — i strid med punkt 122 (lukket [B] storefyr 2026-10-31, spec v3 §9.2e: appen kører IKKE indespærret). Rettet på PR #19: sektionen fjernet fra desktop-filen; `setOrganizationName` i koden er uændret, så config-stien bliver. [M]+kode
+
 ## Runde 6b: tool-kald målt gennem UI (samme byg, samme dag)
 
 Prompt i AcpChatPage: "Kør ls i /home/defaultuser og fortæl hvad der ligger der" — agenten svarede med mappens indhold (vist i UI; kopiering fra UI ikke muligt endnu, wire-log er kilden). Udtræk af `/tmp/skrynja-ui2.log` (93 linjer, 17 `[acp]`-linjer, sessionId `1611d73e-...`):
