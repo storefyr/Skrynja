@@ -34,9 +34,25 @@ App startet i baggrund fra terminalen med log til fil; besked skrevet i AcpChatP
 | 6 | session/new-resultat indeholder `configOptions` (mode/model/thinking med currentValue) og `workspace_trust: untrusted` — relevant for set_config_option/A7 | [M] |
 | 7 | Ingen `request_permission` ved denne runde (mode accept-edits, kun læsning) | [M] |
 
+## Runde 6b: tool-kald målt gennem UI (samme byg, samme dag)
+
+Prompt i AcpChatPage: "Kør ls i /home/defaultuser og fortæl hvad der ligger der" — agenten svarede med mappens indhold (vist i UI; kopiering fra UI ikke muligt endnu, wire-log er kilden). Udtræk af `/tmp/skrynja-ui2.log` (93 linjer, 17 `[acp]`-linjer, sessionId `1611d73e-...`):
+
+    36 sessionUpdate":"agent_message_chunk"
+     2 sessionUpdate":"agent_thought_chunk"
+     1 sessionUpdate":"available_commands_update"
+     2 sessionUpdate":"session_info_update"
+     1 sessionUpdate":"tool_call"
+     1 sessionUpdate":"tool_call_update"
+     7 sessionUpdate":"usage_update"
+     1 sessionUpdate":"user_message_chunk"
+    request_permission: 0   stopReason: "end_turn"
+
+Fund: læsning via tool blev auto-approvet i accept-edits (ingen request_permission); `agent_thought_chunk` findes som egen update-type (ikke vist i UI endnu); kun `agent_message_chunk` akkumuleres til boblen — tool_call vises kun i loggen (alpha-begrænsning).
+
 ## Ikke målt endnu
 
-- tool_call / tool_call_update gennem UI (kræver et prompt der får agenten til at køre et værktøj)
-- request_permission-dialog (kræver mode ask eller et risikabelt kald)
+- request_permission ved mode ask eller risikabelt kald (set_config_option mål for mode måles først)
 - session/load ved genåbning af app (loadSession: true annonceret)
 - billede i prompt (image: true annonceret)
+- kopiering af tekst fra dialogen i UI (ikke muligt endnu — wire-log bruges)
