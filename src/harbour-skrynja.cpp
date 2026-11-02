@@ -23,6 +23,8 @@
 #include <QDir>
 #include <QFile>
 #include <unistd.h>
+#include <QProcess>
+#include <QTcpSocket>
 
 #ifndef APP_VERSION
 #define APP_VERSION "0.9.8"
@@ -222,6 +224,31 @@ int main(int argc, char *argv[])
     QFile probe(agentPath);
     const bool opened = probe.open(QIODevice::ReadOnly);
     qWarning() << "[acp][diag] open_test" << opened << probe.errorString();
+    // a) exec fra den monterede mappe: start en kopieret busybox derfra
+    {
+        QProcess t;
+        t.start(QStringLiteral("/home/defaultuser/.local/share/harbour-skrynja/bin/busybox"),
+                QStringList{QStringLiteral("echo"), QStringLiteral("jail-exec-ok")});
+        const bool ok = t.waitForFinished(5000);
+        qWarning() << "[acp][diag] exec_from_mounted" << ok << t.exitCode() << t.readAllStandardOutput().trimmed() << t.errorString();
+    }
+    // b) netværk inde fra jailen: TCP til 1.1.1.1:443
+    {
+        QTcpSocket sock;
+        sock.connectToHost(QStringLiteral("1.1.1.1"), 443);
+        const bool ok = sock.waitForConnected(5000);
+        qWarning() << "[acp][diag] net_1.1.1.1:443" << ok << sock.state() << sock.errorString();
+    }
+    // c) projektets rodmappe synlig?
+    qWarning() << "[acp][diag] projectroot" << QFileInfo(QStringLiteral("/home/defaultuser/Skrynja")).exists()
+               << QDir(QStringLiteral("/home/defaultuser/Skrynja")).entryList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot).count();
+    // d) monteret mappe skrivbar?
+    {
+        QFile w(QStringLiteral("/home/defaultuser/.local/share/harbour-skrynja/diag-write-test"));
+        const bool ok = w.open(QIODevice::WriteOnly);
+        if (ok) { w.write("x"); w.close(); QFile::remove(QStringLiteral("/home/defaultuser/.local/share/harbour-skrynja/diag-write-test")); }
+        qWarning() << "[acp][diag] mounted_writable" << ok << w.errorString();
+    }
     if (QFileInfo::exists(agentPath)) {
         acpClient.start(agentPath, QDir::homePath());
         // initialize handshake: the agent negotiates only protocolVersion 1
