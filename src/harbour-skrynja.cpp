@@ -215,7 +215,13 @@ int main(int argc, char *argv[])
                << "cwd" << QDir::currentPath()
                << "exists" << QFileInfo::exists(agentPath)
                << "isSymLink" << QFileInfo(agentPath).isSymLink()
-               << "canonical" << QFileInfo(agentPath).canonicalFilePath();
+               << "canonical" << QFileInfo(agentPath).canonicalFilePath()
+               << "dotlocal_exists" << QFileInfo(QStringLiteral("/home/defaultuser/.local")).exists()
+               << "bin_list" << QDir(QStringLiteral("/home/defaultuser/.local/bin")).entryList(QDir::AllEntries | QDir::NoDotAndDotDot)
+               << "home_list" << QDir(QStringLiteral("/home/defaultuser")).entryList(QDir::AllEntries | QDir::NoDotAndDotDot).mid(0, 12);
+    QFile probe(agentPath);
+    const bool opened = probe.open(QIODevice::ReadOnly);
+    qWarning() << "[acp][diag] open_test" << opened << probe.errorString();
     if (QFileInfo::exists(agentPath)) {
         acpClient.start(agentPath, QDir::homePath());
         // initialize handshake: the agent negotiates only protocolVersion 1
