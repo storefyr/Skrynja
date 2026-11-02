@@ -38,6 +38,7 @@ App startet i baggrund fra terminalen med log til fil; besked skrevet i AcpChatP
 
 - Agenten **kræver pipe/socket/char-device på stdin/stdout**: ved redirect af stdout til en almindelig fil (`> /tmp/va.out`) crasher den ved opstart med `ValueError: Pipe transport is only for pipes, sockets and character devices`, rc=1, ingen output. Derfor: stdout skal gennem et pipe (`| tee fil`). QProcess i appen bruger pipes — upåvirket. [M] 2026-11-02, telefonen
 - Konsekvens: målescripts må ikke redirecte agentens stdout til fil; de skal pipe den (scriptet `maaling-ask-permission.py` håndterer det selv via subprocess.PIPE).
+- **Metodenavn målt:** agentens tilladelsesanmodning kommer som **`session/request_permission`** (namespaced) — ikke `request_permission`. Scriptet matchede først forkert og så aldrig anmodningen, hvorfor agenten hang til watchdog. [M] 2026-11-02, telefonen (`/tmp/acp-perm-wire.ndjson`, 21 frames, därav 1 `session/request_permission`, 13 `session/update`)
 - Scriptet `maaling-ask-permission.py` (i dette repo) kører hele ask-mode-kæden automatisk og besvarer request_permission med "cancelled"; rå wire i `/tmp/acp-perm-wire.ndjson`. Hentes på telefonen med én curl-linje (ingen lang kode at kopiere).
 
 ## Runde 6b: tool-kald målt gennem UI (samme byg, samme dag)

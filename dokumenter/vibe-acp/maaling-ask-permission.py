@@ -30,7 +30,7 @@ TESTFILE = "/tmp/acp-perm-test.txt"
 def main():
     p = subprocess.Popen([AGENT], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                          stderr=subprocess.DEVNULL, text=True, bufsize=1)
-    threading.Timer(60, p.kill).start()  # watchdog: hæng aldrig
+    threading.Timer(90, p.kill).start()  # watchdog: hæng aldrig
     wire = open(WIRE, "w", encoding="utf-8")
 
     def S(o):
@@ -71,16 +71,20 @@ def main():
     print("SID:", sid)
     S({"jsonrpc": "2.0", "id": 4, "method": "session/set_config_option",
        "params": {"sessionId": sid, "configId": "mode", "value": "ask"}})
+    r4 = until_id(4)
+    print("CFG:", json.dumps(r4)[:120] if r4 else None)
     S({"jsonrpc": "2.0", "id": 5, "method": "session/prompt",
        "params": {"sessionId": sid, "prompt": [
            {"type": "text", "text": "Opret filen %s med teksten hei" % TESTFILE}]}})
 
+    # Målt 2026-11-02: agentens indgående anmodning hedder "session/request_permission"
+    # (namespaced) — ikke "request_permission".
     answered = False
-    for _ in range(200):
+    for _ in range(300):
         m = read()
         if m is None:
             break
-        if m.get("method") == "request_permission":
+        if m.get("method") in ("session/request_permission", "request_permission"):
             pr = m.get("params", {})
             tc = pr.get("toolCall") or {}
             print("PERM_REQ id=%s keys=%s tool=%s options=%s" % (
