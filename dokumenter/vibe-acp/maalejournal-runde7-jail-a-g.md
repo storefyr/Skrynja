@@ -43,6 +43,16 @@ Terminal (uden jail), samme dag:
 | f | Agentens versionsstreng ved initialize | **3.0.2** — `agentInfo.version` i initialize-svaret, målt runde 5 og 6 (`maalejournal-runde5/6`), `protocolVersion: 1` begge veje. | 2026-11-02 |
 | g | Hvornår kommer MISTRAL_API_KEY ind? | **Ikke målt** — miljøvariabel, ikke filsystem. Formodning (ikke måling): arves fra app-miljøet; session/new og et simpelt prompt virkede i REPL uden synlig nøgle i skal-miljøet (runde 6), så nøglen først bliver nødvendig ved rigtige modelkald. Skal måles ved første rigtige LLM-svar. | — |
 
+## R87 tillæg (samme dag, terminal): startkæden målt via ps
+
+    3423 /usr/libexec/mapplauncherd/booster-silica-session --boot-mode
+    3497 /usr/libexec/mapplauncherd/booster-qt5 --systemd --boot-mode
+    3498 /usr/libexec/mapplauncherd/booster-generic --systemd
+    3745 /usr/bin/invoker --type=silica-session -- /usr/bin/sailjail --profile=jolla-camera -- /usr/libexec/mapplauncherd/booster-silica-media --application=jolla-camera
+    3490 /usr/bin/firejail --quiet --template=OrganizationName:com.jolla --template=ApplicationName:camera --private-bin=... --whitelist=...
+
+Målt: `invoker` kører `/usr/bin/sailjail` for silica-apps, og sailjail/firejail-argumenterne bygges fra `--template=OrganizationName:<org> --template=ApplicationName:<app>` — dvs. også UDEN `[X-Sailjail]`-sektion i .desktop kører grid-start gennem sailjail. Kilde til whitelist-listen (hvilke $HOME-mapper der bind-mountes) er endnu ikke målt; mapplauncherd/booster er kandidaten. [M] 2026-11-02.
+
 ## Konsekvens (ikke beslutning)
 
 Grid-start kører i firejail; `.local/bin` og projektroden er ikke nåbare derfra; `.local/share/harbour-skrynja` er nåbar, skrivbar og exec-tilladt, og netværk virker. Programsti (§9.2 felt 1) kan derfor målt pege ind i en monteret mappe, hvis både shim og venv lægges der. Dette kræver ny [B] fra storefyr med ny dato før §9.2e omskrives — ellers står to [B] med modsat indhold. Indtil da: §12 punkt 131 [A].
