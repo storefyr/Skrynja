@@ -15,6 +15,7 @@
 #include <QImageWriter>
 #include <QSet>
 
+#include "acpclient.h"
 #include "audiorecorder.h"
 #include "conversationmodel.h"
 #include "conversationmanager.h"
@@ -2687,6 +2688,146 @@ private slots:
     }
 };
 
+
+class TestAcpClient : public QObject
+{
+    Q_OBJECT
+
+private slots:
+    // v3 §2.1/§3.2: a well-formed line is parsed and delivered.
+    void validLineIsDelivered()
+    {
+        AcpClient c;
+        QSignalSpy msgSpy(&c, SIGNAL(messageReceived(QJsonObject)));
+        c.feedBytes("{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}\n");
+        QCOMPARE(msgSpy.count(), 1);
+        QCOMPARE(msgSpy.at(0).at(0).toJsonObject().value("id").toInt(), 1);
+    }
+
+    // v3 §2.2 (126): a raw 0x0D before 0x0A stays in the line and is eaten by
+    // Qt as whitespace — the line parses fine.
+    void crlfLineParses()
+    {
+        AcpClient c;
+        QSignalSpy msgSpy(&c, SIGNAL(messageReceived(QJsonObject)));
+        c.feedBytes("{\"jsonrpc\":\"2.0\",\"id\":2,\"result\":{}}\r\n");
+        QCOMPARE(msgSpy.count(), 1);
+    }
+
+    // v3 §5.5/§6.2 P1: invalid JSON -> -32700 with id: null on the wire and
+    // 2001 in the log. (Wire capture is not available without a process, so
+    // the log code is asserted; the error frame itself is checked indirectly
+    // via a helper process test below.)
+    void invalidLineLogsP1()
+    {
+        AcpClient c;
+        QSignalSpy logSpy(&c, SIGNAL(logEvent(int,QString)));
+        c.feedBytes("{not json}\n");
+        QCOMPARE(logSpy.count(), 1);
+        QCOMPARE(logSpy.at(0).at(0).toInt(), 2001);
+    }
+
+    // v3 §5.5 trin 6: a scalar document (wrapped probe succeeds) is P2 -> 3001.
+    void scalarLineLogsP2()
+    {
+        AcpClient c;
+        QSignalSpy logSpy(&c, SIGNAL(logEvent(int,QString)));
+        QSignalSpy msgSpy(&c, SIGNAL(messageReceived(QJsonObject)));
+        c.feedBytes("42\n");
+        QCOMPARE(msgSpy.count(), 0);
+        QCOMPARE(logSpy.count(), 1);
+        QCOMPARE(logSpy.at(0).at(0).toInt(), 3001);
+    }
+
+    // v3 §8 (116): a matrix is rejected wholesale as P2, not answered per
+    // element.
+    void batchRejectedAsP2()
+    {
+        AcpClient c;
+        QSignalSpy logSpy(&c, SIGNAL(logEvent(int,QString)));
+        QSignalSpy msgSpy(&c, SIGNAL(messageReceived(QJsonObject)));
+        c.feedBytes("[{\"jsonrpc\":\"2.0\",\"id\":1},{\"jsonrpc\":\"2.0\",\"id\":2}]\n");
+        QCOMPARE(msgSpy.count(), 0);
+        QCOMPARE(logSpy.count(), 1);
+        QCOMPARE(logSpy.at(0).at(0).toInt(), 3001);
+    }
+
+    // v3 §3.1/§3.2 (127): bytes over the cap are dropped at arrival, 0x0A is
+    // still consumed, L1 fires once, and the truncated line is never parsed.
+    void overCapLineFiresL1OnceAndIsNotParsed()
+    {
+        AcpClient c;
+        c.setLineCap(16);
+        QSignalSpy l1Spy(&c, SIGNAL(lineOverCap(qint64,qint64)));
+        QSignalSpy logSpy(&c, SIGNAL(logEvent(int,QString)));
+        QSignalSpy msgSpy(&c, SIGNAL(messageReceived(QJsonObject)));
+        // 40 bytes of 'x' then a newline: cap is 16.
+        c.feedBytes(QByteArray(40, 'x') + "\n");
+        QCOMPARE(l1Spy.count(), 1);
+        QCOMPARE(msgSpy.count(), 0); // never handed to the parser
+        int l1Logs = 0;
+        for (const auto &e : logSpy)
+            if (e.at(0).toInt() == 1001) ++l1Logs;
+        QCOMPARE(l1Logs, 1); // exactly once per line
+        // next line is clean again (short enough to stay under the cap of 16)
+        c.feedBytes("{\"id\":9}\n");
+        QCOMPARE(msgSpy.count(), 1);
+        QCOMPARE(msgSpy.at(0).at(0).toJsonObject().value("id").toInt(), 9);
+    }
+
+    // v3 §3.1: the counter counts discarded bytes too, so a line split across
+    // chunks still trips the cap at the same received byte.
+    void capCountsReceivedBytesAcrossChunks()
+    {
+        AcpClient c;
+        c.setLineCap(10);
+        QSignalSpy l1Spy(&c, SIGNAL(lineOverCap(qint64,qint64)));
+        c.feedBytes(QByteArray(6, 'a'));
+        c.feedBytes(QByteArray(6, 'b')); // received = 12 > 10, no newline yet
+        c.feedBytes("\n");
+        QCOMPARE(l1Spy.count(), 1);
+        QCOMPARE(l1Spy.at(0).at(0).toLongLong(), 12); // received bytes, minus the 0x0A
+    }
+
+    // v3 §3.3 (128/129): a non-empty tail at EOF is parsed and delivered as
+    // hale, logged 1003, and never answered. A zero-byte tail logs nothing.
+    void haleAtEofIsParsedAndLogged1003()
+    {
+        AcpClient c;
+        QSignalSpy haleSpy(&c, SIGNAL(haleReceived(QJsonObject)));
+        QSignalSpy logSpy(&c, SIGNAL(logEvent(int,QString)));
+        c.feedBytes("{\"jsonrpc\":\"2.0\",\"id\":7,\"result\":{}}"); // no 0x0A
+        c.feedEof();
+        QCOMPARE(haleSpy.count(), 1);
+        int haleLogs = 0;
+        for (const auto &e : logSpy)
+            if (e.at(0).toInt() == 1003) ++haleLogs;
+        QCOMPARE(haleLogs, 1);
+    }
+
+    void zeroByteTailIsNotAHale()
+    {
+        AcpClient c;
+        QSignalSpy haleSpy(&c, SIGNAL(haleReceived(QJsonObject)));
+        QSignalSpy logSpy(&c, SIGNAL(logEvent(int,QString)));
+        c.feedBytes("{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}\n"); // ends with 0x0A
+        c.feedEof();
+        QCOMPARE(haleSpy.count(), 0);
+        QCOMPARE(logSpy.count(), 0);
+    }
+
+    // v3 §3.3 trin 1 + 127: if L1 fired on the line, the tail is not parsed.
+    void haleNotParsedWhenL1Fired()
+    {
+        AcpClient c;
+        c.setLineCap(8);
+        QSignalSpy haleSpy(&c, SIGNAL(haleReceived(QJsonObject)));
+        c.feedBytes(QByteArray(20, 'x')); // over cap, no newline
+        c.feedEof();
+        QCOMPARE(haleSpy.count(), 0);
+    }
+};
+
 int main(int argc, char *argv[])
 {
     // Redirect QSettings and the conversation files away from the real
@@ -2701,6 +2842,10 @@ int main(int argc, char *argv[])
     app.setApplicationName("Skrynja");
 
     int status = 0;
+    {
+        TestAcpClient t;
+        status |= QTest::qExec(&t, argc, argv);
+    }
     {
         TestAudioRecorder t;
         status |= QTest::qExec(&t, argc, argv);

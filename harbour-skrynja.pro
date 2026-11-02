@@ -12,6 +12,7 @@ DEFINES += APP_VERSION=\\\"$$VERSION\\\"
 
 SOURCES += src/harbour-skrynja.cpp \
     src/mistralapi.cpp \
+    src/acpclient.cpp \
     src/conversationmodel.cpp \
     src/conversationmanager.cpp \
     src/settingsmanager.cpp \
@@ -21,6 +22,7 @@ SOURCES += src/harbour-skrynja.cpp \
     src/voiceanonymizer.cpp
 
 HEADERS += src/mistralapi.h \
+    src/acpclient.h \
     src/conversationmodel.h \
     src/conversationmanager.h \
     src/settingsmanager.h \

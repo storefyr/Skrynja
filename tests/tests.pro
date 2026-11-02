@@ -8,6 +8,7 @@ CONFIG -= app_bundle
 INCLUDEPATH += ../src
 
 SOURCES += tst_main.cpp \
+    ../src/acpclient.cpp \
     ../src/audiorecorder.cpp \
     ../src/conversationmodel.cpp \
     ../src/conversationmanager.cpp \
@@ -17,7 +18,8 @@ SOURCES += tst_main.cpp \
     ../src/providers.cpp \
     ../src/voiceanonymizer.cpp
 
-HEADERS += ../src/audiorecorder.h \
+HEADERS += ../src/acpclient.h \
+    ../src/audiorecorder.h \
     ../src/conversationmodel.h \
     ../src/conversationmanager.h \
     ../src/mistralapi.h \
