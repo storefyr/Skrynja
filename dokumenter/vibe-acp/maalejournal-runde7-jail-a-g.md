@@ -53,6 +53,24 @@ Terminal (uden jail), samme dag:
 
 Målt: `invoker` kører `/usr/bin/sailjail` for silica-apps, og sailjail/firejail-argumenterne bygges fra `--template=OrganizationName:<org> --template=ApplicationName:<app>` — dvs. også UDEN `[X-Sailjail]`-sektion i .desktop kører grid-start gennem sailjail. Kilde til whitelist-listen (hvilke $HOME-mapper der bind-mountes) er endnu ikke målt; mapplauncherd/booster er kandidaten. [M] 2026-11-02.
 
+## R121–R126 (samme dag, terminal): kilden til firejail-argumenterne målt
+
+App-jailens proces (pid 31036, ejet af defaultuser) cmdline, rå:
+
+    R121: --private-bin=harbour-skrynja
+    R122: n 5 whitelists:
+      --whitelist=/usr/share/harbour-skrynja
+      --whitelist=/usr/share/applications/harbour-skrynja.desktop
+      --whitelist=${HOME}/.local/share/harbour-skrynja
+      --whitelist=${HOME}/.config/harbour-skrynja
+      --whitelist=${HOME}/.cache/harbour-skrynja
+    R123: prof 13 (firejail --profile=... kæde); /etc/firejail: kun .inc-filer, 0 poster med "skrynja", 0 templates
+    R124: /usr/bin/sailjail = 29 215 byte; strengene: whitelist x2, private-bin x1, firejail x4, profile x5
+    R125: formatstrenge i sailjail-binæren: `--mkdir=%s`, `--whitelist=%s`, "application argv not defined", "/usr/bin", `Legacy...ate-bin=%s --whitelist=/usr/share/%s`, `/etc/${HOME}/.local/share/%s` ...
+    R126: alle `--...=%s`-formatstrenge: --whitelist, --trace, --profile, --private-bin, --output-stderr, --mkdir, --dbus-log
+
+**Målt:** whitelist-listen bygges af `/usr/bin/sailjail` selv ud fra app-identiteten (app-id `harbour-skrynja`): altid `/usr/share/<id>`, desktop-filen, og de tre `$HOME/.../harbour-skrynja`-mapper (`.local/share`, `.config`, `.cache`). Ingen profil eller .desktop-felt tilføjer stier. `${HOME}/.local/bin` og `${HOME}/.local/share/uv` er ikke med og kan ikke tilføjes via .desktop. [M] 2026-11-02, Jolla Phone 2026.
+
 ## Konsekvens (ikke beslutning)
 
 Grid-start kører i firejail; `.local/bin` og projektroden er ikke nåbare derfra; `.local/share/harbour-skrynja` er nåbar, skrivbar og exec-tilladt, og netværk virker. Programsti (§9.2 felt 1) kan derfor målt pege ind i en monteret mappe, hvis både shim og venv lægges der. Dette kræver ny [B] fra storefyr med ny dato før §9.2e omskrives — ellers står to [B] med modsat indhold. Indtil da: §12 punkt 131 [A].
