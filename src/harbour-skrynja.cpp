@@ -22,6 +22,7 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QFile>
+#include <QSettings>
 #include <unistd.h>
 #include <QProcess>
 #include <QTcpSocket>
@@ -142,28 +143,53 @@ int main(int argc, char *argv[])
         streamBuf.clear();
         assistantOpen = false;
     });
+    // A2: sessionId gemmes lokalt, så app-genstart kan session/load (loadSession
+    // målt true 2026-11-02); ved SessionNotFound falder vi tilbage til session/new.
+    QSettings acpSettings(QStringLiteral("org.skrynja"), QStringLiteral("Skrynja"));
+    qint64 loadId = -1, newId = -1;
+
     QObject::connect(&acpClient, &AcpClient::messageReceived, [&](const QJsonObject &msg) {
         qWarning() << "[acp][in]" << QJsonDocument(msg).toJson(QJsonDocument::Compact);
         ConversationModel *model = conversationManager.currentConversation();
         if (msg.contains(QStringLiteral("id"))) {
             const qint64 id = qint64(msg.value(QStringLiteral("id")).toDouble());
             if (msg.contains(QStringLiteral("error"))) {
-                qWarning() << "[acp][err] id" << id << msg.value(QStringLiteral("error")).toObject().value(QStringLiteral("code")).toInt()
-                           << msg.value(QStringLiteral("error")).toObject().value(QStringLiteral("message")).toString();
+                const QJsonObject err = msg.value(QStringLiteral("error")).toObject();
+                qWarning() << "[acp][err] id" << id << err.value(QStringLiteral("code")).toInt()
+                           << err.value(QStringLiteral("message")).toString();
+                acpClient.setLastError(QStringLiteral("%1: %2").arg(err.value(QStringLiteral("code")).toInt())
+                                      .arg(err.value(QStringLiteral("message")).toString()));
+                if (id == loadId) {
+                    // A2 fallback: session/load fejlede (f.eks. SessionNotFound) -> nyt session
+                    newId = acpClient.sendSessionNew(QDir::homePath());
+                    qWarning() << "[acp] session/load failed, sent session/new id" << newId;
+                }
                 return;
             }
             const QJsonObject result = msg.value(QStringLiteral("result")).toObject();
+            // configOptions kommer i svar på session/new, session/load og
+            // session/set_config_option og erstatter hele listen (målt 2026-11-02).
+            if (result.contains(QStringLiteral("configOptions")))
+                acpClient.setConfigOptions(result.value(QStringLiteral("configOptions")).toArray().toVariantList());
             if (id == 1) {
-                // initialize answered: open the session (measured on the phone
-                // 2026-11-02: session/new needs no extra auth in accept-edits).
-                const qint64 sid = acpClient.sendSessionNew(QDir::homePath());
-                qWarning() << "[acp] sent session/new, id" << sid;
-            } else if (id == 2) {
-                acpClient.setSessionId(result.value(QStringLiteral("sessionId")).toString());
-                qWarning() << "[acp] session ready:" << acpClient.sessionId();
+                // initialize answered: prøv at genåbne gemt session, ellers nyt.
+                const QString saved = acpSettings.value(QStringLiteral("acp/sessionId")).toString();
+                if (!saved.isEmpty()) {
+                    loadId = acpClient.sendSessionLoad(saved, QDir::homePath());
+                    qWarning() << "[acp] sent session/load id" << loadId << "sid" << saved;
+                } else {
+                    newId = acpClient.sendSessionNew(QDir::homePath());
+                    qWarning() << "[acp] sent session/new, id" << newId;
+                }
+            } else if (id == loadId || id == newId) {
+                const QString sid = result.value(QStringLiteral("sessionId")).toString();
+                acpClient.setSessionId(sid);
+                acpSettings.setValue(QStringLiteral("acp/sessionId"), sid);
+                qWarning() << "[acp] session ready:" << sid;
             } else {
                 qWarning() << "[acp] result id" << id << "stopReason"
                            << result.value(QStringLiteral("stopReason")).toString();
+                acpClient.setActivity(QString());
             }
             return;
         }
@@ -183,6 +209,14 @@ int main(int argc, char *argv[])
                     streamBuf += text;
                     model->updateLastAssistantMessage(streamBuf);
                 }
+            } else if (kind == QStringLiteral("tool_call") || kind == QStringLiteral("tool_call_update")) {
+                const QString title = upd.value(QStringLiteral("title")).toString();
+                const QString status = upd.value(QStringLiteral("status")).toString();
+                acpClient.setActivity(status.isEmpty() ? title : title + QStringLiteral(" (") + status + QStringLiteral(")"));
+                qWarning() << "[acp][update]" << kind << title << status;
+            } else if (kind == QStringLiteral("agent_thought_chunk")) {
+                acpClient.setActivity(QStringLiteral("tænker..."));
+                qWarning() << "[acp][update]" << kind;
             } else {
                 qWarning() << "[acp][update]" << kind;
             }
@@ -202,12 +236,21 @@ int main(int argc, char *argv[])
                 opts << v.toObject().value(QStringLiteral("optionId")).toString();
             const qint64 reqId = qint64(msg.value(QStringLiteral("id")).toDouble());
             qWarning() << "[acp][permission] id" << reqId << "tool" << tc.value(QStringLiteral("title")).toString()
-                       << "options" << opts << "-> auto-cancelled (alpha, ingen dialog endnu)";
-            QJsonObject outcome;
-            outcome.insert(QStringLiteral("outcome"), QStringLiteral("cancelled"));
-            QJsonObject result;
-            result.insert(QStringLiteral("outcome"), outcome);
-            acpClient.sendResult(reqId, result);
+                       << "options" << opts << "-> vist i UI";
+            // Vis i dialog i stedet for auto-cancel; svaret går via
+            // acpClient.answerPermission(optionId) / dismissPermission() fra QML.
+            QVariantMap pm;
+            pm.insert(QStringLiteral("id"), double(reqId));
+            pm.insert(QStringLiteral("title"), tc.value(QStringLiteral("title")).toString());
+            QVariantList options;
+            for (const QJsonValue &v : arr) {
+                QVariantMap o;
+                o.insert(QStringLiteral("optionId"), v.toObject().value(QStringLiteral("optionId")).toString());
+                o.insert(QStringLiteral("name"), v.toObject().value(QStringLiteral("name")).toString());
+                options.append(o);
+            }
+            pm.insert(QStringLiteral("options"), options);
+            acpClient.setPendingPermission(pm);
         }
     });
 

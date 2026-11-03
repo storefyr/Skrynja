@@ -5,6 +5,8 @@
 #include <QProcess>
 #include <QByteArray>
 #include <QJsonObject>
+#include <QVariantMap>
+#include <QVariantList>
 
 // ACP client over stdio, per dokumenter/vibe-acp/spec-protokol-v3.md (v3).
 // Spawns vibe-acp as a child process and speaks newline-delimited JSON-RPC 2.0
@@ -28,8 +30,17 @@
 class AcpClient : public QObject
 {
     Q_OBJECT
-    // Current ACP session id (empty until session/new has been answered).
+    // Current ACP session id (empty until session/new or session/load has been answered).
     Q_PROPERTY(QString sessionId READ sessionId NOTIFY sessionIdChanged)
+    // Indgående anmodning fra agenten der venter på svar (session/request_permission).
+    // QVariantMap med nøglerne id, title, options (QVariantList af {optionId, name}).
+    Q_PROPERTY(QVariantMap pendingPermission READ pendingPermission NOTIFY pendingPermissionChanged)
+    // Kort aktivitetstekst til UI (tool-kald, tænkning); tom når idle.
+    Q_PROPERTY(QString activity READ activity NOTIFY activityChanged)
+    // Seneste fejl fra agenten (f.eks. -32602) til visning i UI; tom når ingen.
+    Q_PROPERTY(QString lastError READ lastError WRITE setLastError NOTIFY lastErrorChanged)
+    // configOptions fra seneste session-svar (mode/model/thinking); tom før første svar.
+    Q_PROPERTY(QVariantList configOptions READ configOptions NOTIFY configOptionsChanged)
 
 public:
     // Internal log-only event codes (v3 Bilag C). Not wire codes.
@@ -80,6 +91,25 @@ public:
     // Answers an incoming request (e.g. session/request_permission, measured
     // with id 0/1 on the phone 2026-11-02) with a result object.
     void sendResult(qint64 id, const QJsonObject &result);
+    // session/load (A2): genåbn en eksisterende session; ved SessionNotFound
+    // falder kalderen tilbage til session/new.
+    Q_INVOKABLE qint64 sendSessionLoad(const QString &sessionId, const QString &cwd);
+    // session/set_config_option (kun denne vej — aldrig session/set_mode, A2).
+    // Svaret erstatter hele configOptions-listen (målt 2026-11-02).
+    Q_INVOKABLE qint64 sendSetConfigOption(const QString &configId, const QVariant &value);
+    // Besvar den ventende permission-anmodning med valgt optionId ("selected")
+    // eller afvis (dismissPermission -> "cancelled", A1).
+    Q_INVOKABLE void answerPermission(const QString &optionId);
+    Q_INVOKABLE void dismissPermission();
+
+    QVariantMap pendingPermission() const { return m_pendingPermission; }
+    QString activity() const { return m_activity; }
+    QString lastError() const { return m_lastError; }
+    QVariantList configOptions() const { return m_configOptions; }
+    void setPendingPermission(const QVariantMap &p);
+    void setActivity(const QString &a);
+    void setLastError(const QString &e);
+    void setConfigOptions(const QVariantList &o);
 
 signals:
     // A complete, parsed message from the agent (response or notification).
@@ -95,7 +125,13 @@ signals:
     // (v3 §2.1). Emitted even when the process is not running (the write is a
     // no-op then), so unit tests can capture the wire without spawning.
     void frameWritten(const QByteArray &frame);
+    // Indgående request (id + method) fra agenten — f.eks. session/request_permission.
+    void incomingRequest(qint64 id, const QString &method, const QJsonObject &params);
     void sessionIdChanged();
+    void pendingPermissionChanged();
+    void activityChanged();
+    void lastErrorChanged();
+    void configOptionsChanged();
     // Emitted by sendPrompt so the UI layer can reset its streaming state.
     void promptSent(qint64 id, const QString &text);
     void started();
@@ -117,6 +153,10 @@ private:
     qint64 sendRequestRaw(const QString &method, const QJsonObject &params);
 
     QString m_sessionId;
+    QVariantMap m_pendingPermission;
+    QString m_activity;
+    QString m_lastError;
+    QVariantList m_configOptions;
 
     QProcess m_process;
     QByteArray m_buffer;   // bytes of the current line, capped (v3 §3.1)
