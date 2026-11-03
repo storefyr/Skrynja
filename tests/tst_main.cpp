@@ -2813,7 +2813,8 @@ private slots:
         c.setSessionId(QStringLiteral("sid-1"));
         const qint64 id = c.sendSetConfigOption(QStringLiteral("mode"), QStringLiteral("ask"));
         QVERIFY(id > 0);
-        const QJsonObject req = QJsonDocument::fromJson(frameSpy.at(1).at(0).toByteArray()).object();
+        QCOMPARE(frameSpy.count(), 1);
+        const QJsonObject req = QJsonDocument::fromJson(frameSpy.at(0).at(0).toByteArray()).object();
         QCOMPARE(req.value(QStringLiteral("method")).toString(), QStringLiteral("session/set_config_option"));
         const QJsonObject pr = req.value(QStringLiteral("params")).toObject();
         QCOMPARE(pr.value(QStringLiteral("sessionId")).toString(), QStringLiteral("sid-1"));
