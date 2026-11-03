@@ -82,6 +82,14 @@ App-jailens proces (pid 31036, ejet af defaultuser) cmdline, rå:
 
 **Målt:** sandboxing er slået til som default (`50-enable-sandboxing.conf`, `Enabled=true`); kun apps på allowlisten i `50-sailfish-allowlist.conf` kører u-jail'ed, og `harbour-skrynja` står ikke på listen. Derfor grid-start kører gennem sailjail/firejail uanset .desktop-indhold. [M] 2026-11-02.
 
+## R167–R169 (samme dag, terminal): app-process med synlig agentsti + kørende agent
+
+    R167: /proc/56227/root/home/defaultuser/.local/bin/vibe-acp findes (a ja); mnt-ns mnt:[4026531841]; LD_PRELOAD-poster i environ: 0
+    R168: comm=harbour-skrynja; sti eksekverbar (x ja)
+    R169: barn: 56253 56227 vibe-acp (agent kører som barn af appen)
+
+Forbehold: startmåden for pid 56227 er ikke målt i denne kørsel — hvis det er terminal-start, forventes sti synlig og agent spawned; hvis grid-start, ville det være nyt. [M] 2026-11-02 (delvist).
+
 ## Konsekvens (ikke beslutning)
 
 Grid-start kører i firejail; `.local/bin` og projektroden er ikke nåbare derfra; `.local/share/harbour-skrynja` er nåbar, skrivbar og exec-tilladt, og netværk virker. Programsti (§9.2 felt 1) kan derfor målt pege ind i en monteret mappe, hvis både shim og venv lægges der. Dette kræver ny [B] fra storefyr med ny dato før §9.2e omskrives — ellers står to [B] med modsat indhold. Indtil da: §12 punkt 131 [A].
