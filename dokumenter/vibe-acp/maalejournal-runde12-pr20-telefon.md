@@ -63,3 +63,7 @@ Klik på "Deny" sendte korrekt ramme (2 `selected`-svar i log: tidligere `allow_
 ## Runde 12e — anmodningsdetaljer id 8/9 (2026-11-03, telefonen)
 
 `[acp][permission] id 8 tool "" options ("allow_once","allow_always","allow_always_permanent","reject_once")` og `id 9 ... ("allow_once","allow_session_exact","allow_permanent_exact","reject_once")`. Bemærk: tool-titel er tom i vores loglinje (vi læser `toolCall.title`, der mangler i disse frames), og id 8's options-sæt afviger (allow_always-varianter — matcher `_meta.required_permissions` på desktop-filen). Ingen `stopReason` i loggen endnu: turen var stadig i loop da loggen blev læst. [M] 2026-11-03, telefonen.
+
+## Runde 12f — session/load fejlkode målt (2026-11-03, telefonen)
+
+Ved app-genstart svarer agenten på `session/load id 2` med **`[acp][err] id 2 -32602 "Invalid params"`** (ikke "Session not found" som antaget). Vores ramme bærer `params {sessionId, cwd}` — hvilket af de to felter agenten afviser er ikke målt. Fallback til `session/new id 3` + nyt session ready målt tidligere (runde 12). [M] 2026-11-03, telefonen.
