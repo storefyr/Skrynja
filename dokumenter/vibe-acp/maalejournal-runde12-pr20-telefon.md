@@ -59,3 +59,7 @@ I ask-mode med prompt "Opret filen igen": hver gang dialogen afvises (Afvis -> `
 ## Runde 12d — Deny (reject_once) målt (2026-11-03, telefonen)
 
 Klik på "Deny" sendte korrekt ramme (2 `selected`-svar i log: tidligere `allow_once` + denne `reject_once` på id 0). Alligevel kom næste anmodning med det samme (`id":9`), nu med `"kind":"allow_once"` i options og `_meta.required_permissions` med `invocation_pattern "/usr/share/applications/harbour-skrynja.desktop"` — dvs. agenten skiftede invocationsmønster efter afvisning og spørger igen. UI-observation: efter Deny forsvandt option-knapperne, kun "Afvis" blev tilbage (ikke målt i log endnu om det er tom options-liste i den nye anmodning). Tælling: 10 `request_permission`, 7 `cancelled`, 2 `selected`. Konklusion: hverken `cancelled` eller `reject_once` stopper retry-loopet for denne prompt. [M] 2026-11-03, telefonen.
+
+## Runde 12e — anmodningsdetaljer id 8/9 (2026-11-03, telefonen)
+
+`[acp][permission] id 8 tool "" options ("allow_once","allow_always","allow_always_permanent","reject_once")` og `id 9 ... ("allow_once","allow_session_exact","allow_permanent_exact","reject_once")`. Bemærk: tool-titel er tom i vores loglinje (vi læser `toolCall.title`, der mangler i disse frames), og id 8's options-sæt afviger (allow_always-varianter — matcher `_meta.required_permissions` på desktop-filen). Ingen `stopReason` i loggen endnu: turen var stadig i loop da loggen blev læst. [M] 2026-11-03, telefonen.
