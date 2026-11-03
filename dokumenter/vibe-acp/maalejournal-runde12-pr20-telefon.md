@@ -55,3 +55,7 @@ Efter genstart: `grep '\[acp\]\[err\]' /tmp/skrynja-app.log | cut -c1-160`
 ## Runde 12c — afvisningsloop målt (2026-11-03, telefonen)
 
 I ask-mode med prompt "Opret filen igen": hver gang dialogen afvises (Afvis -> `cancelled`), forsøger agenten skrivningen igen med nyt toolCallId og ny `session/request_permission`. Målt i `/tmp/skrynja-app.log` efter `pkill -x harbour-skrynja`: **9** `request_permission`, **7** `cancelled`-svar, **14** unikke `effect-...` toolCallIds i loggen. Konklusion: `cancelled` stopper ikke agenten; den retrier i loop. [M] 2026-11-03, telefonen. Åbent: om `reject_once` (Deny) stopper loopet — ikke målt.
+
+## Runde 12d — Deny (reject_once) målt (2026-11-03, telefonen)
+
+Klik på "Deny" sendte korrekt ramme (2 `selected`-svar i log: tidligere `allow_once` + denne `reject_once` på id 0). Alligevel kom næste anmodning med det samme (`id":9`), nu med `"kind":"allow_once"` i options og `_meta.required_permissions` med `invocation_pattern "/usr/share/applications/harbour-skrynja.desktop"` — dvs. agenten skiftede invocationsmønster efter afvisning og spørger igen. UI-observation: efter Deny forsvandt option-knapperne, kun "Afvis" blev tilbage (ikke målt i log endnu om det er tom options-liste i den nye anmodning). Tælling: 10 `request_permission`, 7 `cancelled`, 2 `selected`. Konklusion: hverken `cancelled` eller `reject_once` stopper retry-loopet for denne prompt. [M] 2026-11-03, telefonen.
