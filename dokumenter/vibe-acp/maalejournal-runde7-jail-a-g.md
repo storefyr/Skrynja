@@ -90,6 +90,14 @@ App-jailens proces (pid 31036, ejet af defaultuser) cmdline, rå:
 
 Forbehold: startmåden for pid 56227 er ikke målt i denne kørsel — hvis det er terminal-start, forventes sti synlig og agent spawned; hvis grid-start, ville det være nyt. [M] 2026-11-02 (delvist).
 
+## R170–R172 (samme dag, terminal): pid 56227 målt IKKE i jail
+
+    R170: cmdline 56227 = "/usr/bin/harbour-skrynja" (rent, uden invoker/sailjail); forælder 3806 = booster-silica-qt5 --daemon (ppid 1)
+    R171: status: Firejail-poster 0, Seccomp 2 (felt findes); environ: 0 FIREJAIL/firejail-poster; comm=harbour-skrynja
+    R172: Seccomp: 0, Seccomp_filters: 0
+
+**Målt:** pid 56227 (som så agentstien og havde vibe-acp som barn, R167–R169) kører uden firejail (Seccomp 0, ingen FIREJAIL-miljø, forælder booster direkte). Sammen med pid 15257 (firejail-mounts i mountinfo, agentsti ikke synlig) måles forskellen: grid-start = jail, denne start = ikke jail. [M] 2026-11-02.
+
 ## Konsekvens (ikke beslutning)
 
 Grid-start kører i firejail; `.local/bin` og projektroden er ikke nåbare derfra; `.local/share/harbour-skrynja` er nåbar, skrivbar og exec-tilladt, og netværk virker. Programsti (§9.2 felt 1) kan derfor målt pege ind i en monteret mappe, hvis både shim og venv lægges der. Dette kræver ny [B] fra storefyr med ny dato før §9.2e omskrives — ellers står to [B] med modsat indhold. Indtil da: §12 punkt 131 [A].
