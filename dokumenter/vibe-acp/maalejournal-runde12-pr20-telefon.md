@@ -41,6 +41,12 @@ Efter pkill + genstart fra grid:
 | 4 | session/load fejler når agenten ikke længere kender sessionen (ny agent-proces efter app-drab) — forventet; om fejlkoden er -32602 "Session not found" er ikke målt (log slettet før udtræk) | [A] åben |
 | 5 | Om permission-dialogen blev besvaret via UI-knap (outcome selected/cancelled i `[acp][out]`-rammen) er ikke fanget i log denne runde | [A] åben |
 
+## Runde 12b — tilladelsesdialog målt visuelt (skærmbillede 2026-11-03 16:45)
+
+Skærmbillede taget på telefonen mens ask-mode-promptet ventede (`Screenshot_20261103_164518_001.png`): dialog med titlen **"Tilladelse anmodet"** og knapperne **"Allow once"**, **"Allow this file only for this session"**, **"Always allow this file"**, **"Deny"** samt **"Afvis"** — altså præcis de fire målte optionIds (`allow_once`, `allow_session_exact`, `allow_permanent_exact`, `reject_once`) oversat til agentens `name`-felter, plus Afvis-knappen. QML-Dialog/Repeater virker på Qt 5.6. [M] 2026-11-03, telefonen.
+
+Ikke målt endnu: hvilket `outcome` der sendes når der trykkes på en option-knap (afventer `grep -o 'outcome[^}]*}' /tmp/skrynja-app.log` efter klik).
+
 ## Næste måling (forslag til runde 13)
 
 Efter ask-mode-prompt, før pkill: `grep -o 'outcome[^}]*}' /tmp/skrynja-app.log | sort | uniq -c`
