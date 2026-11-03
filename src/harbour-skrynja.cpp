@@ -151,7 +151,11 @@ int main(int argc, char *argv[])
     QObject::connect(&acpClient, &AcpClient::messageReceived, [&](const QJsonObject &msg) {
         qWarning() << "[acp][in]" << QJsonDocument(msg).toJson(QJsonDocument::Compact);
         ConversationModel *model = conversationManager.currentConversation();
-        if (msg.contains(QStringLiteral("id"))) {
+        // Svar har id men aldrig method; requests/notifications har method
+        // (m\u00e5lt: session/request_permission kommer med B\u00d3DE id 0/1 OG method),
+        // s\u00e5 id-grenen skal ekskludere method, ellers sluques anmodningen og
+        // promptet h\u00e6nger i ask-mode.
+        if (msg.contains(QStringLiteral("id")) && !msg.contains(QStringLiteral("method"))) {
             const qint64 id = qint64(msg.value(QStringLiteral("id")).toDouble());
             if (msg.contains(QStringLiteral("error"))) {
                 const QJsonObject err = msg.value(QStringLiteral("error")).toObject();
