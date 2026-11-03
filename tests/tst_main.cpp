@@ -2745,6 +2745,81 @@ private slots:
                      .value(QStringLiteral("outcome")).toString(),
                  QStringLiteral("cancelled"));
     }
+
+    // Indgående request (id + method) udløser incomingRequest — målt format for
+    // session/request_permission er id 0/1 (runde 6d, 2026-11-02).
+    void incomingRequestSignalForAgentRequests()
+    {
+        AcpClient c;
+        QSignalSpy spy(&c, SIGNAL(incomingRequest(qint64,QString,QJsonObject)));
+        c.feedBytes("{\"jsonrpc\":\"2.0\",\"id\":0,\"method\":\"session/request_permission\",\"params\":{\"sessionId\":\"s\",\"toolCall\":{},\"options\":[]}}\n");
+        QCOMPARE(spy.count(), 1);
+        QCOMPARE(spy.at(0).at(0).toLongLong(), qint64(0));
+        QCOMPARE(spy.at(0).at(1).toString(), QStringLiteral("session/request_permission"));
+        // et svar (id uden method) må IKKE udløse incomingRequest
+        c.feedBytes("{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}\n");
+        QCOMPARE(spy.count(), 1);
+    }
+
+    // answerPermission skriver selected-outcome på anmodningens id og rydder
+    // pendingPermission.
+    void answerPermissionWritesSelectedOutcome()
+    {
+        AcpClient c;
+        QVariantMap pm;
+        pm.insert(QStringLiteral("id"), 0.0);
+        pm.insert(QStringLiteral("title"), QStringLiteral("Writing /tmp/x"));
+        c.setPendingPermission(pm);
+        QSignalSpy permSpy(&c, SIGNAL(pendingPermissionChanged()));
+        QSignalSpy frameSpy(&c, SIGNAL(frameWritten(QByteArray)));
+        c.answerPermission(QStringLiteral("allow_once"));
+        QCOMPARE(frameSpy.count(), 1);
+        QCOMPARE(permSpy.count(), 1);
+        QVERIFY(c.pendingPermission().isEmpty());
+        const QJsonObject resp = QJsonDocument::fromJson(frameSpy.at(0).at(0).toByteArray()).object();
+        QCOMPARE(resp.value(QStringLiteral("id")).toDouble(), 0.0);
+        QCOMPARE(resp.value(QStringLiteral("result")).toObject()
+                     .value(QStringLiteral("outcome")).toObject()
+                     .value(QStringLiteral("outcome")).toString(),
+                 QStringLiteral("selected"));
+        QCOMPARE(resp.value(QStringLiteral("result")).toObject()
+                     .value(QStringLiteral("outcome")).toObject()
+                     .value(QStringLiteral("optionId")).toString(),
+                 QStringLiteral("allow_once"));
+    }
+
+    // session/load-ramme: sessionId + cwd (A2, loadSession målt true 2026-11-02).
+    void sessionLoadFrameCarriesIdAndCwd()
+    {
+        AcpClient c;
+        QSignalSpy frameSpy(&c, SIGNAL(frameWritten(QByteArray)));
+        const qint64 id = c.sendSessionLoad(QStringLiteral("sid-9"), QStringLiteral("/home/defaultuser"));
+        QVERIFY(id > 0);
+        const QJsonObject req = QJsonDocument::fromJson(frameSpy.at(0).at(0).toByteArray()).object();
+        QCOMPARE(req.value(QStringLiteral("method")).toString(), QStringLiteral("session/load"));
+        QCOMPARE(req.value(QStringLiteral("params")).toObject().value(QStringLiteral("sessionId")).toString(),
+                 QStringLiteral("sid-9"));
+        QCOMPARE(req.value(QStringLiteral("params")).toObject().value(QStringLiteral("cwd")).toString(),
+                 QStringLiteral("/home/defaultuser"));
+    }
+
+    // set_config_option kræver session; rammen bærer sessionId/configId/value.
+    void setConfigOptionFrame()
+    {
+        AcpClient c;
+        QSignalSpy frameSpy(&c, SIGNAL(frameWritten(QByteArray)));
+        QCOMPARE(c.sendSetConfigOption(QStringLiteral("mode"), QStringLiteral("ask")), qint64(-1));
+        QCOMPARE(frameSpy.count(), 0);
+        c.setSessionId(QStringLiteral("sid-1"));
+        const qint64 id = c.sendSetConfigOption(QStringLiteral("mode"), QStringLiteral("ask"));
+        QVERIFY(id > 0);
+        const QJsonObject req = QJsonDocument::fromJson(frameSpy.at(1).at(0).toByteArray()).object();
+        QCOMPARE(req.value(QStringLiteral("method")).toString(), QStringLiteral("session/set_config_option"));
+        const QJsonObject pr = req.value(QStringLiteral("params")).toObject();
+        QCOMPARE(pr.value(QStringLiteral("sessionId")).toString(), QStringLiteral("sid-1"));
+        QCOMPARE(pr.value(QStringLiteral("configId")).toString(), QStringLiteral("mode"));
+        QCOMPARE(pr.value(QStringLiteral("value")).toString(), QStringLiteral("ask"));
+    }
 };
 
 int main(int argc, char *argv[])

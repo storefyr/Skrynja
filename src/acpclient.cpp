@@ -5,6 +5,7 @@
 #include <QJsonArray>
 #include <QFileInfo>
 #include <QDir>
+#include <QVariantMap>
 
 // Line cap: v3 §4.2 sets 66 060 288 byte (63 MiB), arithmetically derived from
 // Qt's Value::MaxSize; for the first alpha a smaller cap is sufficient and
@@ -190,6 +191,89 @@ void AcpClient::dispatchParsed(const QJsonObject &obj, bool fromHale)
 {
     Q_UNUSED(fromHale)
     emit messageReceived(obj);
+    // En indgående request kendetegnes ved både id og method (målt:
+    // session/request_permission med id 0/1, runde 6d 2026-11-02).
+    if (obj.contains(QStringLiteral("id")) && obj.contains(QStringLiteral("method"))) {
+        emit incomingRequest(qint64(obj.value(QStringLiteral("id")).toDouble()),
+                             obj.value(QStringLiteral("method")).toString(),
+                             obj.value(QStringLiteral("params")).toObject());
+    }
+}
+
+void AcpClient::setPendingPermission(const QVariantMap &p)
+{
+    m_pendingPermission = p;
+    emit pendingPermissionChanged();
+}
+
+void AcpClient::setActivity(const QString &a)
+{
+    if (m_activity == a)
+        return;
+    m_activity = a;
+    emit activityChanged();
+}
+
+void AcpClient::setLastError(const QString &e)
+{
+    if (m_lastError == e)
+        return;
+    m_lastError = e;
+    emit lastErrorChanged();
+}
+
+void AcpClient::setConfigOptions(const QVariantList &o)
+{
+    m_configOptions = o;
+    emit configOptionsChanged();
+}
+
+qint64 AcpClient::sendSessionLoad(const QString &sessionId, const QString &cwd)
+{
+    QJsonObject params;
+    params.insert(QStringLiteral("sessionId"), sessionId);
+    params.insert(QStringLiteral("cwd"), cwd);
+    return sendRequestRaw(QStringLiteral("session/load"), params);
+}
+
+qint64 AcpClient::sendSetConfigOption(const QString &configId, const QVariant &value)
+{
+    if (m_sessionId.isEmpty())
+        return -1;
+    QJsonObject params;
+    params.insert(QStringLiteral("sessionId"), m_sessionId);
+    params.insert(QStringLiteral("configId"), configId);
+    params.insert(QStringLiteral("value"), QJsonValue::fromVariant(value));
+    return sendRequestRaw(QStringLiteral("session/set_config_option"), params);
+}
+
+void AcpClient::answerPermission(const QString &optionId)
+{
+    if (m_pendingPermission.isEmpty())
+        return;
+    const qint64 id = qint64(m_pendingPermission.value(QStringLiteral("id")).toDouble());
+    QJsonObject outcome;
+    outcome.insert(QStringLiteral("outcome"), QStringLiteral("selected"));
+    outcome.insert(QStringLiteral("optionId"), optionId);
+    QJsonObject result;
+    result.insert(QStringLiteral("outcome"), outcome);
+    sendResult(id, result);
+    m_pendingPermission.clear();
+    emit pendingPermissionChanged();
+}
+
+void AcpClient::dismissPermission()
+{
+    if (m_pendingPermission.isEmpty())
+        return;
+    const qint64 id = qint64(m_pendingPermission.value(QStringLiteral("id")).toDouble());
+    QJsonObject outcome;
+    outcome.insert(QStringLiteral("outcome"), QStringLiteral("cancelled"));
+    QJsonObject result;
+    result.insert(QStringLiteral("outcome"), outcome);
+    sendResult(id, result);
+    m_pendingPermission.clear();
+    emit pendingPermissionChanged();
 }
 
 void AcpClient::sendError(qint64 id, int code, const QString &message)
