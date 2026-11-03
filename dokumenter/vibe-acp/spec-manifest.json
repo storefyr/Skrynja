@@ -104,10 +104,10 @@
     {
       "alias": "V3",
       "sti": "dokumenter/vibe-acp/spec-protokol-v3.md",
-      "commit_sha": "01286467da6cb02ea81961f345043e76b4938f33",
-      "blob_sha": "1817c66e74fd661e65fb7cbd32ef10afae8d9962",
-      "bytes": 42235,
-      "linjer": 753,
+      "commit_sha": "a558c273059300422221548bdb1a0d2dec231f3f",
+      "blob_sha": "e0765d6007313047b21ed5b138cd875046eef681",
+      "bytes": 44789,
+      "linjer": 757,
       "sektioner": [
         {
           "overskrift": "# Skrynja — protokol-specifikation v3 (ACP-klient over stdio)",
@@ -207,39 +207,39 @@
         },
         {
           "overskrift": "## Bilag A — Qt-kildegrundlag (læst i denne leverance)",
-          "start_linje": 609
+          "start_linje": 610
         },
         {
           "overskrift": "## Bilag B — målingen, der mangler (fordobling ved 63 MiB)",
-          "start_linje": 654
+          "start_linje": 655
         },
         {
           "overskrift": "#include <QJsonDocument>",
-          "start_linje": 657
-        },
-        {
-          "overskrift": "#include <QJsonParseError>",
           "start_linje": 658
         },
         {
-          "overskrift": "#include <QDebug>",
+          "overskrift": "#include <QJsonParseError>",
           "start_linje": 659
         },
         {
+          "overskrift": "#include <QDebug>",
+          "start_linje": 660
+        },
+        {
           "overskrift": "## Bilag C — interne koder (spor kun, aldrig på tråden)",
-          "start_linje": 699
+          "start_linje": 700
         },
         {
           "overskrift": "## Bilag D — kilder, metode, dato, maskine",
-          "start_linje": 725
+          "start_linje": 726
         }
       ],
-      "bekraeftet_i": "01286467da6cb02ea81961f345043e76b4938f33"
+      "bekraeftet_i": "a558c273059300422221548bdb1a0d2dec231f3f"
     }
   ],
   "ophav": {
     "regel": "Ingen fil indeholder sin egen blob-SHA som selvbeskrivelse; denne bagudrettede ophavslinje bærer FORRIGE revisions fulde commit-SHA og skrives af det commit, der følger efter den, den peger på.",
-    "forrige_revision": "01286467da6cb02ea81961f345043e76b4938f33",
-    "bemærkning": "0128646 er main-tip før denne ændring (punkt 124 lukket [B] ≥3.0.2). Hver række bærer den revision, hvori rækken blev bekræftet."
+    "forrige_revision": "a558c273059300422221548bdb1a0d2dec231f3f",
+    "bemærkning": "a558c27 er PR-grenens spec-commit (§9.2e pakningskrav, punkt 131). Hver række bærer den revision, hvori rækken blev bekræftet."
   }
 }
