@@ -98,6 +98,19 @@ Forbehold: startmåden for pid 56227 er ikke målt i denne kørsel — hvis det 
 
 **Målt:** pid 56227 (som så agentstien og havde vibe-acp som barn, R167–R169) kører uden firejail (Seccomp 0, ingen FIREJAIL-miljø, forælder booster direkte). Sammen med pid 15257 (firejail-mounts i mountinfo, agentsti ikke synlig) måles forskellen: grid-start = jail, denne start = ikke jail. [M] 2026-11-02.
 
+## Runde 8 (2026-11-02, senere): Sandboxing=Disabled i kildens .desktop — grid-start u-jail'ed, ACP klar
+
+Byg PR #19 @ `da94508` (desktop med `[X-Sailjail] Sandboxing=Disabled`), installeret via test-pr.sh 19 + genstart. Grid-start, rå log `/tmp/skrynja-app.log`:
+
+    grep -c Sandboxing /usr/share/applications/harbour-skrynja.desktop -> 2
+    [acp] sent session/new, id 2
+    [acp][in] session/update usage_update ...
+    [acp][in] {"id":2,..."result":{"configOptions":...}}
+    [acp] session ready: "e179429e-0881-83aa-878a-ac41af924785"
+    [acp] agent finished, exitCode 0 status 0   (ved app-luk)
+
+**Målt:** med eksplicit fravalg i desktop kører grid-start u-jail'ed, agenten spawnes fra `~/.local/bin/vibe-acp`, session bliver klar, og app-luk giver exit 0. [M] 2026-11-02. (Relæ-rapporten fra anden dialog om sailjaild/Sandboxing=Disabled er herved genskabt i egen måling.)
+
 ## Konsekvens (ikke beslutning)
 
 Grid-start kører i firejail; `.local/bin` og projektroden er ikke nåbare derfra; `.local/share/harbour-skrynja` er nåbar, skrivbar og exec-tilladt, og netværk virker. Programsti (§9.2 felt 1) kan derfor målt pege ind i en monteret mappe, hvis både shim og venv lægges der. Dette kræver ny [B] fra storefyr med ny dato før §9.2e omskrives — ellers står to [B] med modsat indhold. Indtil da: §12 punkt 131 [A].
