@@ -526,7 +526,7 @@ fra ≥3.0.2: [V] log afvigelsen i sporet (versionsstreng + forventet område) o
 **fortsæt** — afbrydelse er ikke standardadfærden. Ved ændring af SDK-versionen
 udløses [A123]: §6 efterprøves mod den faktiske SDK.
 
-**§9.2e Indespærring — udgået af omfanget.** Sailjail/indespærring tages ud af Skrynja-projektets omfang; appen køres ikke indespærret. [B] beslutning truffet af projektejer storefyr, 2026-10-31. De hidtidige [M]-påstande om Sailjail-stier og tom-map-regel (§9.2e før denne ændring, kilde sailjail-permissions README) beholdes ikke som grundlag, fordi emnet ikke længere er i omfang. N1 (3004) bortfalder: der måles ikke nåbarhed, fordi der ikke indespærres. Se §12 punkt 122 (lukket).
+**§9.2e Indespærring — udgået af omfanget; pakningskrav i stedet.** Sailjail/indespærring forbliver uden for Skrynja-projektets omfang; appen køres ikke indespærret. [B] beslutning truffet af projektejer storefyr, 2026-10-31. N1 (3004) forbliver udgået. I stedet gælder et pakningskrav: den leverede .desktop-fil skal indeholde en [X-Sailjail]-sektion med Sandboxing=Disabled. [B] pakningskrav besluttet af projektejer storefyr, 2026-11-03. Grund, målt ikke antaget: platformen indespærrer som standard (/etc/sailjail/config/50-enable-sandboxing.conf har [Default Profile] Enabled=true, og harbour-skrynja står ikke på allowlisten i 50-sailfish-allowlist.conf), og fravær af sektionen er ikke et fravalg; først Sandboxing=Disabled (nøglen læses af /usr/bin/sailjaild; /usr/bin/sailjail kender den ikke) kører appen uden jail. [M] målt på enheden 2026-11-02 og 2026-11-03 (Bilag D). Pakningskontrol måles med to betingelser: filen bærer nøglen, og app-processen har ikke firejail i forældrekæden (Seccomp 0 og ingen Firejail-post i /proc/PID/status for den grid-startede proces). [M] 2026-11-03 (Bilag D). Før/efter på samme app er målt: uden sektion kørte grid-start i firejail (agentstien ikke synlig i jailen), med Sandboxing=Disabled kører grid-start uden jail og agenten i /home/defaultuser/.local/bin/vibe-acp er nåbar. [M] 2026-11-02 og 2026-11-03 (Bilag D). De hidtidige [M]-påstande om Sailjail-stier og tom-map-regel (kilde sailjail-permissions README) beholdes ikke som grundlag for noget krav. Se §12 punkt 122 (lukket) og punkt 131 (lukket).
 
 **§9.2f Netværk.** Agenten taler med en fjerntjeneste; klienten skal have netværksadgang. [B] `Internet`-tilladelsen som Sailjail-mekanisme er udgået sammen med §9.2e (storefyr, 2026-10-31); kravet om netværksadgang selv står. Uden netværk er klienten en parser uden modpart.
 
@@ -596,9 +596,10 @@ alene (læst 2026-10-29) dækker ikke qtbase-pakken og lukker ikke punktet.
 | 128 | Hale: fortolkning, levering, svar | **lukket [B]:** fortolkes efter §5 (medmindre L1), leveres, besvares ikke; nul byte er ikke en hale; storefyr 2026-11-02 (§3.3) |
 | 129 | Spor-kode for hale | **lukket [B]:** 1003, skrevet ved strømmens slutning; 1002 forbliver hul; storefyr 2026-11-02 (Bilag C) |
 | 130 | Hale uden række i §6.2 | **lukket [B]:** tabellen dækker linjer; hale udløser ingen række, kun spor 1003; storefyr 2026-11-02 (§6.2) |
+| 131 | Indespærring som pakningskrav i .desktop | **lukket [B]:** den leverede .desktop-fil skal bære [X-Sailjail] med Sandboxing=Disabled; fravær af sektion er ikke fravalg (default-on målt); storefyr 2026-11-03 (§9.2e, Bilag D) |
 
 **Ikke målt:** Bilag B (fordobling ved
-63 MiB), [A110] (præcis qtbase-version på enheden). Punkt 118 er målt, men ikke
+63 MiB), [A110] (præcis qtbase-version på enheden), om Permissions= i [X-Sailjail] har nogen virkning ved Sandboxing=Disabled (ikke målt 2026-11-03). Punkt 118 er målt, men ikke
 ugtømmende (fire kald 2026-11-01). **Belæg for 118-målingen:** tallene er
 ett-trins-målinger rapporteret via relæ 2026-11-01; de er ikke reproduceret her og
 ikke i nogen målejournal på denne gren endnu — før de bruges som andet end [M]-note,
@@ -743,6 +744,9 @@ to rækker.
 `pip show`), binær `vibe-acp` i `$HOME/.local/bin`, wire-format NDJSON målt runde
 3-4. Se dette repos målejournaler for detaljer — men bemærk: denne spec forudsætter
 ikke dem; værdierne står her med dato og maskine.
+
+
+**Målt på enheden (Jolla Phone 2026, Sailfish OS 5, aarch64) 2026-11-02 og 2026-11-03 — jail og pakning:** Kilde: /etc/sailjail/config/ (50-enable-sandboxing.conf med [Default Profile] Enabled=true; 50-sailfish-allowlist.conf med 16 allowlist-poster, ingen med skrynja), strengsøgning i /usr/bin/sailjail (29 215 byte; kender ikke Sandboxing) og /usr/bin/sailjaild (kender Sandboxing), /proc/PID/mountinfo, /proc/PID/status, /proc/PID/cmdline og /proc/PID/environ for grid-startet app før (pid 15257: i firejail, tmpfs over /home, whitelist kun /usr/share/harbour-skrynja + desktop + tre $HOME/harbour-skrynja-mapper, agentstien ikke synlig) og efter (pid 10854: PPid booster, Seccomp 0, ingen Firejail, agent nåbar), samt /usr/share/applications (20 af 67 desktop-filer med Sandboxing=Disabled). Metode: grep/ls/wc på config og binærer, /proc-læsning, grid-start før/efter på samme app (byg uden sektion vs byg da94508 med Sandboxing=Disabled); rå output i målejournal runde 7-10 (maalejournal-runde7-jail-a-g.md). Anvendt til: §9.2e og §12 punkt 131. Maskine og dato: Jolla Phone 2026, 2026-11-02 og 2026-11-03.
 
 **Ikke målt:** Bilag B (fordobling ved
 63 MiB), [A110] (præcis qtbase-version på enheden). Punkt 118 er målt, men ikke
