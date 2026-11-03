@@ -51,3 +51,7 @@ Ikke målt endnu: hvilket `outcome` der sendes når der trykkes på en option-kn
 
 Efter ask-mode-prompt, før pkill: `grep -o 'outcome[^}]*}' /tmp/skrynja-app.log | sort | uniq -c`
 Efter genstart: `grep '\[acp\]\[err\]' /tmp/skrynja-app.log | cut -c1-160`
+
+## Runde 12c — afvisningsloop målt (2026-11-03, telefonen)
+
+I ask-mode med prompt "Opret filen igen": hver gang dialogen afvises (Afvis -> `cancelled`), forsøger agenten skrivningen igen med nyt toolCallId og ny `session/request_permission`. Målt i `/tmp/skrynja-app.log` efter `pkill -x harbour-skrynja`: **9** `request_permission`, **7** `cancelled`-svar, **14** unikke `effect-...` toolCallIds i loggen. Konklusion: `cancelled` stopper ikke agenten; den retrier i loop. [M] 2026-11-03, telefonen. Åbent: om `reject_once` (Deny) stopper loopet — ikke målt.
