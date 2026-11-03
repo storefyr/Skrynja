@@ -1338,36 +1338,6 @@ private slots:
         QVERIFY(perDay.last().toInt() >= 40);
     }
 
-    // The remote conversation id is persisted with the conversation and
-    // survives a reload: it is what tells sendMessage to append rather than
-    // create again.
-    void remoteConversationIdRoundTrip()
-    {
-        ConversationManager manager;
-        manager.purgeAllConversations();
-
-        // Not created yet: empty, so the first turn creates the remote one
-        QCOMPARE(manager.remoteConversationId(), QString());
-
-        const QString localId = manager.currentConversationId();
-        manager.currentConversation()->addUserMessage("hello");
-
-        // Simulate the API reporting a created remote conversation while this
-        // conversation is the one being answered.
-        MistralAPI api;
-        manager.bindApi(&api);
-        api.sendMessage("key", "model", QString(), "hello", QString(), false,
-                        QString());
-        api.processStreamData("event: conversation.response.started\n"
-                              "data: {\"conversation_id\":\"remote-42\"}\n");
-        QCOMPARE(manager.remoteConversationId(), QString("remote-42"));
-
-        // Survives a switch away and back
-        manager.createNewConversation();
-        QCOMPARE(manager.remoteConversationId(), QString());
-        manager.loadConversation(localId);
-        QCOMPARE(manager.remoteConversationId(), QString("remote-42"));
-    }
 
     // The pending turn handed to the API is the last user message of the
     // current conversation, image included.
@@ -1538,162 +1508,10 @@ private slots:
                  QString("Renamed from elsewhere"));
     }
 
-    void streamingLandsWithoutAnyUi()
-    {
-        // The chat page is popped whenever the user swipes back to the
-        // history, so the whole streaming lifecycle has to work with no QML
-        // attached at all.
-        MistralAPI api;
-        ConversationManager manager;
-        manager.purgeAllConversations();
-        manager.bindApi(&api);
 
-        const QString id = manager.currentConversationId();
-        manager.currentConversation()->addUserMessage("question");
 
-        QVERIFY(QMetaObject::invokeMethod(&api, "messageSent"));
-        QCOMPARE(manager.currentConversation()->rowCount(), 2);
-        QCOMPARE(manager.streamingConversationId(), id);
 
-        QVERIFY(QMetaObject::invokeMethod(&api, "streamingResponse",
-                                          Q_ARG(QString, "Hel")));
-        QVERIFY(QMetaObject::invokeMethod(&api, "streamingResponse",
-                                          Q_ARG(QString, "lo")));
-        // Deltas are coalesced, so give the throttle timer a chance to fire
-        QTest::qWait(250);
-        QCOMPARE(manager.currentConversation()->getLastAssistantMessage(),
-                 QString("Hello"));
 
-        QVERIFY(QMetaObject::invokeMethod(&api, "responseCompleted"));
-        QCOMPARE(manager.streamingConversationId(), QString());
-
-        QJsonObject entry = manager.getConversationsList().at(0).toObject();
-        QCOMPARE(entry["id"].toString(), id);
-        QCOMPARE(entry["messageCount"].toInt(), 2);
-        QVERIFY(entry["unread"].toBool());
-
-        manager.markConversationRead(id);
-        QVERIFY(!manager.getConversationsList().at(0).toObject()["unread"].toBool());
-
-        // Unknown ids are ignored rather than crashing
-        manager.markConversationRead("no-such-id");
-    }
-
-    void answerNeverLeaksIntoAnotherConversation()
-    {
-        // ConversationModel is a single reused object. Switching conversation
-        // mid-response used to make the rest of the answer land in - and be
-        // saved into - whatever was opened next.
-        MistralAPI api;
-        ConversationManager manager;
-        manager.purgeAllConversations();
-        manager.bindApi(&api);
-
-        const QString asking = manager.currentConversationId();
-        manager.currentConversation()->addUserMessage("question in A");
-        manager.saveCurrentConversation();
-
-        QVERIFY(QMetaObject::invokeMethod(&api, "messageSent"));
-        QVERIFY(QMetaObject::invokeMethod(&api, "streamingResponse",
-                                          Q_ARG(QString, "first half ")));
-        QTest::qWait(250);
-
-        // The user walks off to an unrelated conversation
-        manager.createNewConversation();
-        const QString other = manager.currentConversationId();
-        manager.currentConversation()->addUserMessage("unrelated question");
-        manager.saveCurrentConversation();
-
-        QVERIFY(QMetaObject::invokeMethod(&api, "streamingResponse",
-                                          Q_ARG(QString, "second half")));
-        QTest::qWait(250);
-
-        // Nothing from the answer may show up here
-        QCOMPARE(manager.currentConversation()->rowCount(), 1);
-        QCOMPARE(manager.currentConversation()->getLastAssistantMessage(), QString());
-
-        QVERIFY(QMetaObject::invokeMethod(&api, "responseCompleted"));
-
-        // The other conversation is untouched
-        QCOMPARE(manager.getConversationStatistics(other)["messageCount"].toInt(), 1);
-        QCOMPARE(manager.currentConversation()->rowCount(), 1);
-
-        // And the full answer landed where it was asked
-        manager.loadConversation(asking);
-        QCOMPARE(manager.currentConversation()->rowCount(), 2);
-        QCOMPARE(manager.currentConversation()->getLastAssistantMessage(),
-                 QString("first half second half"));
-    }
-
-    void returningMidStreamShowsTheLatestText()
-    {
-        MistralAPI api;
-        ConversationManager manager;
-        manager.purgeAllConversations();
-        manager.bindApi(&api);
-
-        const QString asking = manager.currentConversationId();
-        manager.currentConversation()->addUserMessage("question");
-        manager.saveCurrentConversation();
-
-        QVERIFY(QMetaObject::invokeMethod(&api, "messageSent"));
-        QVERIFY(QMetaObject::invokeMethod(&api, "streamingResponse",
-                                          Q_ARG(QString, "partial")));
-        QTest::qWait(250);
-
-        manager.createNewConversation();
-        QVERIFY(QMetaObject::invokeMethod(&api, "streamingResponse",
-                                          Q_ARG(QString, " and more")));
-        QTest::qWait(250);
-
-        // Coming back must show everything buffered so far, not the snapshot
-        // taken when leaving
-        manager.loadConversation(asking);
-        QCOMPARE(manager.currentConversation()->getLastAssistantMessage(),
-                 QString("partial and more"));
-
-        QVERIFY(QMetaObject::invokeMethod(&api, "responseCompleted"));
-    }
-
-    void cancelledRequestLeavesNoEmptyBubble()
-    {
-        MistralAPI api;
-        ConversationManager manager;
-        manager.purgeAllConversations();
-        manager.bindApi(&api);
-
-        manager.currentConversation()->addUserMessage("question");
-        QVERIFY(QMetaObject::invokeMethod(&api, "messageSent"));
-        QCOMPARE(manager.currentConversation()->rowCount(), 2);
-
-        // No content ever arrives: the placeholder must go, and nothing is
-        // reported as unread
-        QVERIFY(QMetaObject::invokeMethod(&api, "responseCompleted"));
-        QCOMPARE(manager.currentConversation()->rowCount(), 1);
-
-        QJsonObject entry = manager.getConversationsList().at(0).toObject();
-        QVERIFY(entry["unread"].toBool());   // the question itself is still there
-        QCOMPARE(entry["messageCount"].toInt(), 1);
-    }
-
-    void unreadFlagSurvivesReload()
-    {
-        MistralAPI api;
-        {
-            ConversationManager manager;
-            manager.purgeAllConversations();
-            manager.bindApi(&api);
-            manager.currentConversation()->addUserMessage("question");
-            QVERIFY(QMetaObject::invokeMethod(&api, "messageSent"));
-            QVERIFY(QMetaObject::invokeMethod(&api, "streamingResponse",
-                                              Q_ARG(QString, "answer")));
-            QTest::qWait(250);
-            QVERIFY(QMetaObject::invokeMethod(&api, "responseCompleted"));
-        }
-
-        ConversationManager reopened;
-        QVERIFY(reopened.getConversationsList().at(0).toObject()["unread"].toBool());
-    }
 
     void deletedConversationLeavesNoFile()
     {
@@ -2825,6 +2643,107 @@ private slots:
         c.feedBytes(QByteArray(20, 'x')); // over cap, no newline
         c.feedEof();
         QCOMPARE(haleSpy.count(), 0);
+    }
+
+    // v3 §2.1: every written frame is emitted as frameWritten — compact JSON
+    // plus exactly one trailing 0x0A. Here: the P1 error frame for an invalid
+    // line (-32700, id: null per v3 §6.3).
+    void frameWrittenCarriesCompactErrorFrame()
+    {
+        AcpClient c;
+        QSignalSpy frameSpy(&c, SIGNAL(frameWritten(QByteArray)));
+        c.feedBytes("{oops\n");
+        QCOMPARE(frameSpy.count(), 1);
+        const QByteArray frame = frameSpy.at(0).at(0).toByteArray();
+        QVERIFY(frame.endsWith('\n'));
+        QCOMPARE(frame.count('\n'), 1);
+        const QJsonObject obj = QJsonDocument::fromJson(frame).object();
+        QCOMPARE(obj.value(QStringLiteral("jsonrpc")).toString(), QStringLiteral("2.0"));
+        QCOMPARE(obj.value(QStringLiteral("error")).toObject().value(QStringLiteral("code")).toInt(), -32700);
+        QVERIFY(obj.value(QStringLiteral("id")).isNull());
+    }
+
+    // session/new frame: method, cwd and an empty mcpServers array; the
+    // frame is written (and emitted) even without a running process.
+    void sessionNewFrameIsWritten()
+    {
+        AcpClient c;
+        QSignalSpy frameSpy(&c, SIGNAL(frameWritten(QByteArray)));
+        const qint64 id = c.sendSessionNew(QStringLiteral("/home/defaultuser"));
+        QVERIFY(id > 0);
+        QCOMPARE(frameSpy.count(), 1);
+        const QJsonObject req = QJsonDocument::fromJson(frameSpy.at(0).at(0).toByteArray()).object();
+        QCOMPARE(req.value(QStringLiteral("method")).toString(), QStringLiteral("session/new"));
+        QCOMPARE(req.value(QStringLiteral("id")).toDouble(), double(id));
+        QCOMPARE(req.value(QStringLiteral("params")).toObject().value(QStringLiteral("cwd")).toString(),
+                 QStringLiteral("/home/defaultuser"));
+        QVERIFY(req.value(QStringLiteral("params")).toObject().value(QStringLiteral("mcpServers")).toArray().isEmpty());
+    }
+
+    // session/prompt without a session is refused: -1, nothing written.
+    void promptWithoutSessionIsRefused()
+    {
+        AcpClient c;
+        QSignalSpy frameSpy(&c, SIGNAL(frameWritten(QByteArray)));
+        QCOMPARE(c.sendPrompt(QStringLiteral("hej")), qint64(-1));
+        QCOMPARE(frameSpy.count(), 0);
+    }
+
+    // session/prompt with a session: one text content block, sessionId in
+    // params, and promptSent is emitted so the UI can reset its stream state.
+    void promptFrameCarriesSessionAndText()
+    {
+        AcpClient c;
+        c.setSessionId(QStringLiteral("sid-1"));
+        QSignalSpy frameSpy(&c, SIGNAL(frameWritten(QByteArray)));
+        QSignalSpy promptSpy(&c, SIGNAL(promptSent(qint64,QString)));
+        const qint64 id = c.sendPrompt(QStringLiteral("Svar kun OK"));
+        QVERIFY(id > 0);
+        QCOMPARE(frameSpy.count(), 1);
+        QCOMPARE(promptSpy.count(), 1);
+        const QJsonObject req = QJsonDocument::fromJson(frameSpy.at(0).at(0).toByteArray()).object();
+        QCOMPARE(req.value(QStringLiteral("method")).toString(), QStringLiteral("session/prompt"));
+        const QJsonObject params = req.value(QStringLiteral("params")).toObject();
+        QCOMPARE(params.value(QStringLiteral("sessionId")).toString(), QStringLiteral("sid-1"));
+        const QJsonArray prompt = params.value(QStringLiteral("prompt")).toArray();
+        QCOMPARE(prompt.size(), 1);
+        QCOMPARE(prompt.at(0).toObject().value(QStringLiteral("type")).toString(), QStringLiteral("text"));
+        QCOMPARE(prompt.at(0).toObject().value(QStringLiteral("text")).toString(), QStringLiteral("Svar kun OK"));
+    }
+
+    void sessionIdChangeEmitsSignal()
+    {
+        AcpClient c;
+        QSignalSpy spy(&c, SIGNAL(sessionIdChanged()));
+        c.setSessionId(QStringLiteral("a"));
+        QCOMPARE(spy.count(), 1);
+        c.setSessionId(QStringLiteral("a")); // unchanged: no signal
+        QCOMPARE(spy.count(), 1);
+        c.setSessionId(QStringLiteral("b"));
+        QCOMPARE(spy.count(), 2);
+        QCOMPARE(c.sessionId(), QStringLiteral("b"));
+    }
+
+    // sendResult: svarramme til en indgående anmodning. Målt på telefonen
+    // 2026-11-02: session/request_permission kommer med id 0, så svaret skal
+    // også bære id 0 (ikke et sekventielt klient-id).
+    void resultFrameCarriesRequestId()
+    {
+        AcpClient c;
+        QSignalSpy frameSpy(&c, SIGNAL(frameWritten(QByteArray)));
+        QJsonObject outcome;
+        outcome.insert(QStringLiteral("outcome"), QStringLiteral("cancelled"));
+        QJsonObject result;
+        result.insert(QStringLiteral("outcome"), outcome);
+        c.sendResult(0, result);
+        QCOMPARE(frameSpy.count(), 1);
+        const QJsonObject resp = QJsonDocument::fromJson(frameSpy.at(0).at(0).toByteArray()).object();
+        QCOMPARE(resp.value(QStringLiteral("jsonrpc")).toString(), QStringLiteral("2.0"));
+        QCOMPARE(resp.value(QStringLiteral("id")).toDouble(), 0.0);
+        QCOMPARE(resp.value(QStringLiteral("result")).toObject()
+                     .value(QStringLiteral("outcome")).toObject()
+                     .value(QStringLiteral("outcome")).toString(),
+                 QStringLiteral("cancelled"));
     }
 };
 

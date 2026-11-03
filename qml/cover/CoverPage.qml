@@ -19,21 +19,17 @@ CoverBackground {
     }
 
     Connections {
-        target: mistralApi
-        onResponseCompleted: cover.refresh()
-    }
-
-    Connections {
         target: conversationManager
         onCurrentConversationChanged: cover.refresh()
     }
 
-    // Follow the answer as it arrives. Polling beats reacting to every delta:
-    // the cover is small and a redraw per token would be wasted work.
+    // ACP clean slate: follow the answer while a conversation is streaming.
+    // Polling beats reacting to every delta: the cover is small and a redraw
+    // per token would be wasted work.
     Timer {
         interval: 500
         repeat: true
-        running: mistralApi.isBusy
+        running: conversationManager.streamingConversationId !== ""
         onTriggered: cover.lastMessage = conversationModel.getLastAssistantMessage()
     }
 

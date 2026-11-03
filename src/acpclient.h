@@ -28,6 +28,8 @@
 class AcpClient : public QObject
 {
     Q_OBJECT
+    // Current ACP session id (empty until session/new has been answered).
+    Q_PROPERTY(QString sessionId READ sessionId NOTIFY sessionIdChanged)
 
 public:
     // Internal log-only event codes (v3 Bilag C). Not wire codes.
@@ -67,6 +69,18 @@ public:
     qint64 sendRequest(const QString &method, const QJsonObject &params);
     void sendNotification(const QString &method, const QJsonObject &params);
 
+    QString sessionId() const { return m_sessionId; }
+    void setSessionId(const QString &id);
+    Q_INVOKABLE bool isRunning() const { return m_process.state() == QProcess::Running; }
+    // session/new with an empty mcpServers list. Returns the request id.
+    Q_INVOKABLE qint64 sendSessionNew(const QString &cwd);
+    // session/prompt with one text content block. Returns -1 when no session
+    // exists yet (nothing is written in that case).
+    Q_INVOKABLE qint64 sendPrompt(const QString &text);
+    // Answers an incoming request (e.g. session/request_permission, measured
+    // with id 0/1 on the phone 2026-11-02) with a result object.
+    void sendResult(qint64 id, const QJsonObject &result);
+
 signals:
     // A complete, parsed message from the agent (response or notification).
     void messageReceived(const QJsonObject &message);
@@ -77,6 +91,13 @@ signals:
     void haleReceived(const QJsonObject &message);
     // Internal log event; code is a LogCode, never a wire code.
     void logEvent(int code, const QString &detail);
+    // Every frame handed to the agent's stdin, including the trailing 0x0A
+    // (v3 §2.1). Emitted even when the process is not running (the write is a
+    // no-op then), so unit tests can capture the wire without spawning.
+    void frameWritten(const QByteArray &frame);
+    void sessionIdChanged();
+    // Emitted by sendPrompt so the UI layer can reset its streaming state.
+    void promptSent(qint64 id, const QString &text);
     void started();
     void finished(int exitCode, QProcess::ExitStatus status);
 
@@ -91,6 +112,11 @@ private:
     void dispatchParsed(const QJsonObject &obj, bool fromHale);
     void sendError(qint64 id, int code, const QString &message);
     void writeFrame(const QJsonObject &obj);
+    // Like sendRequest but writes the frame even when the process is not
+    // running, so unit tests can capture the wire without spawning.
+    qint64 sendRequestRaw(const QString &method, const QJsonObject &params);
+
+    QString m_sessionId;
 
     QProcess m_process;
     QByteArray m_buffer;   // bytes of the current line, capped (v3 §3.1)

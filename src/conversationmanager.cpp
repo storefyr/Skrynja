@@ -1,5 +1,4 @@
 #include "conversationmanager.h"
-#include "mistralapi.h"
 #include "providers.h"
 #include "securestore.h"
 
@@ -70,7 +69,6 @@ ConversationManager::ConversationManager(QObject *parent)
     , m_streamDirty(false)
     , m_totalPromptTokens(0)
     , m_totalCompletionTokens(0)
-    , m_api(nullptr)
     , m_autoSyncing(false)
     , m_autoSyncAttached(0)
     , m_streamIncomplete(false)
@@ -99,41 +97,6 @@ ConversationManager::ConversationManager(QObject *parent)
 }
 
 // ---------------------------------------------------------------- streaming
-
-void ConversationManager::bindApi(MistralAPI *api)
-{
-    if (!api) {
-        return;
-    }
-
-    connect(api, &MistralAPI::messageSent,
-            this, &ConversationManager::onMessageSent);
-    connect(api, &MistralAPI::streamingResponse,
-            this, &ConversationManager::onStreamingResponse);
-    connect(api, &MistralAPI::sourcesReceived,
-            this, &ConversationManager::onSourcesReceived);
-    connect(api, &MistralAPI::thinkingResponse,
-            this, &ConversationManager::onThinkingReceived);
-    connect(api, &MistralAPI::responseCompleted,
-            this, &ConversationManager::onResponseCompleted);
-    connect(api, &MistralAPI::usageReceived,
-            this, &ConversationManager::onUsageReceived);
-    connect(api, &MistralAPI::sideRequestUsage,
-            this, &ConversationManager::onSideRequestUsage);
-    connect(api, &MistralAPI::conversationCreated,
-            this, &ConversationManager::onConversationCreated);
-    connect(api, &MistralAPI::responseIncomplete,
-            this, &ConversationManager::onResponseIncomplete);
-    connect(api, &MistralAPI::remoteConversationsFetched,
-            this, &ConversationManager::onAutoSyncConversationsFetched);
-    connect(api, &MistralAPI::remoteConversationsFetchFailed,
-            this, &ConversationManager::onAutoSyncConversationsFetchFailed);
-    connect(api, &MistralAPI::remoteMessagesFetched,
-            this, &ConversationManager::onAutoSyncMessagesFetched);
-    connect(api, &MistralAPI::remoteMessagesFetchFailed,
-            this, &ConversationManager::onAutoSyncMessagesFetchFailed);
-    m_api = api;
-}
 
 // The remote conversation was created: persist its id on the conversation
 // that is being answered, so later turns append instead of creating again.
@@ -778,10 +741,11 @@ void ConversationManager::deleteConversationWithRemote(const QString &conversati
 
     deleteConversation(conversationId);
 
-    // F7: also delete on the server so auto-sync does not bring it back.
-    if (!remoteId.isEmpty() && m_api && !apiKey.isEmpty()) {
-        m_api->deleteRemoteConversation(apiKey, remoteId);
-    }
+    // ACP clean slate (storefyr, 2026-11-02): no remote Conversations API,
+    // so there is nothing to delete server-side; remoteId is kept for the
+    // stored format only.
+    Q_UNUSED(remoteId)
+    Q_UNUSED(apiKey)
 }
 
 void ConversationManager::renameConversation(const QString &conversationId, const QString &newTitle)
@@ -1073,15 +1037,9 @@ void ConversationManager::purgeAllConversations()
 
 void ConversationManager::purgeAllConversationsWithRemote(const QString &apiKey)
 {
-    // F7: delete every remote conversation on the server first, so
-    // auto-sync does not bring them back after the local purge.
-    if (m_api && !apiKey.isEmpty()) {
-        for (const Conversation &conv : m_conversations) {
-            if (!conv.remoteConversationId.isEmpty()) {
-                m_api->deleteRemoteConversation(apiKey, conv.remoteConversationId);
-            }
-        }
-    }
+    // ACP clean slate (storefyr, 2026-11-02): no remote deletion, the
+    // Conversations API is not part of the ACP build.
+    Q_UNUSED(apiKey)
     purgeAllConversations();
 }
 
@@ -1746,16 +1704,13 @@ const Conversation* ConversationManager::findConversation(const QString &id) con
 
 void ConversationManager::autoSyncRemoteConversations(const QString &apiKey)
 {
-    if (m_autoSyncing || !m_api || apiKey.isEmpty()) {
+    // ACP clean slate (storefyr, 2026-11-02): there is no remote backend to
+    // sync with, so this reports "nothing attached" immediately.
+    Q_UNUSED(apiKey)
+    if (m_autoSyncing) {
         return;
     }
-    m_autoSyncing = true;
-    m_autoSyncAttached = 0;
-    m_autoSyncApiKey = apiKey;
-    m_autoSyncPending.clear();
-    m_autoSyncNameModel.clear();
-    emit autoSyncingChanged();
-    m_api->fetchRemoteConversations(apiKey);
+    emit autoSyncFinished(0);
 }
 
 void ConversationManager::onAutoSyncConversationsFetched(const QVariantList &conversations)
@@ -1818,9 +1773,13 @@ void ConversationManager::onAutoSyncConversationsFetched(const QVariantList &con
         emit autoSyncFinished(0);
         return;
     }
-    // Start fetching messages for the first pending conversation.
-    const QVariantMap first = m_autoSyncPending.takeFirst().toMap();
-    m_api->fetchRemoteMessages(m_autoSyncApiKey, first["id"].toString());
+    // ACP clean slate: no remote fetch; finish with what is attached.
+    m_autoSyncing = false;
+    m_autoSyncApiKey.clear();
+    m_autoSyncPending.clear();
+    m_autoSyncNameModel.clear();
+    emit autoSyncingChanged();
+    emit autoSyncFinished(m_autoSyncAttached);
 }
 
 void ConversationManager::onAutoSyncConversationsFetchFailed()
@@ -1858,9 +1817,6 @@ void ConversationManager::onAutoSyncMessagesFetched(const QString &remoteConvers
         m_autoSyncNameModel.clear();
         emit autoSyncingChanged();
         emit autoSyncFinished(m_autoSyncAttached);
-    } else {
-        const QVariantMap next = m_autoSyncPending.takeFirst().toMap();
-        m_api->fetchRemoteMessages(m_autoSyncApiKey, next["id"].toString());
     }
 }
 
@@ -1877,8 +1833,5 @@ void ConversationManager::onAutoSyncMessagesFetchFailed(const QString &remoteCon
         m_autoSyncNameModel.clear();
         emit autoSyncingChanged();
         emit autoSyncFinished(m_autoSyncAttached);
-    } else {
-        const QVariantMap next = m_autoSyncPending.takeFirst().toMap();
-        m_api->fetchRemoteMessages(m_autoSyncApiKey, next["id"].toString());
     }
 }
