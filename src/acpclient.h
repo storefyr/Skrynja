@@ -5,6 +5,8 @@
 #include <QProcess>
 #include <QByteArray>
 #include <QJsonObject>
+#include <QVariantMap>
+#include <QVariantList>
 
 // ACP client over stdio, per dokumenter/vibe-acp/spec-protokol-v3.md (v3).
 // Spawns vibe-acp as a child process and speaks newline-delimited JSON-RPC 2.0
@@ -30,6 +32,14 @@ class AcpClient : public QObject
     Q_OBJECT
     // Current ACP session id (empty until session/new has been answered).
     Q_PROPERTY(QString sessionId READ sessionId NOTIFY sessionIdChanged)
+    // Punkt 1: indgående anmodning fra agenten der venter på svar
+    // (session/request_permission). QVariantMap med nøglerne id, title, options
+    // (QVariantList af {optionId, name}). Køens hoved (ældste ubesvarede); tom map
+    // når køen er tom. Flere anmodninger stables (målt 2026-11-03 runde 12c:
+    // agenten sender id 0 så id 1, og retrier efter afvisning).
+    Q_PROPERTY(QVariantMap pendingPermission READ pendingPermission NOTIFY pendingPermissionChanged)
+    // Antal ubesvarede permission-anmodninger i køen.
+    Q_PROPERTY(int pendingPermissionCount READ pendingPermissionCount NOTIFY pendingPermissionChanged)
 
 public:
     // Internal log-only event codes (v3 Bilag C). Not wire codes.
@@ -80,6 +90,14 @@ public:
     // Answers an incoming request (e.g. session/request_permission, measured
     // with id 0/1 on the phone 2026-11-02) with a result object.
     void sendResult(qint64 id, const QJsonObject &result);
+    // Punkt 1: besvar køens hoved (ældste ubesvarede anmodning) med "selected"
+    // + optionId, eller afvis med dismissPermission ("cancelled").
+    Q_INVOKABLE void answerPermission(const QString &optionId);
+    Q_INVOKABLE void dismissPermission();
+
+    QVariantMap pendingPermission() const { return m_pendingPermission; }
+    int pendingPermissionCount() const { return m_pendingQueue.size(); }
+    void setPendingPermission(const QVariantMap &p);
 
 signals:
     // A complete, parsed message from the agent (response or notification).
@@ -96,6 +114,7 @@ signals:
     // no-op then), so unit tests can capture the wire without spawning.
     void frameWritten(const QByteArray &frame);
     void sessionIdChanged();
+    void pendingPermissionChanged();
     // Emitted by sendPrompt so the UI layer can reset its streaming state.
     void promptSent(qint64 id, const QString &text);
     void started();
@@ -115,8 +134,11 @@ private:
     // Like sendRequest but writes the frame even when the process is not
     // running, so unit tests can capture the wire without spawning.
     qint64 sendRequestRaw(const QString &method, const QJsonObject &params);
+    void answerPendingPermission(const QJsonObject &result);
 
     QString m_sessionId;
+    QVariantMap m_pendingPermission;   // køens hoved (cache af m_pendingQueue.first)
+    QVariantList m_pendingQueue;       // alle ubesvarede anmodninger, ældste først
 
     QProcess m_process;
     QByteArray m_buffer;   // bytes of the current line, capped (v3 §3.1)

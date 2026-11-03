@@ -145,7 +145,11 @@ int main(int argc, char *argv[])
     QObject::connect(&acpClient, &AcpClient::messageReceived, [&](const QJsonObject &msg) {
         qWarning() << "[acp][in]" << QJsonDocument(msg).toJson(QJsonDocument::Compact);
         ConversationModel *model = conversationManager.currentConversation();
-        if (msg.contains(QStringLiteral("id"))) {
+        // Svar har id men aldrig method; requests/notifications har method
+        // (målt: session/request_permission kommer med BÅDE id 0/1 OG method),
+        // så id-grenen skal ekskludere method, ellers sluques anmodningen og
+        // promptet hænger i ask-mode (målt "hænger" 2026-11-03 før denne rettelse).
+        if (msg.contains(QStringLiteral("id")) && !msg.contains(QStringLiteral("method"))) {
             const qint64 id = qint64(msg.value(QStringLiteral("id")).toDouble());
             if (msg.contains(QStringLiteral("error"))) {
                 qWarning() << "[acp][err] id" << id << msg.value(QStringLiteral("error")).toObject().value(QStringLiteral("code")).toInt()
@@ -192,8 +196,8 @@ int main(int argc, char *argv[])
             // ("session/request_permission") med id 0/1 og params-nøglerne
             // options/sessionId/toolCall; options målt til allow_once,
             // allow_session_exact, allow_permanent_exact, reject_once.
-            // Alpha: ingen dialog endnu — log og svar "cancelled" med det
-            // samme, så et prompt i ask-mode ikke hænger.
+            // Punkt 1: vis i dialog i stedet for auto-cancel; svaret går via
+            // acpClient.answerPermission(optionId) / dismissPermission() fra QML.
             const QJsonObject pr = msg.value(QStringLiteral("params")).toObject();
             const QJsonObject tc = pr.value(QStringLiteral("toolCall")).toObject();
             QStringList opts;
@@ -202,12 +206,24 @@ int main(int argc, char *argv[])
                 opts << v.toObject().value(QStringLiteral("optionId")).toString();
             const qint64 reqId = qint64(msg.value(QStringLiteral("id")).toDouble());
             qWarning() << "[acp][permission] id" << reqId << "tool" << tc.value(QStringLiteral("title")).toString()
-                       << "options" << opts << "-> auto-cancelled (alpha, ingen dialog endnu)";
-            QJsonObject outcome;
-            outcome.insert(QStringLiteral("outcome"), QStringLiteral("cancelled"));
-            QJsonObject result;
-            result.insert(QStringLiteral("outcome"), outcome);
-            acpClient.sendResult(reqId, result);
+                       << "options" << opts << "-> vist i UI";
+            QVariantMap pm;
+            pm.insert(QStringLiteral("id"), double(reqId));
+            // title kan mangle i nogle frames (målt tom 2026-11-03, runde 12e) —
+            // falde tilbage til toolCallId så dialogen aldrig står uden beskrivelse.
+            QString title = tc.value(QStringLiteral("title")).toString();
+            if (title.isEmpty())
+                title = tc.value(QStringLiteral("toolCallId")).toString();
+            pm.insert(QStringLiteral("title"), title);
+            QVariantList options;
+            for (const QJsonValue &v : arr) {
+                QVariantMap o;
+                o.insert(QStringLiteral("optionId"), v.toObject().value(QStringLiteral("optionId")).toString());
+                o.insert(QStringLiteral("name"), v.toObject().value(QStringLiteral("name")).toString());
+                options.append(o);
+            }
+            pm.insert(QStringLiteral("options"), options);
+            acpClient.setPendingPermission(pm);
         }
     });
 

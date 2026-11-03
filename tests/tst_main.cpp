@@ -2745,6 +2745,74 @@ private slots:
                      .value(QStringLiteral("outcome")).toString(),
                  QStringLiteral("cancelled"));
     }
+
+    // Punkt 1: answerPermission skriver selected+optionId på køens hoved (id 0).
+    void answerPermissionWritesSelectedOutcome()
+    {
+        AcpClient c;
+        QVariantMap pm;
+        pm.insert(QStringLiteral("id"), 0.0);
+        pm.insert(QStringLiteral("title"), QStringLiteral("Writing /tmp/x"));
+        c.setPendingPermission(pm);
+        QSignalSpy permSpy(&c, SIGNAL(pendingPermissionChanged()));
+        QSignalSpy frameSpy(&c, SIGNAL(frameWritten(QByteArray)));
+        c.answerPermission(QStringLiteral("allow_once"));
+        QCOMPARE(frameSpy.count(), 1);
+        QCOMPARE(permSpy.count(), 2); // en fra setPendingPermission, en fra svar
+        QVERIFY(c.pendingPermission().isEmpty());
+        const QJsonObject resp = QJsonDocument::fromJson(frameSpy.at(0).at(0).toByteArray()).object();
+        QCOMPARE(resp.value(QStringLiteral("id")).toDouble(), 0.0);
+        QCOMPARE(resp.value(QStringLiteral("result")).toObject()
+                     .value(QStringLiteral("outcome")).toObject()
+                     .value(QStringLiteral("outcome")).toString(),
+                 QStringLiteral("selected"));
+        QCOMPARE(resp.value(QStringLiteral("result")).toObject()
+                     .value(QStringLiteral("outcome")).toObject()
+                     .value(QStringLiteral("optionId")).toString(),
+                 QStringLiteral("allow_once"));
+    }
+
+    // Punkt 1: permission-kø — flere anmodninger stables, ældste besvares først
+    // (målt 2026-11-03 runde 12c: agenten sender id 0 så id 1 og retrier efter afvisning).
+    void permissionQueueAnswersOldestFirst()
+    {
+        AcpClient c;
+        QVariantMap p0;
+        p0.insert(QStringLiteral("id"), 0.0);
+        QVariantMap p1;
+        p1.insert(QStringLiteral("id"), 1.0);
+        c.setPendingPermission(p0);
+        c.setPendingPermission(p1);
+        QCOMPARE(c.pendingPermissionCount(), 2);
+        QCOMPARE(qint64(c.pendingPermission().value(QStringLiteral("id")).toDouble()), qint64(0));
+        QSignalSpy frameSpy(&c, SIGNAL(frameWritten(QByteArray)));
+        c.answerPermission(QStringLiteral("reject_once"));
+        QCOMPARE(frameSpy.count(), 1);
+        QCOMPARE(QJsonDocument::fromJson(frameSpy.at(0).at(0).toByteArray()).object()
+                     .value(QStringLiteral("id")).toDouble(), 0.0);
+        // næste hoved i køen er nu id 1
+        QCOMPARE(c.pendingPermissionCount(), 1);
+        QCOMPARE(qint64(c.pendingPermission().value(QStringLiteral("id")).toDouble()), qint64(1));
+        c.dismissPermission();
+        QCOMPARE(frameSpy.count(), 2);
+        QCOMPARE(QJsonDocument::fromJson(frameSpy.at(1).at(0).toByteArray()).object()
+                     .value(QStringLiteral("id")).toDouble(), 1.0);
+        QCOMPARE(c.pendingPermissionCount(), 0);
+        QVERIFY(c.pendingPermission().isEmpty());
+    }
+
+    // dismissPermission på tom kø er en no-op (intet frame, ingen crash).
+    void dismissOnEmptyQueueIsNoop()
+    {
+        AcpClient c;
+        QSignalSpy frameSpy(&c, SIGNAL(frameWritten(QByteArray)));
+        QSignalSpy permSpy(&c, SIGNAL(pendingPermissionChanged()));
+        c.dismissPermission();
+        c.answerPermission(QStringLiteral("allow_once"));
+        QCOMPARE(frameSpy.count(), 0);
+        QCOMPARE(permSpy.count(), 0);
+        QCOMPARE(c.pendingPermissionCount(), 0);
+    }
 };
 
 int main(int argc, char *argv[])

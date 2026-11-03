@@ -90,6 +90,62 @@ Page {
         }
     }
 
+    // Punkt 1: permission-dialog — viser ventende session/request_permission med
+    // de målte options (allow_once, allow_session_exact, ...). Svar går tilbage på
+    // samme id (målt id 0/1) via answerPermission/dismissPermission. Kø håndteres i
+    // acpClient (ældste først): dialogen lukkes kun når køen er tom, ellers vises
+    // næste anmodning med det samme.
+    Dialog {
+        id: permDialog
+        property var perm: acpClient.pendingPermission
+        canAccept: false
+        Connections {
+            target: acpClient
+            onPendingPermissionChanged: {
+                if (acpClient.pendingPermissionCount > 0)
+                    permDialog.open()
+            }
+        }
+        Column {
+            width: parent.width
+            spacing: Theme.paddingMedium
+            DialogHeader {
+                title: qsTr("Tilladelse anmodet") + (acpClient.pendingPermissionCount > 1 ? " (" + acpClient.pendingPermissionCount + ")" : "")
+                acceptText: ""
+            }
+            Label {
+                width: parent.width - 2 * Theme.horizontalPageMargin
+                x: Theme.horizontalPageMargin
+                text: permDialog.perm.title || ""
+                wrapMode: Text.Wrap
+                font.pixelSize: Theme.fontSizeSmall
+            }
+            Repeater {
+                model: permDialog.perm.options || []
+                Button {
+                    width: parent.width - 2 * Theme.horizontalPageMargin
+                    x: Theme.horizontalPageMargin
+                    text: modelData.name || modelData.optionId
+                    onClicked: {
+                        acpClient.answerPermission(modelData.optionId)
+                        if (acpClient.pendingPermissionCount === 0)
+                            permDialog.close()
+                    }
+                }
+            }
+            Button {
+                width: parent.width - 2 * Theme.horizontalPageMargin
+                x: Theme.horizontalPageMargin
+                text: qsTr("Afvis")
+                onClicked: {
+                    acpClient.dismissPermission()
+                    if (acpClient.pendingPermissionCount === 0)
+                        permDialog.close()
+                }
+            }
+        }
+    }
+
     function sendMessage() {
         var message = messageInput.text.trim()
         if (message.length === 0 || acpClient.sessionId === "") return

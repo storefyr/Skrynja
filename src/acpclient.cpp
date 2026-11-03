@@ -3,6 +3,7 @@
 #include <QJsonDocument>
 #include <QJsonParseError>
 #include <QJsonArray>
+#include <QVariantMap>
 #include <QFileInfo>
 #include <QDir>
 
@@ -263,6 +264,47 @@ void AcpClient::sendResult(qint64 id, const QJsonObject &result)
     resp.insert(QStringLiteral("id"), id);
     resp.insert(QStringLiteral("result"), result);
     writeFrame(resp);
+}
+
+// Punkt 1: stabl i kø — agenten kan sende flere anmodninger uden at vente på
+// svar (målt 2026-11-03 runde 12c: id 0 så id 1, og nye efter hver afvisning).
+void AcpClient::setPendingPermission(const QVariantMap &p)
+{
+    m_pendingQueue.append(p);
+    m_pendingPermission = m_pendingQueue.first().toMap();
+    emit pendingPermissionChanged();
+}
+
+// Besvar køens hoved (ældste ubesvarede anmodning) og ryk videre i køen.
+void AcpClient::answerPendingPermission(const QJsonObject &result)
+{
+    if (m_pendingQueue.isEmpty())
+        return;
+    const QVariantMap head = m_pendingQueue.first().toMap();
+    const qint64 id = qint64(head.value(QStringLiteral("id")).toDouble());
+    sendResult(id, result);
+    m_pendingQueue.removeFirst();
+    m_pendingPermission = m_pendingQueue.isEmpty() ? QVariantMap() : m_pendingQueue.first().toMap();
+    emit pendingPermissionChanged();
+}
+
+void AcpClient::answerPermission(const QString &optionId)
+{
+    QJsonObject outcome;
+    outcome.insert(QStringLiteral("outcome"), QStringLiteral("selected"));
+    outcome.insert(QStringLiteral("optionId"), optionId);
+    QJsonObject result;
+    result.insert(QStringLiteral("outcome"), outcome);
+    answerPendingPermission(result);
+}
+
+void AcpClient::dismissPermission()
+{
+    QJsonObject outcome;
+    outcome.insert(QStringLiteral("outcome"), QStringLiteral("cancelled"));
+    QJsonObject result;
+    result.insert(QStringLiteral("outcome"), outcome);
+    answerPendingPermission(result);
 }
 
 void AcpClient::sendNotification(const QString &method, const QJsonObject &params)
