@@ -2788,6 +2788,48 @@ private slots:
                  QStringLiteral("allow_once"));
     }
 
+    // Permission-kø: flere anmodninger stables, ældste besvares først (målt
+    // 2026-11-03 runde 12c: agenten sender id 0 så id 1 og retrier efter afvisning).
+    void permissionQueueAnswersOldestFirst()
+    {
+        AcpClient c;
+        QVariantMap p0;
+        p0.insert(QStringLiteral("id"), 0.0);
+        QVariantMap p1;
+        p1.insert(QStringLiteral("id"), 1.0);
+        c.setPendingPermission(p0);
+        c.setPendingPermission(p1);
+        QCOMPARE(c.pendingPermissionCount(), 2);
+        QCOMPARE(qint64(c.pendingPermission().value(QStringLiteral("id")).toDouble()), qint64(0));
+        QSignalSpy frameSpy(&c, SIGNAL(frameWritten(QByteArray)));
+        c.answerPermission(QStringLiteral("reject_once"));
+        QCOMPARE(frameSpy.count(), 1);
+        QCOMPARE(QJsonDocument::fromJson(frameSpy.at(0).at(0).toByteArray()).object()
+                     .value(QStringLiteral("id")).toDouble(), 0.0);
+        // næste hoved i køen er nu id 1
+        QCOMPARE(c.pendingPermissionCount(), 1);
+        QCOMPARE(qint64(c.pendingPermission().value(QStringLiteral("id")).toDouble()), qint64(1));
+        c.dismissPermission();
+        QCOMPARE(frameSpy.count(), 2);
+        QCOMPARE(QJsonDocument::fromJson(frameSpy.at(1).at(0).toByteArray()).object()
+                     .value(QStringLiteral("id")).toDouble(), 1.0);
+        QCOMPARE(c.pendingPermissionCount(), 0);
+        QVERIFY(c.pendingPermission().isEmpty());
+    }
+
+    // dismissPermission på tom kø er en no-op (intet frame, ingen crash).
+    void dismissOnEmptyQueueIsNoop()
+    {
+        AcpClient c;
+        QSignalSpy frameSpy(&c, SIGNAL(frameWritten(QByteArray)));
+        QSignalSpy permSpy(&c, SIGNAL(pendingPermissionChanged()));
+        c.dismissPermission();
+        c.answerPermission(QStringLiteral("allow_once"));
+        QCOMPARE(frameSpy.count(), 0);
+        QCOMPARE(permSpy.count(), 0);
+        QCOMPARE(c.pendingPermissionCount(), 0);
+    }
+
     // session/load-ramme: sessionId + cwd (A2, loadSession målt true 2026-11-02).
     void sessionLoadFrameCarriesIdAndCwd()
     {

@@ -245,7 +245,12 @@ int main(int argc, char *argv[])
             // acpClient.answerPermission(optionId) / dismissPermission() fra QML.
             QVariantMap pm;
             pm.insert(QStringLiteral("id"), double(reqId));
-            pm.insert(QStringLiteral("title"), tc.value(QStringLiteral("title")).toString());
+            // title kan mangle i nogle frames (målt tom 2026-11-03, runde 12e) —
+            // falde tilbage til toolCallId så dialogen aldrig står uden beskrivelse.
+            QString title = tc.value(QStringLiteral("title")).toString();
+            if (title.isEmpty())
+                title = tc.value(QStringLiteral("toolCallId")).toString();
+            pm.insert(QStringLiteral("title"), title);
             QVariantList options;
             for (const QJsonValue &v : arr) {
                 QVariantMap o;

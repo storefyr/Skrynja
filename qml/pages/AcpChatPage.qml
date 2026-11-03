@@ -178,7 +178,9 @@ Page {
         Connections {
             target: acpClient
             onPendingPermissionChanged: {
-                if (acpClient.pendingPermission.id !== undefined && acpClient.pendingPermission.id !== null)
+                // Åbn igen ved hver ny/ændret anmodning; køen håndteres i acpClient
+                // (ældste først) — luk kun når køen er tom.
+                if (acpClient.pendingPermissionCount > 0)
                     permDialog.open()
             }
         }
@@ -186,7 +188,7 @@ Page {
             width: parent.width
             spacing: Theme.paddingMedium
             DialogHeader {
-                title: qsTr("Tilladelse anmodet")
+                title: qsTr("Tilladelse anmodet") + (acpClient.pendingPermissionCount > 1 ? " (" + acpClient.pendingPermissionCount + ")" : "")
                 acceptText: ""
             }
             Label {
@@ -204,7 +206,8 @@ Page {
                     text: modelData.name || modelData.optionId
                     onClicked: {
                         acpClient.answerPermission(modelData.optionId)
-                        permDialog.close()
+                        if (acpClient.pendingPermissionCount === 0)
+                            permDialog.close()
                     }
                 }
             }
@@ -214,7 +217,8 @@ Page {
                 text: qsTr("Afvis")
                 onClicked: {
                     acpClient.dismissPermission()
-                    permDialog.close()
+                    if (acpClient.pendingPermissionCount === 0)
+                        permDialog.close()
                 }
             }
         }

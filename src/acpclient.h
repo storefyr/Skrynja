@@ -34,7 +34,11 @@ class AcpClient : public QObject
     Q_PROPERTY(QString sessionId READ sessionId NOTIFY sessionIdChanged)
     // Indgående anmodning fra agenten der venter på svar (session/request_permission).
     // QVariantMap med nøglerne id, title, options (QVariantList af {optionId, name}).
+    // Køens hoved (ældste ubesvarede); tom map når køen er tom. Flere anmodninger
+    // stables (målt 2026-11-03: agenten sender id 0 så id 1, og retrier efter afvisning).
     Q_PROPERTY(QVariantMap pendingPermission READ pendingPermission NOTIFY pendingPermissionChanged)
+    // Antal ubesvarede permission-anmodninger i køen.
+    Q_PROPERTY(int pendingPermissionCount READ pendingPermissionCount NOTIFY pendingPermissionChanged)
     // Kort aktivitetstekst til UI (tool-kald, tænkning); tom når idle.
     Q_PROPERTY(QString activity READ activity NOTIFY activityChanged)
     // Seneste fejl fra agenten (f.eks. -32602) til visning i UI; tom når ingen.
@@ -103,6 +107,7 @@ public:
     Q_INVOKABLE void dismissPermission();
 
     QVariantMap pendingPermission() const { return m_pendingPermission; }
+    int pendingPermissionCount() const { return m_pendingQueue.size(); }
     QString activity() const { return m_activity; }
     QString lastError() const { return m_lastError; }
     QVariantList configOptions() const { return m_configOptions; }
@@ -151,9 +156,11 @@ private:
     // Like sendRequest but writes the frame even when the process is not
     // running, so unit tests can capture the wire without spawning.
     qint64 sendRequestRaw(const QString &method, const QJsonObject &params);
+    void answerPendingPermission(const QJsonObject &result);
 
     QString m_sessionId;
-    QVariantMap m_pendingPermission;
+    QVariantMap m_pendingPermission;   // køens hoved (cache af m_pendingQueue.first)
+    QVariantList m_pendingQueue;       // alle ubesvarede anmodninger, ældste først
     QString m_activity;
     QString m_lastError;
     QVariantList m_configOptions;
