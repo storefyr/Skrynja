@@ -115,6 +115,15 @@ Byg PR #19 @ `da94508` (desktop med `[X-Sailjail] Sandboxing=Disabled`), install
 
 UI (grid-start, byg da94508): prompt "Svar kun med ordet OK" -> svar "OK" vist i dialogen. [M] 2026-11-02, telefonen.
 
+## Runde 10 (2026-11-03, terminal + grid-start): relæ-påstande genskabt i egen måling
+
+    grep -ac Sandboxing /usr/bin/sailjaild -> 1   (sailjaild kender nøglen; sailjail-binæren gjorde ikke, R124–R126)
+    grep -l 'Sandboxing=Disabled' /usr/share/applications/*.desktop | wc -l -> 20
+    ls /usr/share/applications/*.desktop | wc -l -> 67   (altså 20 af 67; relæ sagde 19 — rettet ved genmåling)
+    grid-startet app pid 10854: PPid 3802 (booster-silica-qt5), Seccomp: 0, ingen Firejail-post i status, cmdline "/usr/bin/harbour-skrynja"
+
+**Målt 2026-11-03:** efter `Sandboxing=Disabled` i kildens .desktop kører grid-start u-jail'ed (Seccomp 0, booster-forælder, ingen firejail), og agenten i `~/.local/bin` er nåbar (runde 8-9). [M] 2026-11-03, Jolla Phone 2026.
+
 ## Konsekvens (ikke beslutning)
 
 Grid-start kører i firejail; `.local/bin` og projektroden er ikke nåbare derfra; `.local/share/harbour-skrynja` er nåbar, skrivbar og exec-tilladt, og netværk virker. Programsti (§9.2 felt 1) kan derfor målt pege ind i en monteret mappe, hvis både shim og venv lægges der. Dette kræver ny [B] fra storefyr med ny dato før §9.2e omskrives — ellers står to [B] med modsat indhold. Indtil da: §12 punkt 131 [A].
