@@ -111,6 +111,10 @@ Byg PR #19 @ `da94508` (desktop med `[X-Sailjail] Sandboxing=Disabled`), install
 
 **Målt:** med eksplicit fravalg i desktop kører grid-start u-jail'ed, agenten spawnes fra `~/.local/bin/vibe-acp`, session bliver klar, og app-luk giver exit 0. [M] 2026-11-02. (Relæ-rapporten fra anden dialog om sailjaild/Sandboxing=Disabled er herved genskabt i egen måling.)
 
+## Runde 9 (2026-11-02): første prompt-rundtur fra grid i u-jail'et byg
+
+UI (grid-start, byg da94508): prompt "Svar kun med ordet OK" -> svar "OK" vist i dialogen. [M] 2026-11-02, telefonen.
+
 ## Konsekvens (ikke beslutning)
 
 Grid-start kører i firejail; `.local/bin` og projektroden er ikke nåbare derfra; `.local/share/harbour-skrynja` er nåbar, skrivbar og exec-tilladt, og netværk virker. Programsti (§9.2 felt 1) kan derfor målt pege ind i en monteret mappe, hvis både shim og venv lægges der. Dette kræver ny [B] fra storefyr med ny dato før §9.2e omskrives — ellers står to [B] med modsat indhold. Indtil da: §12 punkt 131 [A].
