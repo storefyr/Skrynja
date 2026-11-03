@@ -71,6 +71,17 @@ App-jailens proces (pid 31036, ejet af defaultuser) cmdline, rå:
 
 **Målt:** whitelist-listen bygges af `/usr/bin/sailjail` selv ud fra app-identiteten (app-id `harbour-skrynja`): altid `/usr/share/<id>`, desktop-filen, og de tre `$HOME/.../harbour-skrynja`-mapper (`.local/share`, `.config`, `.cache`). Ingen profil eller .desktop-felt tilføjer stier. `${HOME}/.local/bin` og `${HOME}/.local/share/uv` er ikke med og kan ikke tilføjes via .desktop. [M] 2026-11-02, Jolla Phone 2026.
 
+## R138–R140 (samme dag, terminal): hvorfor appen jails — målt
+
+    R138: /etc/sailjail/applications: 1 fil (jolla-classzero-dialog.desktop), 0 med "skrynja"
+          /etc/sailjail/config: 3 filer (50-default-profile.conf, 50-enable-sandboxing.conf, 50-sailfish-allowlist.conf)
+    R139: 50-default-profile.conf: [Default Profile] Permissions=Audio;Bluetooth;Camera;Compatibility;Internet;Location;MediaIndexing;Microphone;NFC;RemovableMedia;UserDirs;WebView
+          50-enable-sandboxing.conf: [Default Profile] Enabled=true
+          50-sailfish-allowlist.conf: 30 843 byte, [Allowlist], kun kommentarer vist
+    R140: allowlist: 0 træf på "skrynja", 16 ikke-kommentar-poster (jolla-classzero-dialog=always, voicecall-ui=always, ...)
+
+**Målt:** sandboxing er slået til som default (`50-enable-sandboxing.conf`, `Enabled=true`); kun apps på allowlisten i `50-sailfish-allowlist.conf` kører u-jail'ed, og `harbour-skrynja` står ikke på listen. Derfor grid-start kører gennem sailjail/firejail uanset .desktop-indhold. [M] 2026-11-02.
+
 ## Konsekvens (ikke beslutning)
 
 Grid-start kører i firejail; `.local/bin` og projektroden er ikke nåbare derfra; `.local/share/harbour-skrynja` er nåbar, skrivbar og exec-tilladt, og netværk virker. Programsti (§9.2 felt 1) kan derfor målt pege ind i en monteret mappe, hvis både shim og venv lægges der. Dette kræver ny [B] fra storefyr med ny dato før §9.2e omskrives — ellers står to [B] med modsat indhold. Indtil da: §12 punkt 131 [A].
