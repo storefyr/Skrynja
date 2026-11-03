@@ -7,6 +7,11 @@ Exec=harbour-skrynja
 Comment=Chat med Mistral AI med websøgning
 Categories=Network;Chat;
 
-# Ingen [X-Sailjail]-sektion: appen køres IKKE indespærret — beslutning
-# punkt 122, lukket [B] storefyr 2026-10-31 (spec v3 §9.2e). Uden sektionen
-# kan grid-start spawne agenten i ~/.local/bin.
+# Eksplicit fravalg: sandboxing er default-on (/etc/sailjail/config/
+# 50-enable-sandboxing.conf, Enabled=true), og fravær af sektion betyder
+# IKKE fravær af jail — målt 2026-11-02 (målejournal runde 7). Kun
+# Sandboxing=Disabled (læses af /usr/bin/sailjaild) kører appen u-jail'ed,
+# så grid-start kan spawne agenten i ~/.local/bin. Implementerer punkt 122
+# [B] storefyr 2026-10-31 (spec v3 §9.2e: appen køres ikke indespærret).
+[X-Sailjail]
+Sandboxing=Disabled
