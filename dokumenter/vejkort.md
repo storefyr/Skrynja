@@ -252,11 +252,11 @@ Hviler på migreringsdokumentet. Uverificeret. Samlingsreglen fra K4 gælder, hv
 
 ## 8. Måleporte
 
-Sytten porte. Ingen er udført. **M0.1 er metodeændret** i Rev. 13: den måler ikke funktionsflag, men adfærd (F24).
+Sytten porte. M0.0 er udført ●; seksten er ikke. **M0.1 er metodeændret** i Rev. 13: den måler ikke funktionsflag, men adfærd (F24).
 
 | Port | Spørgsmål | Lag | Metode |
 |---|---|---|---|
-| **M0.0** | Findes `vibe-acp` på målmaskinen, i hvilken version, under hvilken licens? | L3 | `--version`, pakke metadata ● (versionsangivelse findes i repoet [^2]) |
+| **M0.0** | Findes `vibe-acp` på målmaskinen, i hvilken version, under hvilken licens? | L3 | Udført ● — se dokumenter/vibe-acp/ |
 | **M0.1** | Hvilken protokolversion svarer agenten på i `initialize`? | L3 | Anmodning/ svar, ikke flagaflæsning |
 | **M0.2** | Hvilke `SessionUpdate`-varianter udsender den faktisk? | L3 | Trafikprotokol over en repræsentativ session |
 | **M0.3** | Er `tool_call_update` indlejret eller flad? | L3 | Trafikprotokol |
@@ -334,7 +334,7 @@ Sytten porte. Ingen er udført. **M0.1 er metodeændret** i Rev. 13: den måler 
 
 Modelfladen er målt: varianter, felter, stier, flag, stabilitet og evnekrav holder på 36 efterprøvede påstande fordelt over tre runder uden afvigelse i den målte halvdel. Dokumentationshalvdelen (†) er ikke genåbnet, og kilderegisteret findes endnu ikke.
 
-Det, der mangler, er ikke flere opslag. Det er **seksten uudførte måleporte mod L3 og L2**, en omlagt målemetode og et transportvalg, der skal træffes igen. Før M0.0, M0.15, M0.1, M0.3 og M0.4 er udført, er vejkortet en kontrakt uden modpart — præcis, men uafprøvet.
+Det, der mangler, er ikke flere opslag. Det er **femten uudførte måleporte mod L3 og L2**, en omlagt målemetode og et transportvalg, der skal træffes igen. Før M0.0, M0.15, M0.1, M0.3 og M0.4 er udført, er vejkortet en kontrakt uden modpart — præcis, men uafprøvet.
 
 **References**
 

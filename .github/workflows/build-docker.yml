@@ -157,23 +157,22 @@ jobs:
 
           1. Launch **Skrynja** from your app drawer
           2. Pull down and select **Settings**
-          3. Enter your Mistral AI API key (get one free at [console.mistral.ai](https://console.mistral.ai))
+          3. Installér og start en ACP-agent (se LÆSMIG.md)
           4. Choose your preferred model
           5. Optionally enable **web search**
           6. Start chatting with AI! 💬
 
           ## ℹ️ About
 
-          Skrynja is a native Sailfish OS client for Mistral AI, built on the
-          Conversations API (`/v1/conversations`) with:
+          Skrynja er en ACP-klient til Sailfish OS, bygget på ACP:
           - Real-time streaming responses
-          - Web search mid-conversation
+          - ACP over standard-ind og -ud
           - Native Silica UI
-          - Multiple model support
+          - Tilladelser i grænsefladen
           - Conversation history
           - Secure local API key storage
 
-          For more info, see the [README](https://github.com/storefyr/Skrynja/blob/main/README.md).
+          For more info, see the [LÆSMIG](https://github.com/storefyr/Skrynja/blob/main/L%C3%86SMIG.md).
           EOF
           cat release_notes.md
 

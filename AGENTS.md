@@ -1,166 +1,79 @@
 # AGENTS.md
 
-Instructions for AI coding agents (Mistral Vibe, Claude Code, etc.) working on this repository.
+Regler for AI-agenter, der arbejder i dette repositorium. Læs `LÆSMIG.md`
+først; den beskriver, hvad programmet er.
 
-## Project
+## Projekt
 
-Skrynja is a native Sailfish OS chat client for Mistral AI, built on the **Conversations API**
-(`/v1/conversations`) — not Chat Completions. That API is stateful (the server remembers the
-conversation) and is the only one that offers the `web_search` tool. Qt/C++ backend, QML/Silica
-frontend, SSE streaming for real-time responses. Forked from SailCat (harbour-sailcat).
+Skrynja er en ACP-klient til Sailfish OS. Klienten starter en lokal agent som
+underordnet proces og taler ACP med den over standard-ind og -ud.
 
-## Migration status
+Når et dokument og koden er uenige, gælder koden. Notér afvigelsen i PR'en.
 
-The codebase is inherited from SailCat and is being rewritten step by step.
-The codebase was forked from SailCat and has been fully rewritten to the
-Conversations API. The sections below describe the current architecture;
-when a doc and the code disagree, trust the code and note the gap.
+## Hårde krav
 
-Locked decisions (do not relitigate in code reviews):
+1. **Kun Qt 5.6.** Sailfish OS leverer Qt 5.6. Ingen API indført i 5.7+
+   (`qAsConst`, `QRandomGenerator`, C++17-afhængige Qt-API'er). Er en API
+   usikker, slås den op i Qt 5.6-dokumentationen før brug.
+2. **QML: QtQuick 2.0 + Sailfish.Silica 1.0.** Ingen QtQuick.Controls, ingen
+   ToolTip, ingen `additionalContent`, ingen Qt Labs-moduler.
+3. **Harbour-regler.** Appnavnet beholder `harbour-`-præfikset. Kun tilladte
+   importer.
+4. **JavaScript i QML er ES5.** Ingen pilefunktioner, intet `let`/`const` i
+   ældre kontekster, ingen skabelonstrenge.
+5. **Kun aarch64.** Målenheden er Jolla Phone (2026). Der bygges og testes
+   ikke for armv7hl eller i486.
+6. **Indespærring er ikke i kraft.** Programmet kører i dag uden
+   SailJail-profil. Omfanget skal måles, før det skrives som krav — det må
+   ikke antages, hverken til eller fra.
 
-- Mistral AI only; no other provider, no custom endpoint.
-- Context-limit trimming removed (server keeps the full history).
-- Model fixed per conversation (create-time only).
-- Edit and regenerate removed for now (needs entry-level restart).
-- Retry after an ambiguous failure reconciles via `GET .../messages` first.
-- A cancelled answer marks the conversation dirty; the next message restarts it.
-- Old local conversations start fresh server-side (no replay migration).
-- Conversation history lives on Mistral's servers; this is documented to users.
+## Byg og test
 
-## Hard Constraints
-
-These are non-negotiable. Violating them produces code that does not compile or gets rejected by the Jolla Store:
-
-1. **Qt 5.6 only.** Sailfish OS ships Qt 5.6. Do not use any API introduced in Qt 5.7+ (no `qAsConst`, no `QRandomGenerator`, no connection syntax requiring newer Qt, no C++17-dependent Qt APIs). When unsure whether an API exists in 5.6, check the Qt 5.6 docs before using it.
-2. **QML: QtQuick 2.0 + Sailfish.Silica 1.0.** No QtQuick.Controls, no ToolTip, no `additionalContent`, no Qt Labs modules. Only Silica components. Past crashes were caused by exactly this (see git log).
-3. **Harbour rules.** App name keeps the `harbour-` prefix. Only Harbour-allowed imports (Sailfish.Silica, Sailfish.Pickers, QtQuick, QtQuick.Layouts, Nemo.Configuration, Nemo.Notifications). `Sailfish.TransferEngine` and `Sailfish.Share` are NOT allowed.
-4. **JavaScript in QML is ES5.** No arrow functions, no `let`/`const` in older QML contexts, no template literals.
-5. **Conversations API streaming is a body parameter, not a URL fragment.** Mistral's docs write
-   `/v1/conversations#stream` as endpoint notation, but the wire path is plain `/v1/conversations`
-   with `"stream": true` in the JSON body (plus `Accept: text/event-stream`). Do NOT put `#stream`
-   or `%23stream` in the URL — the server answers 404. The unit tests cover this.
-6. **SailJail sandboxing is mandatory** (since Sailfish OS 4.4.0). The desktop file must have an
-   `[X-Sailjail]` section with `Permissions=`, `OrganizationName=org.skrynja` and
-   `ApplicationName=Skrynja`. `QStandardPaths::AppDataLocation` / `AppConfigLocation` always
-   return the sandboxed paths — never fall back to `QDir::homePath()`. QSettings must be
-   constructed with an explicit path inside `AppConfigLocation` (see `skrynjaSettingsPath()`),
-   not the two-argument constructor.
-
-## Architecture
-
-- `src/mistralapi.{h,cpp}` — HTTP + SSE streaming to the Conversations API. Endpoints:
-  `POST /v1/conversations` with `"stream": true` (create),
-  `POST /v1/conversations/{id}` with `"stream": true` (append),
-  `POST /v1/conversations/{id}/restart` with `"stream": true` (after a cancelled answer),
-  `GET /v1/conversations/{id}/messages` (reconcile before retry),
-  `DELETE /v1/conversations/{id}` (delete), `GET /v1/models` (catalogue).
-  Signals: `streamingResponse(content)`, `responseCompleted()`, `messageSent()`,
-  `titleGenerated(title)`, `conversationCreated(id)`, `toolActivity(name)`, `sourcesReceived(list)`.
-- `src/conversationmodel.{h,cpp}` — QAbstractListModel of messages (`role`, `content`, `timestamp`, `pinned`, `imagePath`).
-- `src/conversationmanager.{h,cpp}` — persistence (one JSON file per conversation under `AppDataLocation`),
-  current conversation lifecycle, remote `conversation_id` tracking, dirty flag after a cancelled
-  answer, statistics, search.
-- `src/settingsmanager.{h,cpp}` — QSettings wrapper: `apiKey` (stored obfuscated), `modelName`,
-  `webSearch` toggle, `language`, `chatStyle`, `savedPrompts`.
-- `src/securestore.{h,cpp}` — owner-only file permissions and salted obfuscation for the API key.
-- `src/providers.{h,cpp}` — kept from SailCat for the model-catalogue parsing only; there is a single provider (Mistral AI) and no provider picker.
-- `qml/pages/ChatPage.qml` — main chat UI. `qml/components/MessageBubble.qml` — message rendering with regex-based markdown and source chips. `qml/pages/SettingsPage.qml` — settings dialog.
-
-All C++ classes are exposed to QML as context properties: `mistralApi`, `conversationModel`, `conversationManager`, `settingsManager` (registered in `src/harbour-skrynja.cpp`).
-
-## Conversations API semantics (important)
-
-- **Create-time only:** `model`, `instructions` (system prompt) and `tools` (web_search) are set when
-  the conversation is created. Per-turn parameters go in `completion_args` (`temperature`, `max_tokens`).
-- **Append is not idempotent.** If a request may have reached the server, reconcile with
-  `GET /v1/conversations/{id}/messages` before sending again.
-- **Restart returns a new `conversation_id`.** The old one must be deleted and the new one persisted.
-- **SSE events are typed**, sent as `event: <name>` + `data: {...}`: `conversation.response.started`
-  (carries `conversation_id`), `tool.execution.started/delta/done`, `message.output.delta`
-  (text chunks), `conversation.response.done` (usage), `conversation.response.error`.
-  There is no `[DONE]` marker.
-- **Reasoning models** return `content` as a list of chunks (thinking + text), not a plain string.
-
-## Translations
-
-Only **English (en)** and **Danish (da)** are shipped. `translations/harbour-skrynja-<code>.ts`,
-one per entry in `SettingsManager::availableLanguages()`. Adding a language means adding the
-`.ts` file, the code in `availableLanguages()`, the `TRANSLATIONS` list in the `.pro`, and the
-entry in the SettingsPage language ComboBox — the ComboBox order must match `availableLanguages()`.
-
-## Build & Test
-
-**Target device: Jolla Phone (2026) — aarch64 only.** CI builds a single RPM for aarch64. Do not build or test for armv7hl or i486.
-
-```bash
-# Docker build (no SDK needed) — this is the reliable way to verify compilation
-docker run --rm -it -v $(pwd):/home/sailfish/src -w /home/sailfish/src \
-  coderus/sailfishos-platform-sdk:5.0.0.43 \
-  mb2 -t SailfishOS-5.0.0.43-aarch64 build
-```
-
-Unit tests live in `tests/` (QtTest, no Silica dependency — the C++ classes are pure Qt). They run in CI on plain Ubuntu Qt and block releases. Locally:
+Enhedsprøver i `tests/` (QtTest, ingen Silica-afhængighed). De kører i CI på
+almindelig Ubuntu-Qt og blokerer udgivelser. Ændres adfærd i `src/`, udvides
+`tests/tst_main.cpp` tilsvarende.
 
 ```bash
 cd tests && qmake tests.pro && make && ./tst_skrynja
 ```
 
-When changing `src/` behavior, extend `tests/tst_main.cpp` accordingly. QML is tested on device via PR artifacts: copy `test-pr.sh` to the phone and run `sh test-pr.sh <pr-number>` — it downloads and installs the latest aarch64 RPM from the PR's CI build. Quick QML iteration still works via hot-deploy: `scp qml/... nemo@<device-ip>:/usr/share/harbour-skrynja/qml/...` then restart the app.
+Nye kildefiler skal i `harbour-skrynja.pro` (SOURCES/HEADERS), nye QML-filer i
+`OTHER_FILES`/install. Nye synlige tekster skal gennem `qsTr()`.
 
-New source files must be added to `harbour-skrynja.pro` (SOURCES/HEADERS) and new QML files to the `OTHER_FILES`/install sections. New user-visible strings must use `qsTr()`.
+Byg og CI køres på GitHub. Agenter, der arbejder i repoet, bygger ikke på
+enheden og måler ikke på den.
 
-### Device scripts (run on the Jolla Phone)
+## Sprog
 
-| Script | Purpose |
-|--------|---------|
-| `test-pr.sh <N>` | Download and install the aarch64 RPM for PR #N from the `pr-<N>-rpm` branch |
-| `update.sh [version]` | Download and install the latest (or given) release RPM |
+Kode, kommentarer, commit-beskeder og tags er engelske. Projektdokumentation
+er dansk, herunder `LÆSMIG.md`.
 
-Both scripts use only `curl` (preinstalled on Sailfish OS). They must NOT call the GitHub API — see the rule below.
+## Konventioner
 
-### External API calls from device scripts — avoid
+- **Commits:** én linje, kort, konventionelt præfiks (`feat:`, `fix:`,
+  `chore:`). Ingen emoji, ingen AI-tilskrivning.
+- **Tags:** semver `vX.Y.Z`. Version hæves i `rpm/harbour-skrynja.spec` og
+  `harbour-skrynja.yaml` ved udgivelse. Push af et tag udløser
+  `.github/workflows/build-docker.yml`.
+- **Stil:** 4 mellemrum i C++ og QML, Qt-navngivning (`m_`-præfiks, camelCase).
+- **Kommentarer** kun, hvor koden ikke kan forklare sig selv.
+- **Agentversionen** styres med `uv tool`, ikke af dette repositorium.
+  `vibe-acp` er et værktøjssymlink i `~/.local/bin/`.
+- **Enhedsscripts** (`test-pr.sh`, `update.sh`) henter fra
+  `raw.githubusercontent.com` med fast filnavn. De må ikke kalde GitHub-API'et
+  eller hente Actions-artefakter — begge er begrænsede eller kræver
+  autentifikation.
 
-**GitHub API calls are rate-limited** (60 req/hour unauthenticated) and **Actions artifacts require authentication** to download. Do not use `api.github.com` or Actions artifact URLs in device scripts. Instead:
+## Arbejdsform
 
-- CI pushes PR RPMs to a `pr-<N>-rpm` git branch with a **fixed filename** (`skrynja-pr<N>.rpm`).
-- Device scripts download directly from `raw.githubusercontent.com/<repo>/<branch>/<fixed-name>` — no API, no auth, no rate limit.
-- Prefer a known/fixed path over an API lookup when the filename can be controlled on the producer side.
-
-## Conventions
-
-- **Everything in English**: code, comments, commit messages, tags, docs.
-- **Commits**: one-liner, very concise, conventional prefix (`feat:`, `fix:`, `chore:`). No emoji, no "Co-authored-by" or AI attribution lines.
-- **Tags/releases**: semver `vX.Y.Z`, starting at `v0.1.0` for Skrynja (the SailCat 2.x history stays with SailCat). Pushing a tag triggers the release CI (`.github/workflows/build-docker.yml`), which builds aarch64 only and creates the GitHub release. Bump the version in `rpm/harbour-skrynja.spec` and `harbour-skrynja.yaml` when releasing.
-- **Avoid unnecessary API calls.** The Mistral API is rate-limited and costs money per token. When a feature can work without an API call (local heuristics, cached data, first-message titles), prefer that. When an API call is needed, keep the payload small (short digests, cheap models for auxiliary tasks like title generation — use `ministral-3b-2512` at $0.10/M instead of the conversation's active model). Never add a background/automatic API call the user did not ask for unless it is behind a setting that defaults to off.
-- **Avoid rate-limited external APIs in scripts and tooling.** GitHub API is limited to 60 req/hour unauthenticated; Actions artifacts require auth. Prefer `raw.githubusercontent.com` with fixed filenames on git branches (see the device scripts section above).
-- Match existing code style: 4-space indent in C++ and QML, Qt naming (`m_` member prefix, camelCase).
-
-## Working Style
-
-- Be concise. Answer the question first, then supporting detail. No filler.
-- Read the relevant files before editing; never guess a method name or signature — verify it in the header.
-- Keep changes minimal and scoped to the request. Do not refactor adjacent code unless asked.
-- Comments only where the code cannot explain itself (protocol quirks, Qt 5.6 workarounds). No narrative comments.
-- If a build or test fails, report the actual error output — do not claim success without verifying.
-- Feature work is planned in `dokumenter/vejkort.md`.
-
-## Mistral Conversations API Quick Reference
-
-```
-POST https://api.mistral.ai/v1/conversations
-Authorization: Bearer <key>
-Accept: text/event-stream
-{"model": "...", "instructions": "...", "tools": [{"type": "web_search"}],
- "stream": true,
- "inputs": [{"object": "entry", "type": "message.input", "role": "user", "content": "..."}],
- "completion_args": {"temperature": 0.7}}
-
-POST https://api.mistral.ai/v1/conversations/{id}          (append; "stream": true, inputs + completion_args only)
-POST https://api.mistral.ai/v1/conversations/{id}/restart  ("stream": true; from_entry_id; returns a NEW id)
-GET  https://api.mistral.ai/v1/conversations/{id}/messages   (reconcile)
-DELETE https://api.mistral.ai/v1/conversations/{id}
-```
-
-SSE response: typed events, `event: <name>` followed by `data: {...}`. Text chunks arrive as
-`event: message.output.delta` with `data.content`; usage arrives in `conversation.response.done`.
-Parsing lives in `MistralAPI::parseStreamLine()`; UTF-8-safe buffering in `processStreamData()`.
+- Én PR, ét formål. En PR forgrenet fra en forældet `main` lukkes; den
+  rebases ikke.
+- Ingen påstand om et udfald uden en udskrift, der kan gengives.
+- Ingen tomme commits for at udløse CI.
+- Læs de relevante filer før redigering; gæt aldrig på et metodenavn —
+  kontrollér det i headeren.
+- Hold ændringen inden for opgaven. Omkringliggende kode refaktoreres ikke
+  uden at det er bedt om.
+- Fejler et byg eller en prøve, gengives den faktiske fejludskrift.
+- Kontrakt- og måleplanen står i `dokumenter/vejkort.md`. Målinger føres i
+  `dokumenter/vibe-acp/`.
