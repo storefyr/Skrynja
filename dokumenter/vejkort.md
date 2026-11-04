@@ -334,7 +334,7 @@ Sytten porte. M0.0 er udført ●; seksten er ikke. **M0.1 er metodeændret** i 
 
 Modelfladen er målt: varianter, felter, stier, flag, stabilitet og evnekrav holder på 36 efterprøvede påstande fordelt over tre runder uden afvigelse i den målte halvdel. Dokumentationshalvdelen (†) er ikke genåbnet, og kilderegisteret findes endnu ikke.
 
-Det, der mangler, er ikke flere opslag. Det er **femten uudførte måleporte mod L3 og L2**, en omlagt målemetode og et transportvalg, der skal træffes igen. Før M0.0, M0.15, M0.1, M0.3 og M0.4 er udført, er vejkortet en kontrakt uden modpart — præcis, men uafprøvet.
+Det, der mangler, er ikke flere opslag. Det er **femten uudførte måleporte mod L3 og L2**, en omlagt målemetode og et transportvalg, der skal træffes igen. Før M0.15, M0.1, M0.3 og M0.4 er udført, er vejkortet en kontrakt uden modpart — præcis, men uafprøvet.
 
 **References**
 
