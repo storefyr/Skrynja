@@ -3,7 +3,7 @@ Summary:    ACP-klient til Sailfish OS
 Version:    0.9.10
 Release:    1
 Group:      Applications/Internet
-License:    GPL-3.0-only
+License:    GPL-3.0-or-later
 URL:        https://github.com/storefyr/Skrynja
 Source0:    %{name}-%{version}.tar.bz2
 Requires:   sailfishsilica-qt5 >= 0.10.9
