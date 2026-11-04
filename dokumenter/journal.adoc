@@ -112,3 +112,13 @@ følger orakel.adoc: wire-optagelsen, specifikationsparagraffen, prøven, kilden
 agentens egne prøver. vejkort.md er slettet, og indholdet er bevaret på grenen
 legacy. Hver indsættelse er bevist med samme sha256 før og efter, målt i samme
 runde. Målinger: R81, R83, R85.
+
+== R88-R104 — fase 1 committet, fase 2 målt
+
+Fase 1 blev committet, og arbejdstræet var rent. Derefter blev repoet målt:
+src-mappen og byggefilen er gennemmålt, mistralapi står kun i en kommentar
+og er dermed uden for byggeriet. Sporene er ikke isolerede;
+conversationmanager og harbour-skrynja indeholder begge. Oversættelsesfiler
+findes, og QTranslator indlæser dem. Det er i modstrid med N4, og modstriden
+afgøres ved beslutning. En gren lokalt-arbejde findes; forholdet til main er
+ikke målt. Målinger: R90-R104.
