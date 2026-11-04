@@ -1,5 +1,5 @@
 Name:       harbour-skrynja
-Summary:    Chatklient med Mistral AI til Sailfish OS med websøgning
+Summary:    ACP-klient til Sailfish OS
 Version:    0.9.10
 Release:    1
 Group:      Applications/Internet
@@ -18,16 +18,16 @@ BuildRequires:  pkgconfig(Qt5Multimedia)
 BuildRequires:  desktop-file-utils
 
 %description
-Skrynja er en elegant klient til Mistral AI, baseret på Conversations-API'et,
-integreret perfekt i Sailfish OS' brugerflade. Nyd intelligente samtaler med
-websøgning direkte fra din enhed.
+Skrynja er en ACP-klient til Sailfish OS. Klienten starter en lokal agent som
+underordnet proces og taler ACP med den over standard-ind og -ud, indpasset i
+Sailfish OS’ brugerflade.
 
 Funktioner:
-- Mistral AI via Conversations-API'et (/v1/conversations)
-- Websøgning (web_search) i samtaler
-- API-nøgle gemt krypteret
-- Streaming af svar i realtid
-- Native Sailfish-grænseflade med Silica-komponenter
+- ACP over standard-ind og -ud
+- Lokal agent på enheden
+- Sessionsgenoptagelse: session/load med fallback til session/new
+- Tilladelsesdialog i brugerfladen
+- Native Sailfish-graenseflade med Silica-komponenter
 - Samtalehistorik
 
 %prep
