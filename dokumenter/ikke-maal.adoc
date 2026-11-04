@@ -1,0 +1,47 @@
+= Skrynja — ikke-mål
+:status: udkast
+
+Et ikke-mål er et forbud mod at bygge noget. Det kan kun ophæves ved at
+ændre den betingelse, der står ved det. Betingelsen skal kunne afgøres af
+en kørsel, ikke af en vurdering.
+
+== N1 Klientkapabiliteter: fs og terminal
+
+Skrynja erklærer ikke fs.readTextFile, fs.writeTextFile eller terminal.
+Agenten udfører derfor fil- og shellarbejde selv, uden klientens mellemkomst.
+
+Grundlag: se journal.adoc og specifikation.adoc §0.3.
+
+Betingelse: genindføres indespærring af appen, skal de tre felter erklæres i
+samme commit som ændringen. Ellers mister agenten fil- og shelladgang uden at
+nogen prøve fejler.
+
+== N2 Huskede tilladelser
+
+Klienten må ikke selv huske et allow_always eller et reject_always. Huskede
+beslutninger ejes af agenten.
+
+Grundlag: se journal.adoc, tilladelseskontrakten.
+
+Betingelse: ingen. Punktet kan ikke ophæves.
+
+== N3 Mistral-vejen
+
+Skrynja er ikke en klient til Mistral Conversations API. Vejen må ikke
+beskrives, genindføres eller porteres.
+
+Betingelse: et nyt mål vedtaget af suffløren, og kun som ny paragraf i
+opsaetning.adoc.
+
+== N4 Oversættelser
+
+Ingen sprogfiler. Projektet har én bruger og én enhed.
+
+Betingelse: suffløren kræver et andet sprog end dansk i brugerfladen.
+
+== N5 Udgivelseskanal
+
+Ingen butiksgodkendelse, ingen frigivelsesproces, ingen versionsforpligtelse.
+Versionsnummeret er internt.
+
+Betingelse: ingen.

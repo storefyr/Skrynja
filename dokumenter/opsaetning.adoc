@@ -1,0 +1,97 @@
+= Skrynja — opsætning
+:status: udkast
+
+Bindende for generatoren. Se også ikke-maal.adoc, orakel.adoc og vejkort.adoc.
+
+== §1.1 Parter
+
+Projektet har to parter.
+
+Suffløren: et menneske. Afgiver suffli, det vil sige den ordrette instruktion,
+og træffer beslutninger. Udfører ikke målinger og formulerer ikke specifikation.
+
+Maskinsiden: nærværende datasystem og generatoren. Afgiver målinger, scripts,
+specifikation og kode. Træffer ikke valg mellem to muligheder.
+
+Sufflørens samlede bidrag er tekst og et ja eller nej. Alt andet udføres af
+maskinsiden.
+
+=== §1.1.1 Hvad en beslutning kræver
+
+En beslutning kan kun træffes, hvis den præsenteres som mindst to navngivne
+muligheder med hver sin målte konsekvens. Findes der kun én mulighed, er der
+ingen beslutning, og sagen afgøres af maskinsiden uden at spørge.
+
+Følge: maskinsiden må ikke spørge om lov til noget, den ikke kan begrunde med
+mindst to alternativer.
+
+=== §1.1.2 Hvad suffløren ikke gør
+
+Suffløren læser ikke kildekode, gennemgår ikke prøver og fører ikke tilsyn med
+generatorens arbejde. Verifikation er derfor ikke en menneskelig handling.
+Den består udelukkende af kørsler og sammenligninger, der kan gentages af en
+anden instans med samme uddata.
+
+=== §1.1.3 Udførelse
+
+Indtil udløser T1 indtræder, taster suffløren kommandoerne ind på enheden.
+Det er en mekanisk handling, ikke en bedømmelse: fortolkningen af uddata ligger
+hos maskinsiden og skal kunne efterprøves ved genkørsel.
+
+Udløser T1: skive S3 er bestået — tilladelsesdialogen viser kind og fuld
+kommando, og hvert værktøjskald er logget med titel, status og sti.
+
+Ved T1 flytter udførelsen til agenten på enheden. Før den flytning skal to
+ting være gennemført, i denne rækkefølge: fixtures flyttet til fixtures/ og
+gjort skrivebeskyttede; aftrykket af hver prøvefil skrevet til en logfil uden
+for repoet, før den tilhørende kildefil findes.
+
+Kan agenten ikke køre kommandoer på enheden, findes T1 ikke, og denne
+paragraf er ikke tidsbegrænset.
+
+== §1.2 Enhed
+
+Jolla Phone 2026 er den eneste mål- og verifikationsenhed. Et acceptkriterium
+skal kunne afgøres på den, uden andet maskinel. Kan det ikke det, er kriteriet
+ugyldigt og skal omskrives — ikke undtages.
+
+== §1.3 Projektets art
+
+Helt personligt projekt, én bruger. Følgelig: ingen bagudkompatibilitet, data
+må slettes ved brud; ingen migrering af gemt tilstand; versionsnummer er
+internt og blokerer intet; ingen udgivelseskanal; ingen oversættelser.
+
+== §1.4 Verifikationsbudget
+
+Begrundelsen er generatorens kontekst, ikke en menneskelig læser, jf. §1.1.2.
+Grænserne er derfor ikke sat i bytes eller linjer, men som: en fil skal kunne
+genereres færdig i ét gennemløb, og dens prøve skal kunne læses sammen med
+den.
+
+⟨Grænse: måles i R57. Ingen tærskel skrives, før den er målt.⟩
+
+== §1.5 Fejlmoder
+
+1. Forældet hentning. Et svar fra et vært kan være bundet til en anden commit
+end den aktuelle. Hver påstand om filindhold måles i den runde, den bruges.
+2. Uoverensstemmelse mellem kode og wire. Wire-optagelsen er oraklet, ikke
+læsningen af kilden.
+3. Prøve skrevet af samme instans som kilden. Binder ikke. Reglen håndhæves
+mekanisk: prøvens commit er ældre end kildens, målt i git, og prøvens aftryk
+står i en logfil uden for repoet. Se orakel.adoc O2 og O3.
+4. Tal uden oprindelse. Ethvert tal angiver, hvor det er målt.
+
+== §1.6 Sprog
+
+⟨Ikke afgjort. Kræver sufflørens beslutning. Forslag: specifikation, journal og
+beslutninger på dansk; kode, kommentarer og prøvenavne på engelsk; prøvenavne
+bærer paragrafnummer.⟩
+
+== §1.7 Oraklet
+
+En genereret kodebase er rigtig, når: den bygger på enheden; alle prøver, der
+er committet før kilden, består; wire-optagelsen matcher specifikationens
+krævede frames; og ingen fil bryder §1.4.
+
+Betingelse 2 og 3 er ikke det samme. 2 kan bestås af kode og prøver, der er
+enige med hinanden og uenige med virkeligheden.

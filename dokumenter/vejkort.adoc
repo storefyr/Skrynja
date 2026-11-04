@@ -1,0 +1,69 @@
+= Skrynja — vejkort
+:status: udkast
+
+Hver skive er lodret: den giver noget synligt paa enheden, foer den er faerdig.
+Fem trin i fast raekkefoelge: optag, regel, proeve, kode, verificer.
+Proeven committes alene, foer kilden findes. Se orakel.adoc.
+
+== S0 Byggestien og logroteringen
+
+Accept: en kommando bygger og starter appen, og hver appstart giver en ny
+logfil. Den akkumulerende log er maalt: fire initialize-frames i en fil.
+
+Tilstand: ikke paabegyndt.
+
+== S1 Spinen
+
+Spawn, initialize, session/new, session/prompt, en tekstchunk vist.
+
+Accept: spoergsmaal ind, svar ud, og loggen viser praecis et initialize med
+et tomt clientCapabilities.
+
+Tilstand: ikke paabegyndt.
+
+== S2 Vaerktoejskald
+
+Accept: et kald der laeser en fil vises med ikon efter kind, titel og fuld sti.
+
+Tilstand: ikke paabegyndt.
+
+== S3 Tilladelser
+
+Accept: dialogen viser kind og fuld kommando. allow_always gemmes ikke i
+klienten.
+
+Tilstand: ikke paabegyndt. UDLOESER T1: naar S3 er bestaaet, flytter
+udfoerelsen til agenten, efter at fixtures er flyttet og aftryk skrevet.
+
+== S4 Diff og terminalindhold
+
+Accept: en filaendring vises som diff, en kommando viser sit uddata.
+
+Tilstand: ikke paabegyndt.
+
+== S5 Konfiguration
+
+Accept: configOptions vises og kan aendres. Booleske valg kraever
+erklaringen session.configOptions.boolean.
+
+Tilstand: ikke paabegyndt.
+
+== S6 Genoptagelse
+
+Accept: gammel samtale vises korrekt efter genstart, inklusive
+user_message_chunk fra replay.
+
+Tilstand: ikke paabegyndt.
+
+== S7 Oprydning
+
+Accept: traeet indeholder ingen fil, specifikationen ikke naevner.
+
+Tilstand: ikke paabegyndt.
+
+== Faser for udskaeringen
+
+Fase 0: legacy oprettes paa a0523d5. Udfoeres af suffloeren.
+Fase 1: teksterne committes alene. Igangvaerende.
+Fase 2: AGENTS.md erstattes i samme commit som teksterne.
+Fase 3: udskaeringen. Kraever at fixtures er maalt og flyttet foerst.

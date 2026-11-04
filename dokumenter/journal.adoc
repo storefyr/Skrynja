@@ -1,0 +1,114 @@
+= Skrynja — journal
+:status: udkast
+
+Journalen er en fortegnelse over kørsler, ikke en beretning. Hver linje angiver
+runmærke, formål og de tal, der blev målt. Tal uden måling står som ⟨...⟩ og
+måles senere; de gættes ikke.
+
+== R47–R58
+
+⟨Ikke gengivet i denne dialog. Tallene skal hentes fra terminalens historik på
+enheden, før de skrives her. Rækkevidden omfatter byggestien, logroteringen og
+repoets tilstand.⟩
+
+== R59 — fejlet
+
+cd til hjemmemappen slog fejl; skallet svarede No such file or directory for
+/home/defaultuser/Skrynja. Intet blev målt. Fejlmeddelelsen er gengivet uden
+apostrof; den ordrette form står i terminalens historik.
+
+Førte til regel: stien måles, den antages ikke. Se opsaetning.adoc §1.5 pkt 1.
+
+== R59b — målt
+
+pwd og toppunkt: /home/defaultuser/Documents/Skrynja. hoved=a0523d5. uren=0.
+legacy-lokal=nej, legacy-fjern=nej. filer=+------ — kun AGENTS.md fandtes.
+
+== R60 — specifikation.adoc, tørløb
+
+28 linjer, 1296 byte i /tmp/fase1/.
+
+== R61 — indsat
+
+sha256 9aefde0c21e723a2d95df86215dfc9f35c6ac90e6ed1086b2669820d8b6be8aa
+identisk for /tmp-filen og dokumenter/specifikation.adoc. klientcap=1,
+uerklaeret=7. Æøå og § gik uskadt gennem printf-kæden.
+
+== R62 — ikke-maal.adoc, tørløb
+
+47 linjer, 1421 byte. n=5, beting=5.
+
+== R63 — indsat
+
+sha256 08ec61eb406697f3a0759127d0535f657f49e2504d3634f121d90f05667a4132
+identisk. n=5, beting=5, senere=0.
+
+== R64 — orakel.adoc, tørløb
+
+36 linjer, 1142 byte. o=3, trin=5.
+
+== R65 — indsat
+
+sha256 c075fbdfa6e762918a3766993b072e338525dd94303e4502477dbaaf897ff075
+identisk. o=3, trin=5, journal=0.
+
+== R66 — vejkort.adoc, tørløb
+
+69 linjer, 1864 byte. s=8, tilstand=8, fase=4. Filen blev skrevet uden æøå og
+§; det var unødvendigt, jf. R61, og rettes i S7.
+
+== R67 — indsat
+
+sha256 27f771f491839b33a0de636b69dcce95d133fd2b6c07bf73b7e366f8607211c2
+identisk. s=8, tilstand=8, fase=4.
+
+== R68 — fejlet
+
+Kommandoen blev afskåret midt i en streng, og skallet stod i PS2. Intet blev
+skrevet. Førte til regel: filer bygges i bid, og intet bid gøres større, end at
+det kan gengives uden afskæring.
+
+== R68a — målt
+
+/tmp/fase1/ indeholdt fire filer med de bytes, der blev målt i R60, R62, R64 og
+R66. opsaetning.adoc fandtes ikke.
+
+== R68b–R68f — opsaetning.adoc i fem bid
+
+Linje- og bytetal: 26/940, 50/2036, 71/2859, 88/3629, 97/3976.
+
+== R68g — samlet
+
+par=10, aabne=2, t1=4, dubleret=1.
+
+== R69 — indsat
+
+sha256 6afd000bd93c65aa89ff1b47d467e34bb2c5d6df2f54d340f6ac14439d9eceba
+identisk. par=10, aabne=2.
+
+== R70 — arbejdstræet
+
+hoved=a0523d5. aendret=5, utracked=5, dok=5. doknavne: ikke-maal, opsaetning,
+orakel, specifikation, vejkort.
+
+== Fejl i nærværende datasystems formuleringer
+
+To forventningstal var forkerte og blev rettet af målingen: 34 mod målt 26 i
+R68b, og 89 mod målt 88 i R68e. Fejlen opstod i optællingen i genereringen,
+ikke i filen. Målingen er overordnet.
+
+== Regler udledt af kørslerne
+
+1. En sti måles, før den bruges. R59.
+2. Et skridt må ikke være større, end at kommandoen kan gengives uden at blive
+afskåret. R68.
+3. Hvert bid har en vagt, så genkørsel ikke dublerer tekst. R68b–R68f.
+4. Indsættelse bevises med to ens sha256, ikke med formodning. R61 og frem.
+
+== R71–R87 — fase 1 afsluttet
+
+De bindende dokumenter ligger i dokumenter/. AGENTS.md er erstattet, så rangordningen
+følger orakel.adoc: wire-optagelsen, specifikationsparagraffen, prøven, kilden,
+agentens egne prøver. vejkort.md er slettet, og indholdet er bevaret på grenen
+legacy. Hver indsættelse er bevist med samme sha256 før og efter, målt i samme
+runde. Målinger: R81, R83, R85.

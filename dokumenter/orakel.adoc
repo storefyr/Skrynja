@@ -1,0 +1,36 @@
+= Skrynja — orakel
+:status: udkast
+
+En regel består ikke ved at blive forstået, men ved at blive afprøvet.
+
+== O1 Rangordning
+
+1. Wire-optagelsen fra enheden. Kan ikke ændres efter optagelsen.
+2. Specifikationsparagraffen, der henviser til optagelsen.
+3. Prøven, der afprøver paragraffen mod optagelsen.
+4. Kilden.
+5. Generatorens egne prøver. Binder intet.
+
+Trin 5 er en selvbekræftelse, uanset hvor grøn den er.
+
+== O2 Prøven committes før kilden
+
+Prøven skal være committet før den kildefil, den afprøver. Rækkefølgen måles
+med git log, ikke med filens tidsstempel, og ikke med nogen udtalelse om
+hvad der blev skrevet først.
+
+Prøven må ikke ændres for at bestå. Består den ikke, er kilden forkert.
+
+== O3 Aftryk uden for træet
+
+Før en prøvefil tages i brug, udskrives dens sha256 og skrives til en logfil
+uden for repoet.
+
+Logfilen findes, fordi udførelse og måling ellers kan ligge hos samme
+instans. Et aftryk i repoet kan ændres af en commit; et aftryk i logfilen
+kan ikke.
+
+= Prøveformat
+
+Prøvenavnet bærer paragrafnummeret, fx paragraf 2.3_tool_call_kind.
+Fixtures er ndjson og må ikke redigeres.

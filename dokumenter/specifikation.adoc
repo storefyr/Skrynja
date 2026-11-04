@@ -1,0 +1,28 @@
+= Skrynja — protokolspecifikation v4
+:status: udkast
+
+Målgruppe: generatoren. Hver paragraf har en prøve, der er committet før koden.
+Tal er målt af suffløren på Jolla Phone 2026; runmærket angiver kørslen.
+
+== §0 Mål og kapabiliteter
+
+=== §0.3 Erklærede kapabiliteter
+
+Skrynja erklærer ingen klientkapabiliteter. Feltet sendes som et tomt objekt.
+Målt i kilden og på wiren, fire udgående initialize-frames (R49).
+
+    params.insert(QStringLiteral("clientCapabilities"), QJsonObject());
+
+ACP v1, Initialization: alle kapabiliteter, der er udeladt i initialize-anmodningen, skal behandles som ikke understøttet.
+
+* fs.readTextFile — uerklæret: fs/read_text_file utilgængelig
+* fs.writeTextFile — uerklæret: fs/write_text_file utilgængelig
+* terminal — uerklæret: alle terminal/* utilgængelige
+* auth.terminal — uerklæret: agenten må ikke udbyde type terminal
+* session.configOptions.boolean — uerklæret: agenten må ikke sende type boolean
+* elicitation — uerklæret: ingen form, ingen url
+* session.compaction og session.notices — uerklæret: agenten må ikke sende dem
+
+clientInfo sendes med name og version. title er valgfri og udelades.
+
+Afsnit om filadgang og terminaler gælder først, når det tilsvarende felt sættes til true. Se ikke-maal.adoc.
