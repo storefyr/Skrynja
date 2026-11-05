@@ -122,3 +122,18 @@ conversationmanager og harbour-skrynja indeholder begge. Oversættelsesfiler
 findes, og QTranslator indlæser dem. Det er i modstrid med N4, og modstriden
 afgøres ved beslutning. En gren lokalt-arbejde findes; forholdet til main er
 ikke målt. Målinger: R90-R104.
+
+== R88-R150 — fase 2 indledt, sidelinje sikret
+
+Sporfordelingen er maalt: mistral og acp modes i conversationmanager og
+harbour-skrynja; oversaettelsesfiler findes, og QTranslator indlaeser dem.
+Mistralapi er kun naevnt i en kommentar i byggefilen.
+
+Sidelinjen lokalt-arbejde er f423063, 1 commit, 13 filer, forgrenet paa 1ed882a.
+De 180 unikke linjer i mistralapi.cpp er billedhentning uden kaldere og uden acp.
+Intet af det unikke findes i main eller legacy; legacy er forfader til main.
+Sidelinjen er sikret med annoteret maerke wip-billedhentning (52 til 53 maalt).
+
+Aabne beslutninger: grenen lades eller slettes; ikke-maal.adoc N4 mod
+QTranslator og to .ts-filer (A praeciser, B fjern kode, C skriv aabent).
+Maalinger: R88-R150.
