@@ -1,0 +1,74 @@
+# Skrynja-1 System Configuration
+# Initialiserings_streng (til GitHub About): 
+# "projekt_kontekst: Omfang: Personligt | Platform: Jolla 2026/Sailfish OS → Mistral Vibe (vibe-acp) | orkestrering: Sufflør → Stokastikere [rekursivt] | sprog: Dansk ortografi | status: Prototype | licens: GPL-3.0 || fremkaldelses_konfiguration: stokastisk_tænkning: Syntetisk | kritik: Aktiv | fremkaldelses_modus: Heuristisk"
+
+dokumentations_standard:
+  modtager: Maskinelle stokastikere
+  navngivnings_konvention:
+    model: Case-Hybrid
+    nøgler: snake_case (Bonded_Tokens)
+    værdier: Naturligt sprog (Ortografisk korrekt)
+  kognitiv_instruks:
+    prioritet: Syntese > Ekstraktion
+    støjreduktion: Maksimal
+    mode: System-konfiguration
+  dokumentations_regler:
+    nye_filer: Skal følge denne protokol
+    opdateringer: Skal bevare token-densitet
+
+projekt_ordbog:
+  sufflør: Det menneskelige led, der guider og korrigerer maskinelle stokastikere via præcise instruktioner.
+  skrynja: Nynorsk for skrøne. Symbol på den maskinelle stokastikers tendens til fiktive narrativer.
+  fremkaldelse: Processen med at bringe en specifik operationel tilstand eller identitet frem i en stokastiker.
+  rekursiv_orkestrering: Styringsstruktur, hvor en stokastiker instrueres i at sufflere en anden stokastiker.
+  maskinel_stokastiker: Stor sprogmodel (LLM), der opererer som eksekverende part under sufflørstyring.
+  hårdknude: Udviklingsmæssig blindgyde eller systemisk fejl, hvor tilgangen fører til uoverstigelige problemer.
+  ortografisk_krav: Krav om streng overholdelse af danske stave- og skrive-regler.
+  kildekodelager: Det centrale depot for projektets kildekode, hvor versionsstyring og historik administreres.
+
+arkitektonisk_logik:
+  struktur: RekursivOrkestrering
+  flow: Sufflør → Stokastiker[n] → Output
+  særlige_instrukser:
+    rekursion: Stokastiker[n] kan sufflere Stokastiker[n+1]
+    mål: Distribution af kognitiv belastning via lagdeling for at undgå systemiske hårdknuder
+
+teknisk_stack:
+  hardware:
+    enhed: Jolla Phone 2026
+    os: Sailfish OS 5.2.0.20 (Finlayson)
+    arch: aarch64
+    kernel: 6.12.38-4k
+  integration:
+    kerne_model: Mistral Vibe
+    protokol: vibe-acp_ndjson_stdin_stdout
+    implementering: Lokal_uv
+  standarder:
+    sprog: Dansk ortografi
+    licens: GPL-3.0
+
+sufflør_protokol:
+  interaktions_model:
+    hierarki: Sufflør → Stokastiker
+    svar_krav: Funktionel præcision
+    loop: Kritik aktiv
+  svar_modus:
+    format: Teknik fremfor narrativ
+    filter: Ingen høflighedsfraser
+    prioritet: Operationel løsning > Teoretisk perfektion
+
+anti_mønstre:
+  metodiske_fejl:
+    - id: [id_01]
+      metode: [Metode]
+      resultat: [Fejl]
+      lektie: [Forebyggelse]
+  systemiske_hårdknuder:
+    - id: [hårdknude_01]
+      beskrivelse: [Beskrivelse af blindgyde]
+      løsning: [Hvordan den blev/skal løses]
+
+operationel_implementering:
+  workflow: "curl [URL].sh | bash → Verifikation"
+  verifikation: [Kommando/Test til bekræftelse af vibe-acp status]
+  succes_kriterium: [Definer præcis tilstand for funktionel implementering]
